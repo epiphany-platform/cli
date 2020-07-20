@@ -6,6 +6,7 @@ FMT := $(CMD) fmt
 CLEAN := $(CMD) clean
 INSTALL := $(CMD) install
 VENDOR := $(CMD) mod vendor
+TIDY := $(CMD) mod tidy
 
 BUILD_DIR := ./output/
 
@@ -19,6 +20,7 @@ get:
 	$(GET) -d -v ./...
 
 build:
+	$(TIDY)
 	$(VENDOR)
 	$(VET) ./cmd/... ./pkg/...
 	$(FMT) ./cmd/... ./pkg/...
