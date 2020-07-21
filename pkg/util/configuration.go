@@ -1,7 +1,12 @@
+/*
+ * Copyright © 2020 Mateusz Kyc
+ */
+
 package util
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -14,18 +19,40 @@ const (
 )
 
 type Config struct {
-	Version string `yaml:"version"`
-	Kind    string `yaml:"kind"`
+	Version      string        `yaml:"version"`
+	Kind         string        `yaml:"kind"`
+	Environments []Environment `yaml:"environments"`
+}
+
+type Environment struct {
+	Name string `yaml:"name"`
+	Uuid string `yaml:"uuid"`
 }
 
 func InitDefaultConfiguration() string {
 	return initDefaultConfiguration()
 }
 
+func CreateNewEnvironment(configPath string, environmentName string) error {
+	config, err := loadConfig(configPath)
+	if err != nil {
+		return err
+	}
+	config.Environments = append(config.Environments, Environment{
+		Name: environmentName,
+		Uuid: uuid.New().String(),
+	})
+	err = writeConfiguration(configPath, config)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func initDefaultConfiguration() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println(err) //TODO log
+		fmt.Println(err) //TODO err?
 		os.Exit(1)
 	}
 
@@ -37,7 +64,7 @@ func initDefaultConfiguration() string {
 	if _, err = os.Stat(configFilePath); os.IsNotExist(err) {
 		err = createInitConfigFile(configFilePath)
 		if err != nil {
-			fmt.Println(err) //TODO log
+			fmt.Println(err) //TODO warn?
 			os.Exit(1)
 		}
 	}
@@ -49,6 +76,24 @@ func createInitConfigFile(configPath string) error {
 		Version: "v1",
 		Kind:    "Config",
 	}
+	return writeConfiguration(configPath, config)
+}
+
+func loadConfig(configPath string) (*Config, error) {
+	config := &Config{}
+	file, err := os.Open(configPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	d := yaml.NewDecoder(file)
+	if err := d.Decode(&config); err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func writeConfiguration(configPath string, config *Config) error {
 	data, err := yaml.Marshal(config)
 	if err != nil {
 		return err
