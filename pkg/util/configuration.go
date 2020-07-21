@@ -19,14 +19,15 @@ const (
 )
 
 type Config struct {
-	Version      string        `yaml:"version"`
-	Kind         string        `yaml:"kind"`
-	Environments []Environment `yaml:"environments"`
+	Version            string        `yaml:"version"`
+	Kind               string        `yaml:"kind"`
+	Environments       []Environment `yaml:"environments"`
+	CurrentEnvironment uuid.UUID     `yaml:"current-environment"`
 }
 
 type Environment struct {
-	Name string `yaml:"name"`
-	Uuid string `yaml:"uuid"`
+	Name string    `yaml:"name"`
+	Uuid uuid.UUID `yaml:"uuid"`
 }
 
 func InitDefaultConfiguration() string {
@@ -34,19 +35,38 @@ func InitDefaultConfiguration() string {
 }
 
 func CreateNewEnvironment(configPath string, environmentName string) error {
+	return createNewEnvironment(configPath, environmentName)
+}
+
+func GetConfig(configPath string) (*Config, error) {
+	return loadConfig(configPath)
+}
+
+func SetUsedEnvironment(configPath string, uuid uuid.UUID) error {
+	return setUsedEnvironment(configPath, uuid)
+}
+
+func setUsedEnvironment(configPath string, uuid uuid.UUID) error {
 	config, err := loadConfig(configPath)
 	if err != nil {
 		return err
 	}
-	config.Environments = append(config.Environments, Environment{
-		Name: environmentName,
-		Uuid: uuid.New().String(),
-	})
-	err = writeConfiguration(configPath, config)
+	config.CurrentEnvironment = uuid
+	return writeConfiguration(configPath, config)
+}
+
+func createNewEnvironment(configPath string, environmentName string) error {
+	config, err := loadConfig(configPath)
 	if err != nil {
 		return err
 	}
-	return nil
+	newUuid := uuid.New()
+	config.Environments = append(config.Environments, Environment{
+		Name: environmentName,
+		Uuid: newUuid,
+	})
+	config.CurrentEnvironment = newUuid
+	return writeConfiguration(configPath, config)
 }
 
 func initDefaultConfiguration() string {

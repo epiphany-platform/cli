@@ -6,9 +6,10 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 
 	"github.com/spf13/viper"
 )

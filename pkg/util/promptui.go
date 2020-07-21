@@ -6,6 +6,9 @@ package util
 
 import (
 	"errors"
+	"fmt"
+	"github.com/google/uuid"
+	"sort"
 
 	"github.com/manifoldco/promptui"
 )
@@ -30,4 +33,35 @@ func PromptForString(label string) (string, error) {
 	}
 
 	return result, nil
+}
+
+func PromptForEnvironmentSelect(label string, config *Config) (uuid.UUID, error) {
+	keys := make([]string, 0)
+	m := make(map[string]string)
+	for _, e := range config.Environments {
+		keys = append(keys, e.Uuid.String())
+		m[e.Uuid.String()] = e.Name
+	}
+	sort.Strings(keys)
+	var values []string
+	cursorPosition := -1
+	for i, k := range keys {
+		if k == config.CurrentEnvironment.String() {
+			values = append(values, fmt.Sprintf("%s (%s, current)", m[k], k))
+			cursorPosition = i
+		} else {
+			values = append(values, fmt.Sprintf("%s (%s)", m[k], k))
+		}
+	}
+	prompt := promptui.Select{
+		Label:     label,
+		Items:     values,
+		Size:      len(keys),
+		CursorPos: cursorPosition,
+	}
+	c, _, err := prompt.Run()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return uuid.MustParse(keys[c]), nil
 }
