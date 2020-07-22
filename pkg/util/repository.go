@@ -5,6 +5,7 @@
 package util //TODO move to another package
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -36,6 +37,7 @@ type Component struct {
 }
 type ComponentVersion struct {
 	Version       string             `yaml:"version"`
+	IsLatest      bool               `yaml:"latest"`
 	Image         string             `yaml:"image"`
 	WorkDirectory string             `yaml:"workdir"`
 	Commands      []ComponentCommand `yaml:"commands"`
@@ -48,6 +50,36 @@ type ComponentCommand struct {
 }
 
 func ListComponents() ([]Component, error) {
+	repo, err := loadOrDownloadRepository()
+	if err != nil {
+		return nil, err
+	}
+	return repo.Components, nil
+}
+
+func GetLatestComponent(componentName string) (*Component, error) {
+	repo, err := loadOrDownloadRepository()
+	if err != nil {
+		return nil, err
+	}
+	for _, component := range repo.Components {
+		if component.Name == componentName {
+			return buildComponentWithLatestVersion(&component)
+		}
+	}
+	return nil, errors.New("unknown component")
+}
+
+func init() {
+	repositoryFilePath, err := initRepositoryPath()
+	if err != nil {
+		fmt.Println("repos error") //TODO error
+		os.Exit(1)
+	}
+	UsedRepositoryFilePath = repositoryFilePath
+}
+
+func loadOrDownloadRepository() (*RepositoryV1, error) {
 	repo, err := loadRepository()
 	if err != nil {
 		err = getDefaultRepository()
@@ -59,16 +91,33 @@ func ListComponents() ([]Component, error) {
 			return nil, err
 		}
 	}
-	return repo.Components, nil
+	return repo, nil
 }
 
-func init() {
-	repositoryFilePath, err := initRepositoryPath()
-	if err != nil {
-		fmt.Println("repos error") //TODO error
-		os.Exit(1)
+func buildComponentWithLatestVersion(component *Component) (*Component, error) {
+	if len(component.Versions) < 1 {
+		return nil, errors.New("no versions in component")
 	}
-	UsedRepositoryFilePath = repositoryFilePath
+	if len(component.Versions) == 1 {
+		if component.Versions[0].IsLatest {
+			return component, nil
+		} else {
+			return nil, errors.New("component only version is not marked latest")
+		}
+	}
+	result := &Component{
+		Name: component.Name,
+		Type: component.Type,
+	}
+	for _, v := range component.Versions {
+		if v.IsLatest {
+			result.Versions = append(result.Versions, v)
+		}
+	}
+	if len(result.Versions) != 1 {
+		return nil, errors.New("incorrect number of latest versions")
+	}
+	return result, nil
 }
 
 func getDefaultRepository() error {

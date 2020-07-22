@@ -24,7 +24,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
-		components, err := util.ListComponents()
+		components, err := util.ListComponents() //TODO implement repo.String() method
 		if err != nil {
 			fmt.Printf("list componets failed: %v\n", err) //TODO err
 			os.Exit(1)
