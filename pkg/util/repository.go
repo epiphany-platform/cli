@@ -7,6 +7,7 @@ package util //TODO move to another package
 import (
 	"errors"
 	"fmt"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/docker"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
@@ -30,10 +31,18 @@ type ComponentCommand struct {
 	Description          string            `yaml:"description"`
 	Command              string            `yaml:"command"`
 	EnvironmentVariables map[string]string `yaml:"envs"`
+	CommandArguments     []string          `yaml:"args"`
 }
 
 func (cc ComponentCommand) RunDocker(image string, workDirectory string) error {
-	return errors.New("not yet implemented")
+	dockerJob := &docker.Job{
+		Image:                image,
+		Command:              cc.Command,
+		Args:                 cc.CommandArguments,
+		WorkDirectory:        workDirectory,
+		EnvironmentVariables: cc.EnvironmentVariables,
+	}
+	return dockerJob.Run()
 }
 
 type ComponentVersion struct {
