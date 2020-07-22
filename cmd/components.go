@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -22,6 +24,22 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("components called")
+		if len(args) == 1 {
+			printComponentLatestVersionInfo(args[0])
+		}
+		if len(args) == 2 {
+			c, err := util.GetComponent(args[0])
+			if err != nil {
+				fmt.Printf("getting component failed: %v\n", err) //TODO err?
+				os.Exit(1)
+			}
+			err = c.Run(args[1])
+			if err != nil {
+				fmt.Printf("running command failed: %v\n", err) //TODO err?
+				os.Exit(1)
+			}
+			fmt.Printf("running command completed!")
+		}
 	},
 }
 

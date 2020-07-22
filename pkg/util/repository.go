@@ -25,16 +25,17 @@ const (
 
 var UsedRepositoryFilePath string
 
-type RepositoryV1 struct {
-	Version    string      `yaml:"version"`
-	Kind       string      `yaml:"kind"`
-	Components []Component `yaml:"components"`
+type ComponentCommand struct {
+	Name                 string            `yaml:"name"`
+	Description          string            `yaml:"description"`
+	Command              string            `yaml:"command"`
+	EnvironmentVariables map[string]string `yaml:"envs"`
 }
-type Component struct {
-	Name     string             `yaml:"name"`
-	Type     string             `yaml:"type"`
-	Versions []ComponentVersion `yaml:"versions"`
+
+func (cc ComponentCommand) RunDocker(image string, workDirectory string) error {
+	return errors.New("not yet implemented")
 }
+
 type ComponentVersion struct {
 	Version       string             `yaml:"version"`
 	IsLatest      bool               `yaml:"latest"`
@@ -42,11 +43,37 @@ type ComponentVersion struct {
 	WorkDirectory string             `yaml:"workdir"`
 	Commands      []ComponentCommand `yaml:"commands"`
 }
-type ComponentCommand struct {
-	Name                 string            `yaml:"name"`
-	Description          string            `yaml:"description"`
-	Command              string            `yaml:"command"`
-	EnvironmentVariables map[string]string `yaml:"envs"`
+
+func (cv ComponentVersion) RunDocker(command string) error {
+	for _, cc := range cv.Commands {
+		if cc.Name == command {
+			return cc.RunDocker(cv.Image, cv.WorkDirectory)
+		}
+	}
+	return errors.New("nothing to run for this version")
+}
+
+type Component struct {
+	Name     string             `yaml:"name"`
+	Type     string             `yaml:"type"`
+	Versions []ComponentVersion `yaml:"versions"`
+}
+
+func (c Component) Run(command string) error {
+	if c.Type == "docker" {
+		for _, cv := range c.Versions {
+			if cv.IsLatest { //TODO make it possible to run another version
+				return cv.RunDocker(command)
+			}
+		}
+	}
+	return errors.New("nothing to run in component")
+}
+
+type RepositoryV1 struct {
+	Version    string      `yaml:"version"`
+	Kind       string      `yaml:"kind"`
+	Components []Component `yaml:"components"`
 }
 
 func ListComponents() ([]Component, error) {
@@ -57,17 +84,25 @@ func ListComponents() ([]Component, error) {
 	return repo.Components, nil
 }
 
-func GetLatestComponent(componentName string) (*Component, error) {
+func GetComponent(componentName string) (*Component, error) {
 	repo, err := loadOrDownloadRepository()
 	if err != nil {
 		return nil, err
 	}
-	for _, component := range repo.Components {
-		if component.Name == componentName {
-			return buildComponentWithLatestVersion(&component)
+	for _, c := range repo.Components {
+		if c.Name == componentName {
+			return &c, nil
 		}
 	}
 	return nil, errors.New("unknown component")
+}
+
+func GetComponentWithLatestVersion(componentName string) (*Component, error) {
+	c, err := GetComponent(componentName)
+	if err != nil {
+		return nil, err
+	}
+	return buildComponentWithLatestVersion(c)
 }
 
 func init() {
