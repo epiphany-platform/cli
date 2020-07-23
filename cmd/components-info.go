@@ -7,7 +7,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/repository"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,7 @@ to quickly create a Cobra application.`,
 }
 
 func printComponentLatestVersionInfo(componentName string) {
-	c, err := util.GetComponentWithLatestVersion(componentName) //TODO implement component.LatestVersionString()
+	c, err := repository.GetComponentWithLatestVersion(componentName) //TODO implement component.LatestVersionString()
 	if err != nil {
 		panic(fmt.Sprintf("getting component with latest version failed: %v\n", err)) //TODO err
 	}

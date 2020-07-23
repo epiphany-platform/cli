@@ -7,7 +7,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/promptui"
 	"github.com/spf13/cobra"
 )
 
@@ -23,11 +23,11 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("new called") //TODO debug
-		config, err := configuration.NewConfig()
+		config, err := configuration.GetConfig()
 		if err != nil {
 			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 		}
-		name, err := util.PromptForString("Environment name")
+		name, err := promptui.PromptForString("Environment name")
 		if err != nil {
 			panic(fmt.Sprintf("prompt for new environment failed: %v\n", err)) //TODO err
 		}

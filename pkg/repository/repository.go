@@ -2,7 +2,7 @@
  * Copyright © 2020 Mateusz Kyc
  */
 
-package util //TODO move to another package
+package repository //TODO move to another package
 
 import (
 	"errors"

@@ -39,7 +39,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	config, err := configuration.NewConfig()
+	config, err := configuration.GetConfig()
 	if err != nil {
 		panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 	}
@@ -65,7 +65,7 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(config.GetConfigFilePath())
 	} else {
-		config, err := configuration.NewConfig()
+		config, err := configuration.GetConfig()
 		if err != nil {
 			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 		}

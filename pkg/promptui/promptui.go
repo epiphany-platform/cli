@@ -2,7 +2,7 @@
  * Copyright © 2020 Mateusz Kyc
  */
 
-package util
+package promptui
 
 import (
 	"errors"
@@ -36,10 +36,18 @@ func PromptForString(label string) (string, error) {
 	return result, nil
 }
 
-func PromptForEnvironmentSelect(label string, config *configuration.Config) (uuid.UUID, error) {
+func PromptForEnvironmentSelect(label string) (uuid.UUID, error) {
+	config, err := configuration.GetConfig()
+	if err != nil {
+		return uuid.Nil, err
+	}
 	keys := make([]string, 0)
 	m := make(map[string]string)
-	for _, e := range config.Environments {
+	environments, err := configuration.GetAllEnvironments()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	for _, e := range environments {
 		keys = append(keys, e.Uuid.String())
 		m[e.Uuid.String()] = e.Name
 	}

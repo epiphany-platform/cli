@@ -7,6 +7,7 @@ package configuration
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -14,32 +15,27 @@ import (
 )
 
 const (
-	DefaultCfgDirectory             string = ".e"
-	defaultCfgFile                  string = "config.yaml"
-	defaultEnvironmentsSubdirectory string = "environments"
+	DefaultCfgDirectory string = ".e"
+	defaultCfgFile      string = "config.yaml"
 )
 
 var (
 	usedConfigFile             string
-	usedConfigurationDirectory string
+	UsedConfigurationDirectory string
 )
 
 type Config struct {
-	Version            string        `yaml:"version"`
-	Kind               string        `yaml:"kind"`
-	Environments       []Environment `yaml:"environments"`
-	CurrentEnvironment uuid.UUID     `yaml:"current-environment"`
+	Version            string    `yaml:"version"`
+	Kind               string    `yaml:"kind"`
+	CurrentEnvironment uuid.UUID `yaml:"current-environment"`
 }
 
 func (c *Config) CreateNewEnvironment(name string) error {
-	newUuid := uuid.New()
-	c.Environments = append(c.Environments, Environment{
-		Name: name,
-		Uuid: newUuid,
-	})
-	c.CurrentEnvironment = newUuid
-	newEnvironmentDirectory := path.Join(usedConfigurationDirectory, defaultEnvironmentsSubdirectory, newUuid.String())
-	ensureDirectory(newEnvironmentDirectory)
+	env, err := CreateEnvironment(name)
+	if err != nil {
+		panic("cannot create new environment")
+	}
+	c.CurrentEnvironment = env.Uuid
 	return c.Save()
 }
 
@@ -67,21 +63,16 @@ func (c *Config) Save() error {
 	return nil
 }
 
-type Environment struct {
-	Name string    `yaml:"name"`
-	Uuid uuid.UUID `yaml:"uuid"`
-}
-
-func NewConfig() (*Config, error) {
-	usedConfigurationDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory)
-	ensureDirectory(usedConfigurationDirectory)
-	usedConfigFile = path.Join(usedConfigurationDirectory, defaultCfgFile)
+func GetConfig() (*Config, error) {
+	UsedConfigurationDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory)
+	util.EnsureDirectory(UsedConfigurationDirectory)
+	usedConfigFile = path.Join(UsedConfigurationDirectory, defaultCfgFile)
 	return makeOrGetConfig()
 }
 
 func SetConfig(configFile string) (*Config, error) {
-	usedConfigurationDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory)
-	ensureDirectory(usedConfigurationDirectory)
+	UsedConfigurationDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory)
+	util.EnsureDirectory(UsedConfigurationDirectory)
 	usedConfigFile = configFile
 	return makeOrGetConfig()
 }
@@ -121,11 +112,4 @@ func getHomeDirectory() string {
 		panic(fmt.Sprintf("finding home dir failed: %v\n", err)) //TODO err
 	}
 	return home
-}
-
-func ensureDirectory(directory string) {
-	err := os.MkdirAll(directory, 0755)
-	if err != nil {
-		panic(fmt.Sprintf("directory creation failed: %v\n", err)) //TODO err
-	}
 }
