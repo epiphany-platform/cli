@@ -2,7 +2,7 @@
  * Copyright © 2020 Mateusz Kyc
  */
 
-package configuration
+package environment
 
 import (
 	"fmt"
@@ -12,11 +12,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-)
-
-const (
-	defaultEnvironmentsSubdirectory string = "environments"
-	defaultEnvironmentConfigFile    string = "config.yaml"
 )
 
 var (
@@ -29,7 +24,7 @@ type Environment struct {
 }
 
 func init() {
-	UsedEnvironmentDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory, defaultEnvironmentsSubdirectory)
+	UsedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
 }
 
 func (e *Environment) Save() error {
@@ -37,7 +32,7 @@ func (e *Environment) Save() error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path.Join(UsedEnvironmentDirectory, e.Uuid.String(), defaultEnvironmentConfigFile), data, 0644)
+	err = ioutil.WriteFile(path.Join(UsedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName), data, 0644)
 	if err != nil {
 		return err
 	}
@@ -67,7 +62,7 @@ func GetAllEnvironments() ([]*Environment, error) {
 	var environments []*Environment
 	for _, i := range items {
 		if i.IsDir() {
-			expectedFile := path.Join(UsedEnvironmentDirectory, i.Name(), defaultEnvironmentConfigFile)
+			expectedFile := path.Join(UsedEnvironmentDirectory, i.Name(), util.DefaultEnvironmentConfigFileName)
 			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				fmt.Println("file " + expectedFile + " does not exist!") //TODO err
 			} else {

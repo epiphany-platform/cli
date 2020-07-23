@@ -7,6 +7,7 @@ package configuration
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -14,14 +15,9 @@ import (
 	"path"
 )
 
-const (
-	DefaultCfgDirectory string = ".e"
-	defaultCfgFile      string = "config.yaml"
-)
-
 var (
 	usedConfigFile             string
-	UsedConfigurationDirectory string
+	usedConfigurationDirectory string
 )
 
 type Config struct {
@@ -31,7 +27,7 @@ type Config struct {
 }
 
 func (c *Config) CreateNewEnvironment(name string) error {
-	env, err := CreateEnvironment(name)
+	env, err := environment.CreateEnvironment(name)
 	if err != nil {
 		panic("cannot create new environment")
 	}
@@ -64,15 +60,15 @@ func (c *Config) Save() error {
 }
 
 func GetConfig() (*Config, error) {
-	UsedConfigurationDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory)
-	util.EnsureDirectory(UsedConfigurationDirectory)
-	usedConfigFile = path.Join(UsedConfigurationDirectory, defaultCfgFile)
+	usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	util.EnsureDirectory(usedConfigurationDirectory)
+	usedConfigFile = path.Join(usedConfigurationDirectory, util.DefaultConfigFileName)
 	return makeOrGetConfig()
 }
 
 func SetConfig(configFile string) (*Config, error) {
-	UsedConfigurationDirectory = path.Join(getHomeDirectory(), DefaultCfgDirectory)
-	util.EnsureDirectory(UsedConfigurationDirectory)
+	usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	util.EnsureDirectory(usedConfigurationDirectory)
 	usedConfigFile = configFile
 	return makeOrGetConfig()
 }
@@ -104,12 +100,4 @@ func loadConfigFromUsedConfigFile() (*Config, error) {
 		return nil, err
 	}
 	return config, nil
-}
-
-func getHomeDirectory() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(fmt.Sprintf("finding home dir failed: %v\n", err)) //TODO err
-	}
-	return home
 }

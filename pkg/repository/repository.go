@@ -7,8 +7,8 @@ package repository //TODO move to another package
 import (
 	"errors"
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/docker"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
@@ -69,7 +69,7 @@ type Component struct {
 	Versions []ComponentVersion `yaml:"versions"`
 }
 
-func (c Component) Run(command string) error {
+func (c Component) Run(command string) error { //TODO move it to "Environment Component"
 	if c.Type == "docker" {
 		for _, cv := range c.Versions {
 			if cv.IsLatest { //TODO make it possible to run another version
@@ -235,12 +235,12 @@ func loadRepository() (*RepositoryV1, error) {
 	return repo, nil
 }
 
-func initRepositoryPath() (string, error) {
+func initRepositoryPath() (string, error) { //TODO move this responsibility to configuration?
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	configDirPath := path.Join(home, configuration.DefaultCfgDirectory) //TODO move this responsibility co configuration
+	configDirPath := path.Join(home, util.DefaultConfigurationDirectory)
 	if _, err = os.Stat(configDirPath); os.IsNotExist(err) {
 		_ = os.Mkdir(configDirPath, 0755)
 	}
