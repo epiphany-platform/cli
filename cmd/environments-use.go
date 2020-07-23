@@ -27,7 +27,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 		}
-		uuid, err := util.PromptForEnvironmentSelect("Environments", config)
+		uuid, err := util.PromptForEnvironmentSelect("Environments", config) //TODO check if any environment exists
 		if err != nil {
 			panic(fmt.Sprintf("prompt for environment select failed: %v\n", err)) //TODO err
 		}

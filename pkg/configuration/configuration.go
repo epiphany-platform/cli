@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	DefaultCfgDirectory string = ".e"
-	defaultCfgFile      string = "config.yaml"
+	DefaultCfgDirectory             string = ".e"
+	defaultCfgFile                  string = "config.yaml"
+	defaultEnvironmentsSubdirectory string = "environments"
 )
 
 var (
@@ -37,7 +38,8 @@ func (c *Config) CreateNewEnvironment(name string) error {
 		Uuid: newUuid,
 	})
 	c.CurrentEnvironment = newUuid
-	//TODO add creation of environment directory here
+	newEnvironmentDirectory := path.Join(usedConfigurationDirectory, defaultEnvironmentsSubdirectory, newUuid.String())
+	ensureDirectory(newEnvironmentDirectory)
 	return c.Save()
 }
 
@@ -122,7 +124,7 @@ func getHomeDirectory() string {
 }
 
 func ensureDirectory(directory string) {
-	err := os.MkdirAll(directory, os.ModeDir)
+	err := os.MkdirAll(directory, 0755)
 	if err != nil {
 		panic(fmt.Sprintf("directory creation failed: %v\n", err)) //TODO err
 	}
