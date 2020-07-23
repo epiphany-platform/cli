@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"sort"
 
 	"github.com/manifoldco/promptui"
@@ -35,7 +36,7 @@ func PromptForString(label string) (string, error) {
 	return result, nil
 }
 
-func PromptForEnvironmentSelect(label string, config *Config) (uuid.UUID, error) {
+func PromptForEnvironmentSelect(label string, config *configuration.Config) (uuid.UUID, error) {
 	keys := make([]string, 0)
 	m := make(map[string]string)
 	for _, e := range config.Environments {

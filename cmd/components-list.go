@@ -7,8 +7,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -26,8 +24,7 @@ to quickly create a Cobra application.`,
 		fmt.Println("list called")
 		components, err := util.ListComponents() //TODO implement repo.String() method
 		if err != nil {
-			fmt.Printf("list componets failed: %v\n", err) //TODO err
-			os.Exit(1)
+			panic(fmt.Sprintf("list components failed: %v\n", err)) //TODO err
 		}
 		for _, c := range components {
 			for _, v := range c.Versions {

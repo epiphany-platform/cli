@@ -6,10 +6,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
-	"github.com/spf13/viper"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -25,21 +23,18 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("use called")
-		config, err := util.GetConfig(viper.ConfigFileUsed())
+		config, err := configuration.NewConfig()
 		if err != nil {
-			fmt.Printf("loading configuration failed: %v\n", err) //TODO warn?
-			os.Exit(1)
+			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 		}
 		uuid, err := util.PromptForEnvironmentSelect("Environments", config)
 		if err != nil {
-			fmt.Printf("choosing config failed: %v\n", err) //TODO warn?
-			os.Exit(1)
+			panic(fmt.Sprintf("prompt for environment select failed: %v\n", err)) //TODO err
 		}
 		fmt.Printf("Choosed UUID is: %s\v", uuid)
-		err = util.SetUsedEnvironment(viper.ConfigFileUsed(), uuid)
+		err = config.SetUsedEnvironment(uuid)
 		if err != nil {
-			fmt.Printf("setting used environment failed: %v\n", err) //TODO warn?
-			os.Exit(1)
+			panic(fmt.Sprintf("setting used environment failed: %v\n", err)) //TODO err
 		}
 	},
 }

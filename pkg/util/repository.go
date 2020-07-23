@@ -7,6 +7,7 @@ package util //TODO move to another package
 import (
 	"errors"
 	"fmt"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/docker"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -85,7 +86,7 @@ type RepositoryV1 struct {
 	Components []Component `yaml:"components"`
 }
 
-func ListComponents() ([]Component, error) {
+func ListComponents() ([]Component, error) { //TODO move to Repository
 	repo, err := loadOrDownloadRepository()
 	if err != nil {
 		return nil, err
@@ -93,7 +94,7 @@ func ListComponents() ([]Component, error) {
 	return repo.Components, nil
 }
 
-func GetComponent(componentName string) (*Component, error) {
+func GetComponent(componentName string) (*Component, error) { //TODO move to Repository
 	repo, err := loadOrDownloadRepository()
 	if err != nil {
 		return nil, err
@@ -106,7 +107,7 @@ func GetComponent(componentName string) (*Component, error) {
 	return nil, errors.New("unknown component")
 }
 
-func GetComponentWithLatestVersion(componentName string) (*Component, error) {
+func GetComponentWithLatestVersion(componentName string) (*Component, error) { //TODO move to Repository
 	c, err := GetComponent(componentName)
 	if err != nil {
 		return nil, err
@@ -114,11 +115,10 @@ func GetComponentWithLatestVersion(componentName string) (*Component, error) {
 	return buildComponentWithLatestVersion(c)
 }
 
-func init() {
+func init() { //TODO move it to configuration
 	repositoryFilePath, err := initRepositoryPath()
 	if err != nil {
-		fmt.Println("repos error") //TODO error
-		os.Exit(1)
+		panic(fmt.Sprintf("init repository failed: %v\n", err)) //TODO err
 	}
 	UsedRepositoryFilePath = repositoryFilePath
 }
@@ -240,7 +240,7 @@ func initRepositoryPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	configDirPath := path.Join(home, DefaultCfgDirectory)
+	configDirPath := path.Join(home, configuration.DefaultCfgDirectory) //TODO move this responsibility co configuration
 	if _, err = os.Stat(configDirPath); os.IsNotExist(err) {
 		_ = os.Mkdir(configDirPath, 0755)
 	}

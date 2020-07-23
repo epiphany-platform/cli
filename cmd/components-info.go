@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -35,8 +33,7 @@ to quickly create a Cobra application.`,
 func printComponentLatestVersionInfo(componentName string) {
 	c, err := util.GetComponentWithLatestVersion(componentName) //TODO implement component.LatestVersionString()
 	if err != nil {
-		fmt.Printf("getting latest component failed: %v\n", err) //TODO err?
-		os.Exit(1)
+		panic(fmt.Sprintf("getting component with latest version failed: %v\n", err)) //TODO err
 	}
 	var b bytes.Buffer
 	b.WriteString(fmt.Sprintf("Component:\n Name: %s\n Type: %s\n Version: %s\n Image: %s\n Commands:\n", c.Name, c.Type, c.Versions[0].Version, c.Versions[0].Image))

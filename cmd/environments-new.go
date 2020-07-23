@@ -6,10 +6,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
-	"github.com/spf13/viper"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -25,16 +23,18 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("new called") //TODO debug
+		config, err := configuration.NewConfig()
+		if err != nil {
+			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+		}
 		name, err := util.PromptForString("Environment name")
 		if err != nil {
-			fmt.Printf("environment new failed: %v\n", err) //TODO warn?
-			os.Exit(1)
+			panic(fmt.Sprintf("prompt for new environment failed: %v\n", err)) //TODO err
 		}
 		fmt.Printf("name is: %s\n", name) //TODO debug
-		err = util.CreateNewEnvironment(viper.ConfigFileUsed(), name)
+		err = config.CreateNewEnvironment(name)
 		if err != nil {
-			fmt.Printf("create new environment failed: %v\n", err) //TODO warn?
-			os.Exit(1)
+			panic(fmt.Sprintf("create new environemtn failed: %v\n", err)) //TODO err
 		}
 	},
 }

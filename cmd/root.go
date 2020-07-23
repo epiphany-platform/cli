@@ -6,11 +6,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/spf13/cobra"
-	"os"
-
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
-
 	"github.com/spf13/viper"
 )
 
@@ -35,33 +32,45 @@ to quickly create a Cobra application.`,
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		panic(fmt.Sprintf("root execute failed: %v\n", err)) //TODO err
 	}
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	config, err := configuration.NewConfig()
+	if err != nil {
+		panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+	}
+
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $HOME/%s/%s)", util.DefaultCfgDirectory, util.DefaultCfgFile))
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is %s)", config.GetConfigFilePath()))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
+		config, err := configuration.SetConfig(cfgFile)
+		if err != nil {
+			panic(fmt.Sprintf("set config failed: %v\n", err)) //TODO err
+		}
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		viper.SetConfigFile(config.GetConfigFilePath())
 	} else {
+		config, err := configuration.NewConfig()
+		if err != nil {
+			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+		}
 		// setup default
-		viper.SetConfigFile(util.InitDefaultConfiguration())
+		viper.SetConfigFile(config.GetConfigFilePath())
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

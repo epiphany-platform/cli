@@ -7,8 +7,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -30,13 +28,11 @@ to quickly create a Cobra application.`,
 		if len(args) == 2 {
 			c, err := util.GetComponent(args[0])
 			if err != nil {
-				fmt.Printf("getting component failed: %v\n", err) //TODO err?
-				os.Exit(1)
+				panic(fmt.Sprintf("get component failed: %v\n", err)) //TODO err
 			}
 			err = c.Run(args[1])
 			if err != nil {
-				fmt.Printf("running command failed: %v\n", err) //TODO err?
-				os.Exit(1)
+				panic(fmt.Sprintf("run command failed: %v\n", err)) //TODO err
 			}
 			fmt.Printf("running command completed!")
 		}
