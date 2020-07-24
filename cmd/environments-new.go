@@ -27,9 +27,14 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 		}
-		name, err := promptui.PromptForString("Environment name")
-		if err != nil {
-			panic(fmt.Sprintf("prompt for new environment failed: %v\n", err)) //TODO err
+		var name string
+		if len(args) == 1 {
+			name = args[0]
+		} else {
+			name, err = promptui.PromptForString("Environment name")
+			if err != nil {
+				panic(fmt.Sprintf("prompt for new environment failed: %v\n", err)) //TODO err
+			}
 		}
 		fmt.Printf("name is: %s\n", name) //TODO debug
 		err = config.CreateNewEnvironment(name)

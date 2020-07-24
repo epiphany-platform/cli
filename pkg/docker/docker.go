@@ -15,6 +15,23 @@ import (
 	"github.com/docker/docker/client"
 )
 
+type Image struct {
+	Name string
+}
+
+func (i *Image) Pull() error {
+	ctx, cli, err := clientAndContext()
+	if err != nil {
+		return err
+	}
+	reader, err := cli.ImagePull(ctx, i.Name, types.ImagePullOptions{}) //TODO format output
+	if err != nil {
+		return err
+	}
+	_, _ = io.Copy(os.Stdout, reader) //TODO persist
+	return nil
+}
+
 type Job struct {
 	Image                string
 	Command              string
@@ -28,17 +45,10 @@ func (j Job) Run() error {
 }
 
 func run(job Job) error {
-	ctx := context.Background()
-	cli, err := client.NewEnvClient()
+	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return err
 	}
-	reader, err := cli.ImagePull(ctx, job.Image, types.ImagePullOptions{}) //TODO format output
-	if err != nil {
-		return err
-	}
-	_, _ = io.Copy(os.Stdout, reader)
-
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:      job.Image,
 		Cmd:        []string{"init"}, //TODO add arguments
@@ -63,4 +73,13 @@ func run(job Job) error {
 	_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, out)
 
 	return nil
+}
+
+func clientAndContext() (context.Context, *client.Client, error) {
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		return nil, nil, err
+	}
+	return ctx, cli, nil
 }

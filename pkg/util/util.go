@@ -10,10 +10,12 @@ import (
 )
 
 const (
-	DefaultConfigurationDirectory    string = ".e"
-	DefaultConfigFileName            string = "config.yaml"
-	DefaultEnvironmentsSubdirectory  string = "environments"
-	DefaultEnvironmentConfigFileName string = "config.yaml"
+	DefaultConfigurationDirectory      string = ".e"
+	DefaultConfigFileName              string = "config.yaml"
+	DefaultEnvironmentsSubdirectory    string = "environments"
+	DefaultEnvironmentConfigFileName   string = "config.yaml"
+	DefaultComponentRunsSubdirectory   string = "runs"
+	DefaultComponentMountsSubdirectory string = "mounts"
 )
 
 func EnsureDirectory(directory string) {

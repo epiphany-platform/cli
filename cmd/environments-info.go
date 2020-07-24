@@ -6,8 +6,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -27,6 +29,10 @@ to quickly create a Cobra application.`,
 		config, err := configuration.GetConfig()
 		if err != nil {
 			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+		}
+		if config.CurrentEnvironment == uuid.Nil {
+			fmt.Println("no environment used") //TODO warn?
+			os.Exit(1)
 		}
 		environment, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {

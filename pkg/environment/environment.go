@@ -73,6 +73,14 @@ func (cv *InstalledComponentVersion) String() string {
 	return b.String()
 }
 
+func (cv *InstalledComponentVersion) Download() error {
+	if cv.Type == "docker" {
+		dockerImage := &docker.Image{Name: cv.Image}
+		return dockerImage.Pull()
+	}
+	return nil
+}
+
 type Environment struct {
 	Name      string                      `yaml:"name"`
 	Uuid      uuid.UUID                   `yaml:"uuid"`
@@ -101,13 +109,21 @@ func (e *Environment) String() string {
 	return b.String()
 }
 
-func (e *Environment) Install(new InstalledComponentVersion) error {
+func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 	for _, ic := range e.Installed {
-		if ic.Name == new.Name && ic.Version == new.Version {
+		if ic.Name == newComponent.Name && ic.Version == newComponent.Version {
 			return errors.New("there is this version of component already installed in environment")
 		}
 	}
-	e.Installed = append(e.Installed, new)
+	e.Installed = append(e.Installed, newComponent)
+	newComponentRunsDirectory := path.Join(usedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentRunsSubdirectory)
+	newComponentMountsDirectory := path.Join(usedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentMountsSubdirectory)
+	util.EnsureDirectory(newComponentRunsDirectory)
+	util.EnsureDirectory(newComponentMountsDirectory)
+	err := newComponent.Download()
+	if err != nil {
+		return err
+	}
 	return e.Save()
 }
 
@@ -122,6 +138,7 @@ func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersio
 
 func init() {
 	usedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
+	util.EnsureDirectory(usedEnvironmentDirectory)
 }
 
 func Create(name string) (*Environment, error) {
