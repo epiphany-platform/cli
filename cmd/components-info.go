@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// infoCmd represents the info command
-var infoCmd = &cobra.Command{
+// componentsInfoCmd represents the info command
+var componentsInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
@@ -44,15 +44,15 @@ func printComponentLatestVersionInfo(componentName string) {
 }
 
 func init() {
-	componentsCmd.AddCommand(infoCmd)
+	componentsCmd.AddCommand(componentsInfoCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// infoCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// componentsInfoCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// infoCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// componentsInfoCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
