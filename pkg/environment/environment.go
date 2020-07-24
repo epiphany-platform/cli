@@ -39,7 +39,11 @@ func (e *Environment) Save() error {
 	return nil
 }
 
-func CreateEnvironment(name string) (*Environment, error) {
+func (e *Environment) String() string {
+	return fmt.Sprintf(" Name: %s\n UUID: %s\n", e.Name, e.Uuid.String())
+}
+
+func Create(name string) (*Environment, error) {
 	environment := &Environment{
 		Name: name,
 		Uuid: uuid.New(),
@@ -54,7 +58,7 @@ func CreateEnvironment(name string) (*Environment, error) {
 	return environment, nil
 }
 
-func GetAllEnvironments() ([]*Environment, error) {
+func GetAll() ([]*Environment, error) {
 	items, err := ioutil.ReadDir(UsedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
@@ -62,19 +66,27 @@ func GetAllEnvironments() ([]*Environment, error) {
 	var environments []*Environment
 	for _, i := range items {
 		if i.IsDir() {
-			expectedFile := path.Join(UsedEnvironmentDirectory, i.Name(), util.DefaultEnvironmentConfigFileName)
-			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-				fmt.Println("file " + expectedFile + " does not exist!") //TODO err
-			} else {
-				e, err := loadEnvironmentFromConfigFile(expectedFile)
-				if err != nil {
-					fmt.Println("incorrect file?") //TODO warn?
-				}
+			e, err := Get(uuid.MustParse(i.Name()))
+			if err == nil {
 				environments = append(environments, e)
 			}
 		}
 	}
 	return environments, nil
+}
+
+func Get(uuid uuid.UUID) (*Environment, error) {
+	expectedFile := path.Join(UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
+	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+		fmt.Println("file " + expectedFile + " does not exist!") //TODO err?
+		return nil, err
+	} else {
+		e, err := loadEnvironmentFromConfigFile(expectedFile)
+		if err != nil {
+			fmt.Println("incorrect file?") //TODO warn?
+		}
+		return e, nil
+	}
 }
 
 func loadEnvironmentFromConfigFile(configPath string) (*Environment, error) {

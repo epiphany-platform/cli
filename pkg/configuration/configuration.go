@@ -27,7 +27,7 @@ type Config struct {
 }
 
 func (c *Config) CreateNewEnvironment(name string) error {
-	env, err := environment.CreateEnvironment(name)
+	env, err := environment.Create(name)
 	if err != nil {
 		panic("cannot create new environment")
 	}

@@ -44,7 +44,7 @@ func PromptForEnvironmentSelect(label string) (uuid.UUID, error) {
 	}
 	keys := make([]string, 0)
 	m := make(map[string]string)
-	environments, err := environment.GetAllEnvironments()
+	environments, err := environment.GetAll()
 	if err != nil {
 		return uuid.Nil, err
 	}
