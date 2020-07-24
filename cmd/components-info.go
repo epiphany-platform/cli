@@ -30,8 +30,12 @@ to quickly create a Cobra application.`,
 	},
 }
 
-func printComponentLatestVersionInfo(componentName string) {
-	c, err := repository.GetComponentWithLatestVersion(componentName) //TODO implement component.LatestVersionString()
+func printComponentLatestVersionInfo(componentName string) { //TODO implement component.LatestVersionString()
+	tc, err := repository.GetRepository().GetComponentByName(componentName)
+	if err != nil {
+		panic(fmt.Sprintf("getting component by name failed: %v\n", err)) //TODO err
+	}
+	c, err := tc.JustLatestVersion()
 	if err != nil {
 		panic(fmt.Sprintf("getting component with latest version failed: %v\n", err)) //TODO err
 	}

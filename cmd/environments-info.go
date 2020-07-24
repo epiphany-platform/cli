@@ -7,7 +7,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
-	environment2 "github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
 
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
 		}
-		environment, err := environment2.Get(config.CurrentEnvironment)
+		environment, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
 			panic(fmt.Sprintf("environemtns details failed: %v\n", err)) //TODO err
 		}

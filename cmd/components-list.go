@@ -22,11 +22,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("list called")
-		components, err := repository.ListComponents() //TODO implement repo.String() method
-		if err != nil {
-			panic(fmt.Sprintf("list components failed: %v\n", err)) //TODO err
-		}
-		for _, c := range components {
+		for _, c := range repository.GetRepository().Components {
 			for _, v := range c.Versions {
 				fmt.Printf("%s %s", c.Name, v.Version)
 			}

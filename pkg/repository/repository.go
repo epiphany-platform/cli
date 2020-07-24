@@ -80,39 +80,53 @@ func (c Component) Run(command string) error { //TODO move it to "Environment Co
 	return errors.New("nothing to run in component")
 }
 
-type RepositoryV1 struct {
+func (c *Component) JustLatestVersion() (*Component, error) {
+	if len(c.Versions) < 1 {
+		return nil, errors.New("no versions in component")
+	}
+	if len(c.Versions) == 1 {
+		if c.Versions[0].IsLatest {
+			return c, nil
+		} else {
+			return nil, errors.New("component only version is not marked latest")
+		}
+	}
+	result := &Component{
+		Name: c.Name,
+		Type: c.Type,
+	}
+	for _, v := range c.Versions {
+		if v.IsLatest {
+			result.Versions = append(result.Versions, v)
+		}
+	}
+	if len(result.Versions) != 1 {
+		return nil, errors.New("incorrect number of latest versions")
+	}
+	return result, nil
+}
+
+type V1 struct {
 	Version    string      `yaml:"version"`
 	Kind       string      `yaml:"kind"`
 	Components []Component `yaml:"components"`
 }
 
-func ListComponents() ([]Component, error) { //TODO move to Repository
-	repo, err := loadOrDownloadRepository()
-	if err != nil {
-		return nil, err
-	}
-	return repo.Components, nil
-}
-
-func GetComponent(componentName string) (*Component, error) { //TODO move to Repository
-	repo, err := loadOrDownloadRepository()
-	if err != nil {
-		return nil, err
-	}
-	for _, c := range repo.Components {
-		if c.Name == componentName {
+func (v V1) GetComponentByName(name string) (*Component, error) {
+	for _, c := range v.Components {
+		if c.Name == name {
 			return &c, nil
 		}
 	}
 	return nil, errors.New("unknown component")
 }
 
-func GetComponentWithLatestVersion(componentName string) (*Component, error) { //TODO move to Repository
-	c, err := GetComponent(componentName)
+func GetRepository() *V1 {
+	v1, err := loadOrDownloadRepository()
 	if err != nil {
-		return nil, err
+		panic(fmt.Sprintf("get repository failed: %v\n", err)) //TODO err
 	}
-	return buildComponentWithLatestVersion(c)
+	return v1
 }
 
 func init() { //TODO move it to configuration
@@ -123,7 +137,7 @@ func init() { //TODO move it to configuration
 	UsedRepositoryFilePath = repositoryFilePath
 }
 
-func loadOrDownloadRepository() (*RepositoryV1, error) {
+func loadOrDownloadRepository() (*V1, error) {
 	repo, err := loadRepository()
 	if err != nil {
 		err = getDefaultRepository()
@@ -136,32 +150,6 @@ func loadOrDownloadRepository() (*RepositoryV1, error) {
 		}
 	}
 	return repo, nil
-}
-
-func buildComponentWithLatestVersion(component *Component) (*Component, error) {
-	if len(component.Versions) < 1 {
-		return nil, errors.New("no versions in component")
-	}
-	if len(component.Versions) == 1 {
-		if component.Versions[0].IsLatest {
-			return component, nil
-		} else {
-			return nil, errors.New("component only version is not marked latest")
-		}
-	}
-	result := &Component{
-		Name: component.Name,
-		Type: component.Type,
-	}
-	for _, v := range component.Versions {
-		if v.IsLatest {
-			result.Versions = append(result.Versions, v)
-		}
-	}
-	if len(result.Versions) != 1 {
-		return nil, errors.New("incorrect number of latest versions")
-	}
-	return result, nil
 }
 
 func getDefaultRepository() error {
@@ -179,7 +167,7 @@ func getDefaultRepository() error {
 	return writeRepository(UsedRepositoryFilePath, repo)
 }
 
-func downloadRepositoryV1Metadata(repositoryUrl string) (*RepositoryV1, error) {
+func downloadRepositoryV1Metadata(repositoryUrl string) (*V1, error) {
 	client := http.Client{
 		Timeout: time.Second * 5,
 	}
@@ -201,7 +189,7 @@ func downloadRepositoryV1Metadata(repositoryUrl string) (*RepositoryV1, error) {
 	if err != nil {
 		return nil, err
 	}
-	repository := &RepositoryV1{}
+	repository := &V1{}
 	err = yaml.Unmarshal(body, repository)
 	if err != nil {
 		return nil, err
@@ -209,7 +197,7 @@ func downloadRepositoryV1Metadata(repositoryUrl string) (*RepositoryV1, error) {
 	return repository, nil
 }
 
-func writeRepository(repositoryPath string, repository *RepositoryV1) error {
+func writeRepository(repositoryPath string, repository *V1) error {
 	data, err := yaml.Marshal(repository)
 	if err != nil {
 		return err
@@ -221,8 +209,8 @@ func writeRepository(repositoryPath string, repository *RepositoryV1) error {
 	return nil
 }
 
-func loadRepository() (*RepositoryV1, error) {
-	repo := &RepositoryV1{}
+func loadRepository() (*V1, error) {
+	repo := &V1{}
 	file, err := os.Open(UsedRepositoryFilePath)
 	if err != nil {
 		return nil, err

@@ -26,7 +26,7 @@ to quickly create a Cobra application.`,
 			printComponentLatestVersionInfo(args[0])
 		}
 		if len(args) == 2 {
-			c, err := repository.GetComponent(args[0])
+			c, err := repository.GetRepository().GetComponentByName(args[0])
 			if err != nil {
 				panic(fmt.Sprintf("get component failed: %v\n", err)) //TODO err
 			}

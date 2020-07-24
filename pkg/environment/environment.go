@@ -5,6 +5,8 @@
 package environment
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
@@ -18,12 +20,34 @@ var (
 	usedEnvironmentDirectory string
 )
 
-type Environment struct {
-	Name string    `yaml:"name"`
-	Uuid uuid.UUID `yaml:"uuid"`
+type InstalledComponentCommand struct {
+	Name                 string            `yaml:"name"`
+	Description          string            `yaml:"description"`
+	Command              string            `yaml:"command"`
+	EnvironmentVariables map[string]string `yaml:"envs"`
+	CommandArguments     []string          `yaml:"args"`
 }
 
-func (e *Environment) Save() error {
+type InstalledComponentVersion struct {
+	Version       string                      `yaml:"version"`
+	Image         string                      `yaml:"image"`
+	WorkDirectory string                      `yaml:"workdir"`
+	Commands      []InstalledComponentCommand `yaml:"commands"`
+}
+
+type InstalledComponent struct {
+	Name    string                    `yaml:"name"`
+	Type    string                    `yaml:"type"`
+	Version InstalledComponentVersion `yaml:"version"`
+}
+
+type Environment struct {
+	Name      string               `yaml:"name"`
+	Uuid      uuid.UUID            `yaml:"uuid"`
+	Installed []InstalledComponent `yaml:"installed"`
+}
+
+func (e Environment) Save() error {
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
@@ -35,8 +59,24 @@ func (e *Environment) Save() error {
 	return nil
 }
 
-func (e *Environment) String() string {
-	return fmt.Sprintf(" Name: %s\n UUID: %s\n", e.Name, e.Uuid.String())
+func (e Environment) String() string {
+	var b bytes.Buffer
+	b.WriteString("Environment info:\n")
+	b.WriteString(fmt.Sprintf(" Name: %s\n UUID: %s\n", e.Name, e.Uuid.String()))
+	for _, ic := range e.Installed {
+		b.WriteString(fmt.Sprintf("  Installed Component:\n   Name: %s\n   Type: %s\n   Version: %s\n   Image: %s\n", ic.Name, ic.Type, ic.Version.Version, ic.Version.Image))
+	}
+	return b.String()
+}
+
+func (e Environment) Install(new InstalledComponent) error {
+	for _, ic := range e.Installed {
+		if ic.Name == new.Name && ic.Version.Version == new.Version.Version {
+			return errors.New("there is this version of component already installed in environment")
+		}
+	}
+	e.Installed = append(e.Installed, new)
+	return e.Save()
 }
 
 func init() {
