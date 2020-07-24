@@ -7,7 +7,6 @@ package repository //TODO move to another package
 import (
 	"errors"
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/docker"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -35,17 +34,6 @@ type ComponentCommand struct {
 	CommandArguments     []string          `yaml:"args"`
 }
 
-func (cc ComponentCommand) RunDocker(image string, workDirectory string) error {
-	dockerJob := &docker.Job{
-		Image:                image,
-		Command:              cc.Command,
-		Args:                 cc.CommandArguments,
-		WorkDirectory:        workDirectory,
-		EnvironmentVariables: cc.EnvironmentVariables,
-	}
-	return dockerJob.Run()
-}
-
 type ComponentVersion struct {
 	Version       string             `yaml:"version"`
 	IsLatest      bool               `yaml:"latest"`
@@ -54,30 +42,10 @@ type ComponentVersion struct {
 	Commands      []ComponentCommand `yaml:"commands"`
 }
 
-func (cv ComponentVersion) RunDocker(command string) error {
-	for _, cc := range cv.Commands {
-		if cc.Name == command {
-			return cc.RunDocker(cv.Image, cv.WorkDirectory)
-		}
-	}
-	return errors.New("nothing to run for this version")
-}
-
 type Component struct {
 	Name     string             `yaml:"name"`
 	Type     string             `yaml:"type"`
 	Versions []ComponentVersion `yaml:"versions"`
-}
-
-func (c Component) Run(command string) error { //TODO move it to "Environment Component"
-	if c.Type == "docker" {
-		for _, cv := range c.Versions {
-			if cv.IsLatest { //TODO make it possible to run another version
-				return cv.RunDocker(command)
-			}
-		}
-	}
-	return errors.New("nothing to run in component")
 }
 
 func (c *Component) JustLatestVersion() (*Component, error) {

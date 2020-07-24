@@ -46,14 +46,12 @@ to quickly create a Cobra application.`,
 			panic(fmt.Sprintf("get component latest version failed: %v\n", err)) //TODO err
 		}
 
-		newComponent := environment.InstalledComponent{
-			Name: c.Name,
-			Type: c.Type,
-			Version: environment.InstalledComponentVersion{
-				Version:       c.Versions[0].Version,
-				Image:         c.Versions[0].Image,
-				WorkDirectory: c.Versions[0].WorkDirectory,
-			},
+		newComponent := environment.InstalledComponentVersion{
+			Name:          c.Name,
+			Type:          c.Type,
+			Version:       c.Versions[0].Version,
+			Image:         c.Versions[0].Image,
+			WorkDirectory: c.Versions[0].WorkDirectory,
 		}
 		for _, rc := range c.Versions[0].Commands {
 			nic := environment.InstalledComponentCommand{
@@ -63,13 +61,13 @@ to quickly create a Cobra application.`,
 				EnvironmentVariables: rc.EnvironmentVariables,
 				CommandArguments:     rc.CommandArguments,
 			}
-			newComponent.Version.Commands = append(newComponent.Version.Commands, nic)
+			newComponent.Commands = append(newComponent.Commands, nic)
 		}
 		err = e.Install(newComponent)
 		if err != nil {
 			panic(fmt.Sprintf("install component in environment failed: %v\n", err)) //TODO err
 		}
-		fmt.Printf("Installed component %s %s to environment %s\n", newComponent.Name, newComponent.Version.Version, e.Name)
+		fmt.Printf("Installed component %s %s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
 	},
 }
 

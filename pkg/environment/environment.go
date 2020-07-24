@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/docker"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -28,26 +29,57 @@ type InstalledComponentCommand struct {
 	CommandArguments     []string          `yaml:"args"`
 }
 
+func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string) error {
+	dockerJob := &docker.Job{
+		Image:                image,
+		Command:              cc.Command,
+		Args:                 cc.CommandArguments,
+		WorkDirectory:        workDirectory,
+		EnvironmentVariables: cc.EnvironmentVariables,
+	}
+	return dockerJob.Run()
+}
+
+func (cc *InstalledComponentCommand) String() string {
+	return fmt.Sprintf("    Command:\n     Name %s\n     Description %s\n", cc.Name, cc.Description)
+}
+
 type InstalledComponentVersion struct {
+	Name          string                      `yaml:"name"`
+	Type          string                      `yaml:"type"`
 	Version       string                      `yaml:"version"`
 	Image         string                      `yaml:"image"`
 	WorkDirectory string                      `yaml:"workdir"`
 	Commands      []InstalledComponentCommand `yaml:"commands"`
 }
 
-type InstalledComponent struct {
-	Name    string                    `yaml:"name"`
-	Type    string                    `yaml:"type"`
-	Version InstalledComponentVersion `yaml:"version"`
+func (cv *InstalledComponentVersion) Run(command string) error {
+	if cv.Type == "docker" {
+		for _, cc := range cv.Commands {
+			if cc.Name == command {
+				return cc.RunDocker(cv.Image, cv.WorkDirectory)
+			}
+		}
+	}
+	return errors.New("nothing to run for this version")
+}
+
+func (cv *InstalledComponentVersion) String() string {
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf("  Installed Component:\n   Name: %s\n   Type: %s\n   Version: %s\n   Image: %s\n", cv.Name, cv.Type, cv.Version, cv.Image))
+	for _, cc := range cv.Commands {
+		b.WriteString(cc.String())
+	}
+	return b.String()
 }
 
 type Environment struct {
-	Name      string               `yaml:"name"`
-	Uuid      uuid.UUID            `yaml:"uuid"`
-	Installed []InstalledComponent `yaml:"installed"`
+	Name      string                      `yaml:"name"`
+	Uuid      uuid.UUID                   `yaml:"uuid"`
+	Installed []InstalledComponentVersion `yaml:"installed"`
 }
 
-func (e Environment) Save() error {
+func (e *Environment) Save() error {
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
@@ -59,24 +91,33 @@ func (e Environment) Save() error {
 	return nil
 }
 
-func (e Environment) String() string {
+func (e *Environment) String() string {
 	var b bytes.Buffer
 	b.WriteString("Environment info:\n")
 	b.WriteString(fmt.Sprintf(" Name: %s\n UUID: %s\n", e.Name, e.Uuid.String()))
 	for _, ic := range e.Installed {
-		b.WriteString(fmt.Sprintf("  Installed Component:\n   Name: %s\n   Type: %s\n   Version: %s\n   Image: %s\n", ic.Name, ic.Type, ic.Version.Version, ic.Version.Image))
+		b.WriteString(ic.String())
 	}
 	return b.String()
 }
 
-func (e Environment) Install(new InstalledComponent) error {
+func (e *Environment) Install(new InstalledComponentVersion) error {
 	for _, ic := range e.Installed {
-		if ic.Name == new.Name && ic.Version.Version == new.Version.Version {
+		if ic.Name == new.Name && ic.Version == new.Version {
 			return errors.New("there is this version of component already installed in environment")
 		}
 	}
 	e.Installed = append(e.Installed, new)
 	return e.Save()
+}
+
+func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersion, error) {
+	for _, ic := range e.Installed {
+		if ic.Name == name {
+			return &ic, nil
+		}
+	}
+	return nil, errors.New("no such component installed")
 }
 
 func init() {
