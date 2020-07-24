@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	UsedEnvironmentDirectory string
+	usedEnvironmentDirectory string
 )
 
 type Environment struct {
@@ -23,16 +23,12 @@ type Environment struct {
 	Uuid uuid.UUID `yaml:"uuid"`
 }
 
-func init() {
-	UsedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
-}
-
 func (e *Environment) Save() error {
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path.Join(UsedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName), data, 0644)
+	err = ioutil.WriteFile(path.Join(usedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName), data, 0644)
 	if err != nil {
 		return err
 	}
@@ -43,13 +39,17 @@ func (e *Environment) String() string {
 	return fmt.Sprintf(" Name: %s\n UUID: %s\n", e.Name, e.Uuid.String())
 }
 
+func init() {
+	usedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
+}
+
 func Create(name string) (*Environment, error) {
 	environment := &Environment{
 		Name: name,
 		Uuid: uuid.New(),
 	}
 
-	newEnvironmentDirectory := path.Join(UsedEnvironmentDirectory, environment.Uuid.String())
+	newEnvironmentDirectory := path.Join(usedEnvironmentDirectory, environment.Uuid.String())
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
@@ -59,7 +59,7 @@ func Create(name string) (*Environment, error) {
 }
 
 func GetAll() ([]*Environment, error) {
-	items, err := ioutil.ReadDir(UsedEnvironmentDirectory)
+	items, err := ioutil.ReadDir(usedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func GetAll() ([]*Environment, error) {
 }
 
 func Get(uuid uuid.UUID) (*Environment, error) {
-	expectedFile := path.Join(UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
+	expectedFile := path.Join(usedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 		fmt.Println("file " + expectedFile + " does not exist!") //TODO err?
 		return nil, err
