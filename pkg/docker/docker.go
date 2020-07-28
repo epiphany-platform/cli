@@ -6,6 +6,7 @@ package docker
 
 import (
 	"context"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/stdcopy"
 	"io"
 	"os"
@@ -73,6 +74,7 @@ type Job struct {
 	Command              string
 	Args                 []string
 	WorkDirectory        string
+	MountPath            string
 	EnvironmentVariables map[string]string
 }
 
@@ -89,10 +91,17 @@ func run(job Job) error {
 		Image:      job.Image,
 		Cmd:        []string{"init"}, //TODO add arguments
 		WorkingDir: job.WorkDirectory,
-		Volumes:    nil, //TODO create volumes
 		Env:        nil, //TODO pass ENVs
 		Tty:        false,
-	}, nil, nil, "")
+	}, &container.HostConfig{
+		Mounts: []mount.Mount{
+			{
+				Type:   mount.TypeBind,
+				Source: job.MountPath,
+				Target: job.WorkDirectory,
+			},
+		},
+	}, nil, "")
 	if err != nil {
 		return err
 	}

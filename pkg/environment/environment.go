@@ -30,12 +30,15 @@ type InstalledComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
-func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string) error {
+func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mountPath string) error {
+	workDirectoryMountPath := path.Join(mountPath, workDirectory)
+	util.EnsureDirectory(workDirectoryMountPath)
 	dockerJob := &docker.Job{
 		Image:                image,
 		Command:              cc.Command,
 		Args:                 cc.Args,
 		WorkDirectory:        workDirectory,
+		MountPath:            workDirectoryMountPath,
 		EnvironmentVariables: cc.Envs,
 	}
 	return dockerJob.Run()
@@ -57,9 +60,16 @@ type InstalledComponentVersion struct {
 
 func (cv *InstalledComponentVersion) Run(command string) error {
 	if cv.Type == "docker" {
+		mountPath := path.Join(
+			usedEnvironmentDirectory,
+			cv.EnvironmentRef.String(),
+			cv.Name,
+			cv.Version,
+			util.DefaultComponentMountsSubdirectory,
+		)
 		for _, cc := range cv.Commands {
 			if cc.Name == command {
-				return cc.RunDocker(cv.Image, cv.WorkDirectory)
+				return cc.RunDocker(cv.Image, cv.WorkDirectory, mountPath)
 			}
 		}
 	}
