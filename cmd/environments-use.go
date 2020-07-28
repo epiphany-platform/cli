@@ -14,13 +14,8 @@ import (
 // environmentsUseCmd represents the use command
 var environmentsUseCmd = &cobra.Command{
 	Use:   "use",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Allows to select environment to be used",
+	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("use called")
 		config, err := configuration.GetConfig()
@@ -31,7 +26,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			panic(fmt.Sprintf("prompt for environment select failed: %v\n", err)) //TODO err
 		}
-		fmt.Printf("Choosed UUID is: %s\v", uuid)
+		fmt.Printf("Choosen environment UUID is: %s\v", uuid)
 		err = config.SetUsedEnvironment(uuid)
 		if err != nil {
 			panic(fmt.Sprintf("setting used environment failed: %v\n", err)) //TODO err

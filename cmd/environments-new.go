@@ -14,13 +14,8 @@ import (
 // environmentsNewCmd represents the new command
 var environmentsNewCmd = &cobra.Command{
 	Use:   "new",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Creates new environment",
+	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("new called") //TODO debug
 		config, err := configuration.GetConfig()
@@ -36,7 +31,7 @@ to quickly create a Cobra application.`,
 				panic(fmt.Sprintf("prompt for new environment failed: %v\n", err)) //TODO err
 			}
 		}
-		fmt.Printf("name is: %s\n", name) //TODO debug
+		fmt.Printf("new created environment is: %s\n", name) //TODO debug
 		err = config.CreateNewEnvironment(name)
 		if err != nil {
 			panic(fmt.Sprintf("create new environemtn failed: %v\n", err)) //TODO err

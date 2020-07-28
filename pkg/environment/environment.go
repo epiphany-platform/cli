@@ -51,7 +51,7 @@ func (cc *InstalledComponentCommand) String() string {
 }
 
 type InstalledComponentVersion struct {
-	EnvironmentRef uuid.UUID                   `yaml:"environment_ref"`
+	EnvironmentRef uuid.UUID                   `yaml:"environment_ref"` //TODO try to remove it
 	Name           string                      `yaml:"name"`
 	Type           string                      `yaml:"type"`
 	Version        string                      `yaml:"version"`
