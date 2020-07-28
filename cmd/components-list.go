@@ -24,7 +24,7 @@ to quickly create a Cobra application.`,
 		fmt.Println("list called")
 		for _, c := range repository.GetRepository().Components {
 			for _, v := range c.Versions {
-				fmt.Printf("%s %s", c.Name, v.Version)
+				fmt.Printf("%s %s\n", c.Name, v.Version)
 			}
 		}
 	},

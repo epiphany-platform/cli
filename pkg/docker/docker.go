@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"io"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -75,6 +76,7 @@ type Job struct {
 	Command              string
 	Args                 []string
 	WorkDirectory        string
+	Mounts               []string
 	MountPath            string
 	EnvironmentVariables map[string]string
 }
@@ -93,22 +95,31 @@ func run(job Job) error {
 		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
 	}
 	commandAndArgs := append([]string{job.Command}, job.Args...)
-
-	resp, err := cli.ContainerCreate(ctx, &container.Config{
-		Image:      job.Image,
-		Cmd:        commandAndArgs,
-		WorkingDir: job.WorkDirectory,
-		Env:        envs,
-		Tty:        false,
-	}, &container.HostConfig{
-		Mounts: []mount.Mount{
-			{
+	var mounts []mount.Mount
+	for _, m := range job.Mounts {
+		mounts = append(
+			mounts,
+			mount.Mount{
 				Type:   mount.TypeBind,
-				Source: job.MountPath,
-				Target: job.WorkDirectory,
-			},
+				Source: path.Join(job.MountPath, m),
+				Target: m,
+			})
+	}
+
+	resp, err := cli.ContainerCreate(
+		ctx,
+		&container.Config{
+			Image:      job.Image,
+			Cmd:        commandAndArgs,
+			WorkingDir: job.WorkDirectory,
+			Env:        envs,
+			Tty:        false,
+		}, &container.HostConfig{
+			Mounts: mounts,
 		},
-	}, nil, "")
+		nil,
+		"",
+	)
 	if err != nil {
 		return err
 	}

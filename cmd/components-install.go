@@ -53,6 +53,7 @@ to quickly create a Cobra application.`,
 			Version:        c.Versions[0].Version,
 			Image:          c.Versions[0].Image,
 			WorkDirectory:  c.Versions[0].WorkDirectory,
+			Mounts:         c.Versions[0].Mounts,
 		}
 		for _, rc := range c.Versions[0].Commands {
 			nic := environment.InstalledComponentCommand{

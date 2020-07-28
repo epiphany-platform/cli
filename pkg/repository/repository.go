@@ -39,6 +39,7 @@ type ComponentVersion struct {
 	IsLatest      bool               `yaml:"latest"`
 	Image         string             `yaml:"image"`
 	WorkDirectory string             `yaml:"workdir"`
+	Mounts        []string           `yaml:"mounts"`
 	Commands      []ComponentCommand `yaml:"commands"`
 }
 
