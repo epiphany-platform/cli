@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -19,17 +20,52 @@ type Image struct {
 	Name string
 }
 
-func (i *Image) Pull() error {
+func (i *Image) Pull() (string, error) { //TODO consider passing log file directly here to write to it on the fly
 	ctx, cli, err := clientAndContext()
 	if err != nil {
-		return err
+		return "", err
 	}
 	reader, err := cli.ImagePull(ctx, i.Name, types.ImagePullOptions{}) //TODO format output
-	if err != nil {
-		return err
+	logR, logW := io.Pipe()
+	stdoutR, stdoutW := io.Pipe()
+
+	done := make(chan bool)
+	defer close(done)
+
+	var result string
+
+	go func() {
+		_, _ = io.Copy(os.Stdout, stdoutR)
+		done <- true
+	}()
+
+	go func() {
+		buf := new(strings.Builder)
+		_, _ = io.Copy(buf, logR)
+		result = buf.String()
+		done <- true
+	}()
+
+	go func() {
+		defer logW.Close()
+		defer stdoutW.Close()
+
+		// build the MultiWriter for all the pipes
+		mw := io.MultiWriter(logW, stdoutW)
+
+		// copy the data into the MultiWriter
+		_, _ = io.Copy(mw, reader)
+	}()
+
+	for c := 0; c < 2; c++ {
+		<-done
 	}
-	_, _ = io.Copy(os.Stdout, reader) //TODO persist
-	return nil
+
+	reader.Close()
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
 
 type Job struct {

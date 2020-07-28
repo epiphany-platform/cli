@@ -47,19 +47,20 @@ to quickly create a Cobra application.`,
 		}
 
 		newComponent := environment.InstalledComponentVersion{
-			Name:          c.Name,
-			Type:          c.Type,
-			Version:       c.Versions[0].Version,
-			Image:         c.Versions[0].Image,
-			WorkDirectory: c.Versions[0].WorkDirectory,
+			EnvironmentRef: e.Uuid,
+			Name:           c.Name,
+			Type:           c.Type,
+			Version:        c.Versions[0].Version,
+			Image:          c.Versions[0].Image,
+			WorkDirectory:  c.Versions[0].WorkDirectory,
 		}
 		for _, rc := range c.Versions[0].Commands {
 			nic := environment.InstalledComponentCommand{
-				Name:                 rc.Name,
-				Description:          rc.Description,
-				Command:              rc.Command,
-				EnvironmentVariables: rc.EnvironmentVariables,
-				CommandArguments:     rc.CommandArguments,
+				Name:        rc.Name,
+				Description: rc.Description,
+				Command:     rc.Command,
+				Envs:        rc.Envs,
+				Args:        rc.Args,
 			}
 			newComponent.Commands = append(newComponent.Commands, nic)
 		}

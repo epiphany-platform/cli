@@ -15,6 +15,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 )
 
 var (
@@ -22,20 +23,20 @@ var (
 )
 
 type InstalledComponentCommand struct {
-	Name                 string            `yaml:"name"`
-	Description          string            `yaml:"description"`
-	Command              string            `yaml:"command"`
-	EnvironmentVariables map[string]string `yaml:"envs"`
-	CommandArguments     []string          `yaml:"args"`
+	Name        string            `yaml:"name"`
+	Description string            `yaml:"description"`
+	Command     string            `yaml:"command"`
+	Envs        map[string]string `yaml:"envs"`
+	Args        []string          `yaml:"args"`
 }
 
 func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string) error {
 	dockerJob := &docker.Job{
 		Image:                image,
 		Command:              cc.Command,
-		Args:                 cc.CommandArguments,
+		Args:                 cc.Args,
 		WorkDirectory:        workDirectory,
-		EnvironmentVariables: cc.EnvironmentVariables,
+		EnvironmentVariables: cc.Envs,
 	}
 	return dockerJob.Run()
 }
@@ -45,12 +46,13 @@ func (cc *InstalledComponentCommand) String() string {
 }
 
 type InstalledComponentVersion struct {
-	Name          string                      `yaml:"name"`
-	Type          string                      `yaml:"type"`
-	Version       string                      `yaml:"version"`
-	Image         string                      `yaml:"image"`
-	WorkDirectory string                      `yaml:"workdir"`
-	Commands      []InstalledComponentCommand `yaml:"commands"`
+	EnvironmentRef uuid.UUID                   `yaml:"environment_ref"`
+	Name           string                      `yaml:"name"`
+	Type           string                      `yaml:"type"`
+	Version        string                      `yaml:"version"`
+	Image          string                      `yaml:"image"`
+	WorkDirectory  string                      `yaml:"workdir"`
+	Commands       []InstalledComponentCommand `yaml:"commands"`
 }
 
 func (cv *InstalledComponentVersion) Run(command string) error {
@@ -76,9 +78,29 @@ func (cv *InstalledComponentVersion) String() string {
 func (cv *InstalledComponentVersion) Download() error {
 	if cv.Type == "docker" {
 		dockerImage := &docker.Image{Name: cv.Image}
-		return dockerImage.Pull()
+		logs, err := dockerImage.Pull()
+		cv.PersistLogs(logs)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	return nil
+}
+
+func (cv *InstalledComponentVersion) PersistLogs(logs string) {
+	logsPath := path.Join(
+		usedEnvironmentDirectory,
+		cv.EnvironmentRef.String(),
+		cv.Name,
+		cv.Version,
+		util.DefaultComponentRunsSubdirectory,
+		fmt.Sprintf("%s.log", time.Now().Format("20060102-150405.000MST")),
+	)
+	err := ioutil.WriteFile(logsPath, []byte(logs), 0644)
+	if err != nil {
+		panic("failed when writing logs")
+	}
 }
 
 type Environment struct {

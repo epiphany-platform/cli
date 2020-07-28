@@ -27,11 +27,11 @@ const (
 var UsedRepositoryFilePath string
 
 type ComponentCommand struct {
-	Name                 string            `yaml:"name"`
-	Description          string            `yaml:"description"`
-	Command              string            `yaml:"command"`
-	EnvironmentVariables map[string]string `yaml:"envs"`
-	CommandArguments     []string          `yaml:"args"`
+	Name        string            `yaml:"name"`
+	Description string            `yaml:"description"`
+	Command     string            `yaml:"command"`
+	Envs        map[string]string `yaml:"envs"`
+	Args        []string          `yaml:"args"`
 }
 
 type ComponentVersion struct {
