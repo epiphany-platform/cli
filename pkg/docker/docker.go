@@ -6,6 +6,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/pkg/stdcopy"
 	"io"
@@ -87,11 +88,17 @@ func run(job Job) error {
 	if err != nil {
 		return err
 	}
+	var envs []string
+	for k, v := range job.EnvironmentVariables {
+		envs = append(envs, fmt.Sprintf("%s=%s", k, v))
+	}
+	commandAndArgs := append([]string{job.Command}, job.Args...)
+
 	resp, err := cli.ContainerCreate(ctx, &container.Config{
 		Image:      job.Image,
-		Cmd:        []string{"init"}, //TODO add arguments
+		Cmd:        commandAndArgs,
 		WorkingDir: job.WorkDirectory,
-		Env:        nil, //TODO pass ENVs
+		Env:        envs,
 		Tty:        false,
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
@@ -115,7 +122,7 @@ func run(job Job) error {
 		return err
 	}
 
-	_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, out)
+	_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, out) //TODO write logs to file as well
 
 	return nil
 }
