@@ -15,6 +15,7 @@ APP_NAME := e
 
 all: clean get build
 run: build run-empty
+licenses: clean get build licences-task
 
 get:
 	$(GET) -u -d -v ./...
@@ -39,3 +40,10 @@ run-empty:
 
 run-help:
 	$(BUILD_DIR)$(APP_NAME) --help
+
+#go get github.com/google/go-licenses first
+licences-task:
+	rm -rf $(BUILD_DIR)licences
+	go-licenses save $(APP_REPO) --save_path="$(BUILD_DIR)licences"
+	go-licenses check $(APP_REPO)
+	go-licenses csv $(APP_REPO)
