@@ -123,7 +123,7 @@ func run(job Job) error {
 	if err != nil {
 		return err
 	}
-	defer cli.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{}) //TODO warn if error while removing
+	defer removeFinishedContainer(cli, ctx, resp.ID)
 
 	if err := cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return err
@@ -145,4 +145,11 @@ func clientAndContext() (context.Context, *client.Client, error) {
 		return nil, nil, err
 	}
 	return ctx, cli, nil
+}
+
+func removeFinishedContainer(cli *client.Client, ctx context.Context, containerID string) {
+	err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
+	if err != nil {
+		warnRemovingContainer(err)
+	}
 }
