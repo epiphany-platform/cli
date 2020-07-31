@@ -5,7 +5,6 @@
 package util
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -21,14 +20,14 @@ const (
 func EnsureDirectory(directory string) {
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
-		panic(fmt.Sprintf("directory creation failed: %v\n", err)) //TODO err
+		errDirectoryCreation(err, directory)
 	}
 }
 
 func GetHomeDirectory() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(fmt.Sprintf("finding home dir failed: %v\n", err)) //TODO err
+		errFindingHome(err)
 	}
 	return home
 }
