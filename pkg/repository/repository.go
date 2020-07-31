@@ -93,7 +93,7 @@ func (v V1) GetComponentByName(name string) (*Component, error) {
 func GetRepository() *V1 {
 	v1, err := loadOrDownloadRepository()
 	if err != nil {
-		panic(fmt.Sprintf("get repository failed: %v\n", err)) //TODO err
+		errGetRepository(err)
 	}
 	return v1
 }
@@ -101,7 +101,7 @@ func GetRepository() *V1 {
 func init() { //TODO move it to configuration
 	repositoryFilePath, err := initRepositoryPath()
 	if err != nil {
-		panic(fmt.Sprintf("init repository failed: %v\n", err)) //TODO err
+		errInitRepository(err)
 	}
 	UsedRepositoryFilePath = repositoryFilePath
 }
