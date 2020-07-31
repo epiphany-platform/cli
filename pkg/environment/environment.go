@@ -43,6 +43,7 @@ func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory strin
 		MountPath:            mountPath,
 		EnvironmentVariables: cc.Envs,
 	}
+	debug("will try to run docker job %+v", dockerJob)
 	return dockerJob.Run()
 }
 
@@ -101,7 +102,7 @@ func (cv *InstalledComponentVersion) Download() error {
 	return nil
 }
 
-func (cv *InstalledComponentVersion) PersistLogs(logs string) {
+func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to zerolog
 	logsPath := path.Join(
 		usedEnvironmentDirectory,
 		cv.EnvironmentRef.String(),
@@ -112,7 +113,7 @@ func (cv *InstalledComponentVersion) PersistLogs(logs string) {
 	)
 	err := ioutil.WriteFile(logsPath, []byte(logs), 0644)
 	if err != nil {
-		panic("failed when writing logs")
+		errFailedToWriteFile(err)
 	}
 }
 
@@ -123,11 +124,14 @@ type Environment struct {
 }
 
 func (e *Environment) Save() error {
+	debug("will try to marshal environment %+v", e)
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path.Join(usedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName), data, 0644)
+	ep := path.Join(usedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName)
+	debug("will try to write marshaled data to file %s", ep)
+	err = ioutil.WriteFile(ep, data, 0644)
 	if err != nil {
 		return err
 	}
@@ -147,7 +151,7 @@ func (e *Environment) String() string {
 func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 	for _, ic := range e.Installed {
 		if ic.Name == newComponent.Name && ic.Version == newComponent.Version {
-			return errors.New("there is this version of component already installed in environment")
+			return errors.New("this version of component is already installed in environment")
 		}
 	}
 	e.Installed = append(e.Installed, newComponent)
@@ -186,12 +190,13 @@ func Create(name string) (*Environment, error) {
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
-		panic("I wansnt able to save: " + environment.Uuid.String())
+		errSaveEnvironment(err, environment.Uuid.String())
 	}
 	return environment, nil
 }
 
 func GetAll() ([]*Environment, error) {
+	debug("will try to get all subdirectories of %s directory", usedEnvironmentDirectory)
 	items, err := ioutil.ReadDir(usedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
@@ -202,6 +207,8 @@ func GetAll() ([]*Environment, error) {
 			e, err := Get(uuid.MustParse(i.Name()))
 			if err == nil {
 				environments = append(environments, e)
+			} else {
+				warnNotEnvironmentDirectory(err)
 			}
 		}
 	}
@@ -210,26 +217,30 @@ func GetAll() ([]*Environment, error) {
 
 func Get(uuid uuid.UUID) (*Environment, error) {
 	expectedFile := path.Join(usedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
+	debug("will try to get environment config from file %s", expectedFile)
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-		fmt.Println("file " + expectedFile + " does not exist!") //TODO err?
+		warnEnvironmentConfigFileNotFound(err, expectedFile)
 		return nil, err
 	} else {
 		e, err := loadEnvironmentFromConfigFile(expectedFile)
 		if err != nil {
-			fmt.Println("incorrect file?") //TODO warn?
+			return nil, err
 		}
+		debug("got environment config %+v", e)
 		return e, nil
 	}
 }
 
 func loadEnvironmentFromConfigFile(configPath string) (*Environment, error) {
 	e := &Environment{}
+	debug("trying to open %s file", configPath)
 	file, err := os.Open(configPath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 	d := yaml.NewDecoder(file)
+	debug("will try to decode file %s to yaml", configPath)
 	if err := d.Decode(&e); err != nil {
 		return nil, err
 	}

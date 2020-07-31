@@ -18,6 +18,7 @@ const (
 )
 
 func EnsureDirectory(directory string) {
+	debug("will try to ensure directory %s", directory)
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
 		errDirectoryCreation(err, directory)
@@ -25,9 +26,11 @@ func EnsureDirectory(directory string) {
 }
 
 func GetHomeDirectory() string {
+	debug("will try to get home directory")
 	home, err := os.UserHomeDir()
 	if err != nil {
 		errFindingHome(err)
 	}
+	debug("got user home directory: %s", home)
 	return home
 }

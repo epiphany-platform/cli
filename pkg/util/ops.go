@@ -33,3 +33,9 @@ func errFindingHome(err error) {
 		Err(err).
 		Msg("cannot determine home directory")
 }
+
+func debug(format string, v ...interface{}) {
+	logger.
+		Debug().
+		Msgf(format, v...)
+}
