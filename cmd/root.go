@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		panic(fmt.Sprintf("root execute failed: %v\n", err)) //TODO err
+		errRootExecute(err)
 	}
 }
 
@@ -36,7 +36,7 @@ func init() {
 
 	config, err := configuration.GetConfig()
 	if err != nil {
-		panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+		errGetConfig(err)
 	}
 
 	// Here you will define your flags and configuration settings.
@@ -52,26 +52,27 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	debug("initializing root config")
 	if cfgFile != "" {
 		config, err := configuration.SetConfig(cfgFile)
 		if err != nil {
-			panic(fmt.Sprintf("set config failed: %v\n", err)) //TODO err
+			errSetConfigFile(err)
 		}
 		// Use config file from the flag.
 		viper.SetConfigFile(config.GetConfigFilePath())
 	} else {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+			errGetConfig(err)
 		}
 		// setup default
 		viper.SetConfigFile(config.GetConfigFilePath())
 	}
-
+	debug("read config variables")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		infoConfigFile(viper.ConfigFileUsed())
 	}
 }

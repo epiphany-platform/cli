@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +19,7 @@ var componentsCmd = &cobra.Command{
 
 Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("components called")
+		debug("components called")
 	},
 }
 

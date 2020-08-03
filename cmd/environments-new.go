@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/promptui"
 	"github.com/spf13/cobra"
@@ -17,10 +16,10 @@ var environmentsNewCmd = &cobra.Command{
 	Short: "Creates new environment",
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("new called") //TODO debug
+		debug("environments new called")
 		config, err := configuration.GetConfig()
 		if err != nil {
-			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+			errGetConfig(err)
 		}
 		var name string
 		if len(args) == 1 {
@@ -28,13 +27,13 @@ var environmentsNewCmd = &cobra.Command{
 		} else {
 			name, err = promptui.PromptForString("Environment name")
 			if err != nil {
-				panic(fmt.Sprintf("prompt for new environment failed: %v\n", err)) //TODO err
+				errPrompt(err)
 			}
 		}
-		fmt.Printf("new created environment is: %s\n", name) //TODO debug
+		debug("new environment name is: %s", name)
 		err = config.CreateNewEnvironment(name)
 		if err != nil {
-			panic(fmt.Sprintf("create new environemtn failed: %v\n", err)) //TODO err
+			errCreateEnvironment(err)
 		}
 	},
 }

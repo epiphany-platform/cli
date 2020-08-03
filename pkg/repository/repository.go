@@ -5,6 +5,7 @@
 package repository //TODO move to another package
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
@@ -34,6 +35,10 @@ type ComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
+func (cc *ComponentCommand) String() string {
+	return fmt.Sprintf("    Command:\n     Name %s\n     Description %s\n", cc.Name, cc.Description)
+}
+
 type ComponentVersion struct {
 	Version       string             `yaml:"version"`
 	IsLatest      bool               `yaml:"latest"`
@@ -43,10 +48,28 @@ type ComponentVersion struct {
 	Commands      []ComponentCommand `yaml:"commands"`
 }
 
+func (cv *ComponentVersion) String() string {
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf("  Component Version:\n   Version: %s\n   Image: %s\n", cv.Version, cv.Image))
+	for _, cc := range cv.Commands {
+		b.WriteString(cc.String())
+	}
+	return b.String()
+}
+
 type Component struct {
 	Name     string             `yaml:"name"`
 	Type     string             `yaml:"type"`
 	Versions []ComponentVersion `yaml:"versions"`
+}
+
+func (c *Component) String() string {
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf("Component:\n Name: %s\n Type: %s\n", c.Name, c.Type))
+	for _, cv := range c.Versions {
+		b.WriteString(cv.String())
+	}
+	return b.String()
 }
 
 func (c *Component) JustLatestVersion() (*Component, error) {
@@ -96,6 +119,16 @@ func GetRepository() *V1 {
 		errGetRepository(err)
 	}
 	return v1
+}
+
+func (v V1) List() string {
+	var b bytes.Buffer
+	for _, c := range v.Components {
+		for _, v := range c.Versions {
+			b.WriteString(fmt.Sprintf("Component: %s:%s\n", c.Name, v.Version))
+		}
+	}
+	return b.String()
 }
 
 func init() { //TODO move it to configuration

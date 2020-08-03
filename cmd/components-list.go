@@ -16,12 +16,8 @@ var componentsListCmd = &cobra.Command{
 	Short: "Lists all existing components in repository",
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
-		for _, c := range repository.GetRepository().Components {
-			for _, v := range c.Versions {
-				fmt.Printf("%s %s\n", c.Name, v.Version)
-			}
-		}
+		debug("component list called")
+		fmt.Println(repository.GetRepository().List())
 	},
 }
 
