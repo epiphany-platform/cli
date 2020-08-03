@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
@@ -20,9 +21,15 @@ var (
 	usedConfigurationDirectory string
 )
 
+type Kind string
+
+const (
+	KindConfig Kind = "Config"
+)
+
 type Config struct {
 	Version            string    `yaml:"version"`
-	Kind               string    `yaml:"kind"`
+	Kind               Kind      `yaml:"kind"`
 	CurrentEnvironment uuid.UUID `yaml:"current-environment"`
 }
 
@@ -37,6 +44,7 @@ func (c *Config) CreateNewEnvironment(name string) error {
 	return c.Save()
 }
 
+//SetUsedEnvironment to another value (NOTE: there is no additional error check)
 func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
 	debug("changing used environment to %s", u.String())
 	c.CurrentEnvironment = u
@@ -44,6 +52,7 @@ func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
 	return c.Save()
 }
 
+//GetConfigFilePath from usedConfigFile variable or fails if not set
 func (c *Config) GetConfigFilePath() string {
 	if usedConfigFile == "" {
 		errIncorrectInitialization(errors.New("variable usedConfigFile not initialized"))
@@ -51,6 +60,7 @@ func (c *Config) GetConfigFilePath() string {
 	return usedConfigFile
 }
 
+//Save Config to usedConfigFile
 func (c *Config) Save() error {
 	debug("will try to marshal config %+v", c)
 	data, err := yaml.Marshal(c)
@@ -65,28 +75,42 @@ func (c *Config) Save() error {
 	return nil
 }
 
+//GetConfig sets usedConfigFile and usedConfigurationDirectory to default values and returns (existing or just initialized) Config
 func GetConfig() (*Config, error) {
-	usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	debug("will try to get config file")
+	if usedConfigurationDirectory == "" {
+		usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	}
 	util.EnsureDirectory(usedConfigurationDirectory)
-	usedConfigFile = path.Join(usedConfigurationDirectory, util.DefaultConfigFileName)
+	if usedConfigFile == "" {
+		usedConfigFile = path.Join(usedConfigurationDirectory, util.DefaultConfigFileName)
+	}
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }
 
+//SetConfig sets variable usedConfigFile and returns (existing or just initialized) Config
 func SetConfig(configFile string) (*Config, error) {
-	debug("will try to set not default config file at %s", configFile)
-	usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	debug("will try to set config file at %s", configFile)
+	if usedConfigurationDirectory == "" {
+		usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	}
 	util.EnsureDirectory(usedConfigurationDirectory)
+	if usedConfigFile != "" {
+		return nil, errors.New(fmt.Sprintf("usedConfigFile is %s but should be empty on set", usedConfigFile))
+	}
 	usedConfigFile = configFile
+	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }
 
+//makeOrGetConfig initializes new config file or reads existing one and returns Config
 func makeOrGetConfig() (*Config, error) {
 	if _, err := os.Stat(usedConfigFile); os.IsNotExist(err) {
 		debug("there is no config file, will try to initialize one")
 		config := &Config{
 			Version: "v1",
-			Kind:    "Config",
+			Kind:    KindConfig,
 		}
 		err = config.Save()
 		if err != nil {
@@ -95,10 +119,6 @@ func makeOrGetConfig() (*Config, error) {
 		return config, nil
 	}
 	debug("will try to load existing config file from %s", usedConfigFile)
-	return loadConfigFromUsedConfigFile()
-}
-
-func loadConfigFromUsedConfigFile() (*Config, error) {
 	config := &Config{}
 	debug("trying to open %s file", usedConfigFile)
 	file, err := os.Open(usedConfigFile)

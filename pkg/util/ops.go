@@ -20,22 +20,22 @@ func init() {
 		Logger()
 }
 
+func debug(format string, v ...interface{}) {
+	logger.
+		Debug().
+		Msgf(format, v...)
+}
+
 func errDirectoryCreation(err error, directory string) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msgf("directory %s creation failed", directory)
 }
 
 func errFindingHome(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("cannot determine home directory")
-}
-
-func debug(format string, v ...interface{}) {
-	logger.
-		Debug().
-		Msgf(format, v...)
 }

@@ -19,6 +19,12 @@ func init() {
 		Logger()
 }
 
+func debug(format string, v ...interface{}) {
+	logger.
+		Debug().
+		Msgf(format, v...)
+}
+
 func warnEnvironmentConfigFileNotFound(err error, path string) {
 	logger.
 		Warn().
@@ -35,20 +41,14 @@ func warnNotEnvironmentDirectory(err error) {
 
 func errFailedToWriteFile(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("failed to write file")
 }
 
 func errSaveEnvironment(err error, uuid string) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msgf("wasn't able to save environment %s", uuid)
-}
-
-func debug(format string, v ...interface{}) {
-	logger.
-		Debug().
-		Msgf(format, v...)
 }

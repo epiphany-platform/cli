@@ -21,14 +21,14 @@ func init() {
 
 func errGetRepository(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("get repository failed")
 }
 
 func errInitRepository(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("initialization of repository failed")
 }

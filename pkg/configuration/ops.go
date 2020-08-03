@@ -28,21 +28,21 @@ func debug(format string, v ...interface{}) {
 
 func errCreateEnvironment(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("creation of new environment failed")
 }
 
 func errIncorrectInitialization(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("incorrect initialization")
 }
 
 func errSave(err error) {
 	logger.
-		Fatal().
+		Panic().
 		Err(err).
 		Msg("failed to save")
 }

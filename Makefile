@@ -7,6 +7,7 @@ CLEAN := $(CMD) clean
 INSTALL := $(CMD) install
 VENDOR := $(CMD) mod vendor
 TIDY := $(CMD) mod tidy
+TEST := $(CMD) test
 
 BUILD_DIR := ./output/
 
@@ -16,6 +17,7 @@ APP_NAME := e
 all: clean get build
 run: build run-empty
 licenses: clean get build licences-task
+test: clean get build test-task
 
 get:
 	$(GET) -u -d -v ./...
@@ -47,3 +49,6 @@ licences-task:
 	go-licenses save $(APP_REPO) --save_path="$(BUILD_DIR)licences"
 	go-licenses check $(APP_REPO)
 	go-licenses csv $(APP_REPO)
+
+test-task:
+	$(TEST) -v ./...

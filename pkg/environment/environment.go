@@ -185,7 +185,6 @@ func Create(name string) (*Environment, error) {
 		Name: name,
 		Uuid: uuid.New(),
 	}
-
 	newEnvironmentDirectory := path.Join(usedEnvironmentDirectory, environment.Uuid.String())
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
