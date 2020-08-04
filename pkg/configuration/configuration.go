@@ -33,6 +33,8 @@ type Config struct {
 	CurrentEnvironment uuid.UUID `yaml:"current-environment"`
 }
 
+//TODO return newly created environment uuid
+//CreateNewEnvironment in Config
 func (c *Config) CreateNewEnvironment(name string) error {
 	debug("will try to create environment %s", name)
 	env, err := environment.Create(name)
@@ -89,6 +91,7 @@ func GetConfig() (*Config, error) {
 	return makeOrGetConfig()
 }
 
+//TODO change to SetConfigDirectory
 //SetConfig sets variable usedConfigFile and returns (existing or just initialized) Config
 func SetConfig(configFile string) (*Config, error) {
 	debug("will try to set config file at %s", configFile)

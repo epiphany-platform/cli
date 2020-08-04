@@ -175,6 +175,7 @@ func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersio
 	return nil, errors.New("no such component installed")
 }
 
+//TODO move whole global variables initialization to one place
 func init() {
 	usedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
 	util.EnsureDirectory(usedEnvironmentDirectory)
