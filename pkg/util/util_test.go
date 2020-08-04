@@ -13,7 +13,7 @@ import (
 )
 
 func setup() {
-	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 }
 func TestEnsureDirectory(t *testing.T) {
 	setup()

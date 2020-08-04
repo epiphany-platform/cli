@@ -171,10 +171,17 @@ func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersio
 	return nil, errors.New("no such component installed")
 }
 
+//Create new environment with given name
 func Create(name string) (*Environment, error) {
+	return create(name, uuid.New())
+}
+
+//create new environment with given name and uuid
+func create(name string, uuid uuid.UUID) (*Environment, error) {
+	debug("will try to create environment with uuid %s and name %s", uuid.String(), name)
 	environment := &Environment{
 		Name: name,
-		Uuid: uuid.New(),
+		Uuid: uuid,
 	}
 	newEnvironmentDirectory := path.Join(util.UsedEnvironmentDirectory, environment.Uuid.String())
 	util.EnsureDirectory(newEnvironmentDirectory)
