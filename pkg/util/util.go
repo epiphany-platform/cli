@@ -20,6 +20,7 @@ const (
 var (
 	UsedConfigFile             string
 	UsedConfigurationDirectory string
+	UsedEnvironmentDirectory   string
 )
 
 func EnsureDirectory(directory string) {

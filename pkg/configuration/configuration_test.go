@@ -333,6 +333,7 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 		t.Run(tt.name, func(t *testing.T) {
 			util.UsedConfigFile = ""
 			util.UsedConfigurationDirectory = ""
+			util.UsedEnvironmentDirectory = ""
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configFile, tt.mocked, 0644)
 			}

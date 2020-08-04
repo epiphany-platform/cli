@@ -82,6 +82,10 @@ func GetConfig() (*Config, error) {
 	if util.UsedConfigFile == "" {
 		util.UsedConfigFile = path.Join(util.UsedConfigurationDirectory, util.DefaultConfigFileName)
 	}
+	if util.UsedEnvironmentDirectory == "" {
+		util.UsedEnvironmentDirectory = path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
+	}
+	util.EnsureDirectory(util.UsedEnvironmentDirectory)
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }
@@ -94,15 +98,21 @@ func SetConfigDirectory(configDir string) (*Config, error) {
 //setUsedConfigPaths to provided values
 func setUsedConfigPaths(configDir string, configFile string) (*Config, error) {
 	debug("will try to set config directory to %s", configDir)
-	if util.UsedConfigurationDirectory == "" {
-		util.UsedConfigurationDirectory = configDir
+	if util.UsedConfigurationDirectory != "" {
+		return nil, errors.New(fmt.Sprintf("util.UsedConfigurationDirectory is %s but should be empty on set", util.UsedConfigurationDirectory))
 	}
+	util.UsedConfigurationDirectory = configDir
 	util.EnsureDirectory(util.UsedConfigurationDirectory)
 	debug("will try to set used config file")
 	if util.UsedConfigFile != "" {
-		return nil, errors.New(fmt.Sprintf("usedConfigFile is %s but should be empty on set", util.UsedConfigFile))
+		return nil, errors.New(fmt.Sprintf("util.UsedConfigFile is %s but should be empty on set", util.UsedConfigFile))
 	}
 	util.UsedConfigFile = configFile
+	debug("will try to set used environments directory")
+	if util.UsedEnvironmentDirectory != "" {
+		return nil, errors.New(fmt.Sprintf("util.UsedEnvironmentDirectory is %s but should be empty on set", util.UsedEnvironmentDirectory))
+	}
+	util.UsedEnvironmentDirectory = path.Join(configDir, util.DefaultEnvironmentsSubdirectory)
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }

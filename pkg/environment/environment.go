@@ -18,10 +18,6 @@ import (
 	"time"
 )
 
-var (
-	usedEnvironmentDirectory string
-)
-
 type InstalledComponentCommand struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description"`
@@ -65,7 +61,7 @@ type InstalledComponentVersion struct {
 func (cv *InstalledComponentVersion) Run(command string) error {
 	if cv.Type == "docker" {
 		mountPath := path.Join(
-			usedEnvironmentDirectory,
+			util.UsedEnvironmentDirectory,
 			cv.EnvironmentRef.String(),
 			cv.Name,
 			cv.Version,
@@ -104,7 +100,7 @@ func (cv *InstalledComponentVersion) Download() error {
 
 func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to zerolog
 	logsPath := path.Join(
-		usedEnvironmentDirectory,
+		util.UsedEnvironmentDirectory,
 		cv.EnvironmentRef.String(),
 		cv.Name,
 		cv.Version,
@@ -129,7 +125,7 @@ func (e *Environment) Save() error {
 	if err != nil {
 		return err
 	}
-	ep := path.Join(usedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName)
+	ep := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName)
 	debug("will try to write marshaled data to file %s", ep)
 	err = ioutil.WriteFile(ep, data, 0644)
 	if err != nil {
@@ -155,8 +151,8 @@ func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 		}
 	}
 	e.Installed = append(e.Installed, newComponent)
-	newComponentRunsDirectory := path.Join(usedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentRunsSubdirectory)
-	newComponentMountsDirectory := path.Join(usedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentMountsSubdirectory)
+	newComponentRunsDirectory := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentRunsSubdirectory)
+	newComponentMountsDirectory := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentMountsSubdirectory)
 	util.EnsureDirectory(newComponentRunsDirectory)
 	util.EnsureDirectory(newComponentMountsDirectory)
 	err := newComponent.Download()
@@ -175,18 +171,12 @@ func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersio
 	return nil, errors.New("no such component installed")
 }
 
-//TODO move whole global variables initialization to one place
-func init() {
-	usedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
-	util.EnsureDirectory(usedEnvironmentDirectory)
-}
-
 func Create(name string) (*Environment, error) {
 	environment := &Environment{
 		Name: name,
 		Uuid: uuid.New(),
 	}
-	newEnvironmentDirectory := path.Join(usedEnvironmentDirectory, environment.Uuid.String())
+	newEnvironmentDirectory := path.Join(util.UsedEnvironmentDirectory, environment.Uuid.String())
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
@@ -196,8 +186,8 @@ func Create(name string) (*Environment, error) {
 }
 
 func GetAll() ([]*Environment, error) {
-	debug("will try to get all subdirectories of %s directory", usedEnvironmentDirectory)
-	items, err := ioutil.ReadDir(usedEnvironmentDirectory)
+	debug("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
+	items, err := ioutil.ReadDir(util.UsedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +206,7 @@ func GetAll() ([]*Environment, error) {
 }
 
 func Get(uuid uuid.UUID) (*Environment, error) {
-	expectedFile := path.Join(usedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
+	expectedFile := path.Join(util.UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
 	debug("will try to get environment config from file %s", expectedFile)
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 		warnEnvironmentConfigFileNotFound(err, expectedFile)
