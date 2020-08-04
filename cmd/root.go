@@ -7,11 +7,12 @@ package cmd
 import (
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var cfgDir string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -34,16 +35,11 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	config, err := configuration.GetConfig()
-	if err != nil {
-		errGetConfig(err)
-	}
-
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is %s)", config.GetConfigFilePath()))
+	rootCmd.PersistentFlags().StringVar(&cfgDir, "configDir", "", fmt.Sprintf("config directory (default is %s)", util.DefaultConfigurationDirectory))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -53,8 +49,8 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	debug("initializing root config")
-	if cfgFile != "" {
-		config, err := configuration.SetConfig(cfgFile)
+	if cfgDir != "" {
+		config, err := configuration.SetConfigDirectory(cfgDir)
 		if err != nil {
 			errSetConfigFile(err)
 		}

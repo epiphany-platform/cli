@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"github.com/rs/zerolog"
 	"io/ioutil"
 	"os"
@@ -57,7 +58,7 @@ func TestConfig_GetConfigFilePath(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			usedConfigFile = tt.mocked
+			util.UsedConfigFile = tt.mocked
 			c := &Config{}
 			defer func() { recover() }()
 			f := func() {
@@ -124,7 +125,7 @@ current-environment: 567c0831-7e83-4b56-a2a7-ec7a8327238f
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			usedConfigFile = tt.configPath
+			util.UsedConfigFile = tt.configPath
 			defer ioutil.WriteFile(tt.configPath, []byte(""), 0664)
 			c := &Config{
 				Version:            tt.fields.Version,
@@ -146,8 +147,8 @@ current-environment: 567c0831-7e83-4b56-a2a7-ec7a8327238f
 }
 
 func TestConfig_CreateNewEnvironment(t *testing.T) {
-	usedConfigFile, usedConfigurationDirectory = setup(t, "create")
-	defer os.RemoveAll(usedConfigurationDirectory)
+	util.UsedConfigFile, util.UsedConfigurationDirectory = setup(t, "create")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	type args struct {
 		name string
@@ -182,9 +183,9 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if len(tt.mocked) > 0 {
-				_ = ioutil.WriteFile(usedConfigFile, tt.mocked, 0644)
+				_ = ioutil.WriteFile(util.UsedConfigFile, tt.mocked, 0644)
 			}
-			defer ioutil.WriteFile(usedConfigFile, []byte(""), 0664)
+			defer ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0664)
 			c, err := GetConfig()
 			if err != nil {
 				t.Errorf("error getting configuration %v", err)
@@ -200,10 +201,8 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 }
 
 func TestConfig_Save(t *testing.T) {
-	tempFile, tempDirectory := setup(t, "save")
-	defer os.RemoveAll(tempDirectory)
-
-	usedConfigFile = tempFile
+	util.UsedConfigFile, util.UsedConfigurationDirectory = setup(t, "save")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
 		name    string
@@ -253,25 +252,28 @@ func TestConfig_Save(t *testing.T) {
 	}
 }
 
-func TestSetConfig(t *testing.T) {
-	tempFile, tempDirectory := setup(t, "set")
-	defer os.RemoveAll(tempDirectory)
+func Test_setUsedConfigPaths(t *testing.T) {
+	tempFile, tempDir := setup(t, "set")
+	defer os.RemoveAll(tempDir)
 
 	tests := []struct {
 		name       string
-		configPath string
+		configDir  string
+		configFile string
 		mocked     []byte
 		want       *Config
 		wantErr    error
 	}{
 		{
-			name:       "empty",
-			configPath: tempFile,
+			name:       "empty file",
+			configDir:  tempDir,
+			configFile: tempFile,
 			wantErr:    errors.New("EOF"),
 		},
 		{
 			name:       "correct",
-			configPath: tempFile,
+			configDir:  tempDir,
+			configFile: tempFile,
 			mocked: []byte(`version: v1
 kind: Config
 current-environment: 3e5b7269-1b3d-4003-9454-9f472857633a`),
@@ -284,13 +286,15 @@ current-environment: 3e5b7269-1b3d-4003-9454-9f472857633a`),
 		},
 		{
 			name:       "incorrect",
-			configPath: tempFile,
+			configDir:  tempDir,
+			configFile: tempFile,
 			mocked:     []byte("incorrect file"),
 			wantErr:    errors.New("yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `incorre...` into configuration.Config"),
 		},
 		{
 			name:       "correct with null",
-			configPath: tempFile,
+			configDir:  tempDir,
+			configFile: tempFile,
 			mocked: []byte(`version: v1
 kind: Config
 current-environment: 00000000-0000-0000-0000-000000000000`),
@@ -302,8 +306,20 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			wantErr: nil,
 		},
 		{
-			name:       "not existing",
-			configPath: path.Join(tempDirectory, "non-existing-config-file-name.yaml"),
+			name:       "not existing directory",
+			configDir:  path.Join(tempDir, "non-existing-config-directory"),
+			configFile: path.Join(tempDir, "non-existing-config-directory", "non-existing-file.yaml"),
+			wantErr:    nil,
+			want: &Config{
+				Version:            "v1",
+				Kind:               KindConfig,
+				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
+			},
+		},
+		{
+			name:       "not existing file",
+			configDir:  tempDir,
+			configFile: path.Join(tempDir, "another-not-existing-file.yaml"),
 			wantErr:    nil,
 			want: &Config{
 				Version:            "v1",
@@ -315,12 +331,13 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			usedConfigFile = ""
+			util.UsedConfigFile = ""
+			util.UsedConfigurationDirectory = ""
 			if len(tt.mocked) > 0 {
-				_ = ioutil.WriteFile(tt.configPath, tt.mocked, 0644)
+				_ = ioutil.WriteFile(tt.configFile, tt.mocked, 0644)
 			}
-			defer ioutil.WriteFile(tt.configPath, []byte(""), 0664)
-			got, err := SetConfig(tt.configPath)
+			defer ioutil.WriteFile(tt.configFile, []byte(""), 0664)
+			got, err := setUsedConfigPaths(tt.configDir, tt.configFile)
 
 			if isWrongResult(t, err, tt.wantErr) {
 				return
@@ -382,7 +399,7 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 		},
 		{
 			name:       "not existing",
-			configPath: path.Join(tempDirectory, "non-existing-config-file-name.yaml"),
+			configPath: path.Join(tempDirectory, "non-existing-config-directory"),
 			wantErr:    nil,
 			want: &Config{
 				Version:            "v1",
@@ -393,7 +410,7 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			usedConfigFile = tt.configPath
+			util.UsedConfigFile = tt.configPath
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configPath, tt.mocked, 0644)
 			}

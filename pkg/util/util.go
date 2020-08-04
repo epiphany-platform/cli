@@ -17,12 +17,18 @@ const (
 	DefaultComponentMountsSubdirectory string = "mounts"
 )
 
+var (
+	UsedConfigFile             string
+	UsedConfigurationDirectory string
+)
+
 func EnsureDirectory(directory string) {
 	debug("will try to ensure directory %s", directory)
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
 		errDirectoryCreation(err, directory)
 	}
+	debug("directory %s created", directory)
 }
 
 func GetHomeDirectory() string {

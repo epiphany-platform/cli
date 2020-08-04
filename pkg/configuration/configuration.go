@@ -16,11 +16,6 @@ import (
 	"path"
 )
 
-var (
-	usedConfigFile             string
-	usedConfigurationDirectory string
-)
-
 type Kind string
 
 const (
@@ -56,10 +51,10 @@ func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
 
 //GetConfigFilePath from usedConfigFile variable or fails if not set
 func (c *Config) GetConfigFilePath() string {
-	if usedConfigFile == "" {
+	if util.UsedConfigFile == "" {
 		errIncorrectInitialization(errors.New("variable usedConfigFile not initialized"))
 	}
-	return usedConfigFile
+	return util.UsedConfigFile
 }
 
 //Save Config to usedConfigFile
@@ -69,8 +64,8 @@ func (c *Config) Save() error {
 	if err != nil {
 		return err
 	}
-	debug("will try to write marshaled data to file %s", usedConfigFile)
-	err = ioutil.WriteFile(usedConfigFile, data, 0644)
+	debug("will try to write marshaled data to file %s", util.UsedConfigFile)
+	err = ioutil.WriteFile(util.UsedConfigFile, data, 0644)
 	if err != nil {
 		return err
 	}
@@ -80,36 +75,41 @@ func (c *Config) Save() error {
 //GetConfig sets usedConfigFile and usedConfigurationDirectory to default values and returns (existing or just initialized) Config
 func GetConfig() (*Config, error) {
 	debug("will try to get config file")
-	if usedConfigurationDirectory == "" {
-		usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+	if util.UsedConfigurationDirectory == "" {
+		util.UsedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
 	}
-	util.EnsureDirectory(usedConfigurationDirectory)
-	if usedConfigFile == "" {
-		usedConfigFile = path.Join(usedConfigurationDirectory, util.DefaultConfigFileName)
+	util.EnsureDirectory(util.UsedConfigurationDirectory)
+	if util.UsedConfigFile == "" {
+		util.UsedConfigFile = path.Join(util.UsedConfigurationDirectory, util.DefaultConfigFileName)
 	}
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }
 
-//TODO change to SetConfigDirectory
-//SetConfig sets variable usedConfigFile and returns (existing or just initialized) Config
-func SetConfig(configFile string) (*Config, error) {
-	debug("will try to set config file at %s", configFile)
-	if usedConfigurationDirectory == "" {
-		usedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+//SetConfigDirectory sets variable usedConfigurationDirectory and returns (existing or just initialized) Config
+func SetConfigDirectory(configDir string) (*Config, error) {
+	return setUsedConfigPaths(configDir, path.Join(configDir, util.DefaultConfigFileName))
+}
+
+//setUsedConfigPaths to provided values
+func setUsedConfigPaths(configDir string, configFile string) (*Config, error) {
+	debug("will try to set config directory to %s", configDir)
+	if util.UsedConfigurationDirectory == "" {
+		util.UsedConfigurationDirectory = configDir
 	}
-	util.EnsureDirectory(usedConfigurationDirectory)
-	if usedConfigFile != "" {
-		return nil, errors.New(fmt.Sprintf("usedConfigFile is %s but should be empty on set", usedConfigFile))
+	util.EnsureDirectory(util.UsedConfigurationDirectory)
+	debug("will try to set used config file")
+	if util.UsedConfigFile != "" {
+		return nil, errors.New(fmt.Sprintf("usedConfigFile is %s but should be empty on set", util.UsedConfigFile))
 	}
-	usedConfigFile = configFile
+	util.UsedConfigFile = configFile
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }
 
 //makeOrGetConfig initializes new config file or reads existing one and returns Config
 func makeOrGetConfig() (*Config, error) {
-	if _, err := os.Stat(usedConfigFile); os.IsNotExist(err) {
+	if _, err := os.Stat(util.UsedConfigFile); os.IsNotExist(err) {
 		debug("there is no config file, will try to initialize one")
 		config := &Config{
 			Version: "v1",
@@ -121,16 +121,16 @@ func makeOrGetConfig() (*Config, error) {
 		}
 		return config, nil
 	}
-	debug("will try to load existing config file from %s", usedConfigFile)
+	debug("will try to load existing config file from %s", util.UsedConfigFile)
 	config := &Config{}
-	debug("trying to open %s file", usedConfigFile)
-	file, err := os.Open(usedConfigFile)
+	debug("trying to open %s file", util.UsedConfigFile)
+	file, err := os.Open(util.UsedConfigFile)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 	d := yaml.NewDecoder(file)
-	debug("will try to decode file %s to yaml", usedConfigFile)
+	debug("will try to decode file %s to yaml", util.UsedConfigFile)
 	if err := d.Decode(&config); err != nil {
 		return nil, err
 	}
