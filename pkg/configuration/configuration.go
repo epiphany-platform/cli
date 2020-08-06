@@ -79,13 +79,20 @@ func GetConfig() (*Config, error) {
 		util.UsedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
 	}
 	util.EnsureDirectory(util.UsedConfigurationDirectory)
+
 	if util.UsedConfigFile == "" {
 		util.UsedConfigFile = path.Join(util.UsedConfigurationDirectory, util.DefaultConfigFileName)
 	}
+
 	if util.UsedEnvironmentDirectory == "" {
 		util.UsedEnvironmentDirectory = path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
 	}
 	util.EnsureDirectory(util.UsedEnvironmentDirectory)
+
+	if util.UsedRepositoryFile == "" {
+		util.UsedRepositoryFile = path.Join(util.UsedConfigurationDirectory, util.DefaultV1RepositoryFileName)
+	}
+
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }
@@ -103,16 +110,26 @@ func setUsedConfigPaths(configDir string, configFile string) (*Config, error) {
 	}
 	util.UsedConfigurationDirectory = configDir
 	util.EnsureDirectory(util.UsedConfigurationDirectory)
+
 	debug("will try to set used config file")
 	if util.UsedConfigFile != "" {
 		return nil, errors.New(fmt.Sprintf("util.UsedConfigFile is %s but should be empty on set", util.UsedConfigFile))
 	}
 	util.UsedConfigFile = configFile
+
 	debug("will try to set used environments directory")
 	if util.UsedEnvironmentDirectory != "" {
 		return nil, errors.New(fmt.Sprintf("util.UsedEnvironmentDirectory is %s but should be empty on set", util.UsedEnvironmentDirectory))
 	}
 	util.UsedEnvironmentDirectory = path.Join(configDir, util.DefaultEnvironmentsSubdirectory)
+	util.EnsureDirectory(util.UsedEnvironmentDirectory)
+
+	debug("will try to set repo config file path")
+	if util.UsedRepositoryFile != "" {
+		return nil, errors.New(fmt.Sprintf("util.UsedRepositoryFile is %s but should be empty on set", util.UsedRepositoryFile))
+	}
+	util.UsedRepositoryFile = path.Join(configDir, util.DefaultV1RepositoryFileName)
+
 	debug("will try to make or get configuration")
 	return makeOrGetConfig()
 }

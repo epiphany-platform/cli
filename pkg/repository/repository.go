@@ -12,20 +12,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
-	"path"
-	"time"
 )
-
-const (
-	github                  = "https://raw.githubusercontent.com"
-	defaultRepository       = "mkyc/epiphany-wrapper-poc-repo"
-	defaultRepositoryBranch = "master"
-	defaultV1FileLocation   = "v1.yaml"
-)
-
-var UsedRepositoryFilePath string
 
 type ComponentCommand struct {
 	Name        string            `yaml:"name"`
@@ -113,14 +101,6 @@ func (v V1) GetComponentByName(name string) (*Component, error) {
 	return nil, errors.New("unknown component")
 }
 
-func GetRepository() *V1 {
-	v1, err := loadOrDownloadRepository()
-	if err != nil {
-		errGetRepository(err)
-	}
-	return v1
-}
-
 func (v V1) ComponentsString() string {
 	var b bytes.Buffer
 	for _, c := range v.Components {
@@ -131,62 +111,29 @@ func (v V1) ComponentsString() string {
 	return b.String()
 }
 
-func init() { //TODO move it to configuration
-	repositoryFilePath, err := initRepositoryPath()
-	if err != nil {
-		errInitRepository(err)
-	}
-	UsedRepositoryFilePath = repositoryFilePath
-}
-
-func loadOrDownloadRepository() (*V1, error) {
+func GetRepository() *V1 {
+	debug("will try to get repo")
 	repo, err := loadRepository()
 	if err != nil {
-		err = getDefaultRepository()
+		debug("error while loading local repo: %#v", err)
+		debug("will try to download repo")
+		repo, err = downloadAndPersistRepositoryV1()
 		if err != nil {
-			return nil, err
-		}
-		repo, err = loadRepository()
-		if err != nil {
-			return nil, err
+			errGetRepository(err)
 		}
 	}
-	return repo, nil
+	debug("will return repo")
+	return repo
 }
 
-func getDefaultRepository() error {
-	u, err := url.Parse(github)
-
-	if err != nil {
-		return fmt.Errorf("invalid url")
-	}
-	u.Path = path.Join(defaultRepository, defaultRepositoryBranch, defaultV1FileLocation)
-
-	repo, err := downloadRepositoryV1Metadata(u.String())
-	if err != nil {
-		return err
-	}
-	return writeRepository(UsedRepositoryFilePath, repo)
-}
-
-func downloadRepositoryV1Metadata(repositoryUrl string) (*V1, error) {
-	client := http.Client{
-		Timeout: time.Second * 5,
-	}
-	req, err := http.NewRequest(http.MethodGet, repositoryUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "epiphany-wrapper-poc-cli")
-
-	res, err := client.Do(req)
+func downloadAndPersistRepositoryV1() (*V1, error) {
+	res, err := http.Get(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, util.DefaultRepository, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
 	if err != nil {
 		return nil, err
 	}
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
-
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -196,24 +143,16 @@ func downloadRepositoryV1Metadata(repositoryUrl string) (*V1, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = ioutil.WriteFile(util.UsedRepositoryFile, body, 0644)
+	if err != nil {
+		return nil, err
+	}
 	return repository, nil
-}
-
-func writeRepository(repositoryPath string, repository *V1) error {
-	data, err := yaml.Marshal(repository)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(repositoryPath, data, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func loadRepository() (*V1, error) {
 	repo := &V1{}
-	file, err := os.Open(UsedRepositoryFilePath)
+	file, err := os.Open(util.UsedRepositoryFile)
 	if err != nil {
 		return nil, err
 	}
@@ -223,17 +162,4 @@ func loadRepository() (*V1, error) {
 		return nil, err
 	}
 	return repo, nil
-}
-
-func initRepositoryPath() (string, error) { //TODO move this responsibility to configuration?
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	configDirPath := path.Join(home, util.DefaultConfigurationDirectory)
-	if _, err = os.Stat(configDirPath); os.IsNotExist(err) {
-		_ = os.Mkdir(configDirPath, 0755)
-	}
-	repositoryFilePath := path.Join(configDirPath, defaultV1FileLocation)
-	return repositoryFilePath, nil
 }

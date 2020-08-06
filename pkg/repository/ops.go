@@ -19,16 +19,15 @@ func init() {
 		Logger()
 }
 
+func debug(format string, v ...interface{}) {
+	logger.
+		Debug().
+		Msgf(format, v...)
+}
+
 func errGetRepository(err error) {
 	logger.
 		Panic().
 		Err(err).
 		Msg("get repository failed")
-}
-
-func errInitRepository(err error) {
-	logger.
-		Panic().
-		Err(err).
-		Msg("initialization of repository failed")
 }

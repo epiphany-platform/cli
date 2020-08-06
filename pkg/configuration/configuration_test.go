@@ -334,6 +334,7 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			util.UsedConfigFile = ""
 			util.UsedConfigurationDirectory = ""
 			util.UsedEnvironmentDirectory = ""
+			util.UsedRepositoryFile = ""
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configFile, tt.mocked, 0644)
 			}

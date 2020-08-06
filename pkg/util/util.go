@@ -15,12 +15,18 @@ const (
 	DefaultEnvironmentConfigFileName   string = "config.yaml"
 	DefaultComponentRunsSubdirectory   string = "runs"
 	DefaultComponentMountsSubdirectory string = "mounts"
+
+	GithubUrl                   = "https://raw.githubusercontent.com"
+	DefaultRepository           = "mkyc/epiphany-wrapper-poc-repo"
+	DefaultRepositoryBranch     = "master"
+	DefaultV1RepositoryFileName = "v1.yaml"
 )
 
 var (
 	UsedConfigFile             string
 	UsedConfigurationDirectory string
 	UsedEnvironmentDirectory   string
+	UsedRepositoryFile         string
 )
 
 func EnsureDirectory(directory string) {
