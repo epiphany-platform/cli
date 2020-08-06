@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+//InstalledComponentCommand holds information about specific command of installed component
 type InstalledComponentCommand struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description"`
@@ -44,10 +45,12 @@ func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory strin
 	return dockerJob.Run()
 }
 
+//The String method is used to pretty-print InstalledComponentCommand struct
 func (cc *InstalledComponentCommand) String() string {
 	return fmt.Sprintf("    Command:\n     Name %s\n     Description %s\n", cc.Name, cc.Description)
 }
 
+//InstalledComponentVersion struct holds information about installed components with its details.
 type InstalledComponentVersion struct {
 	EnvironmentRef uuid.UUID                   `yaml:"environment_ref"` //TODO try to remove it
 	Name           string                      `yaml:"name"`
@@ -78,6 +81,7 @@ func (cv *InstalledComponentVersion) Run(command string) error {
 	return errors.New("nothing to run for this version")
 }
 
+//The String method is used to pretty-print InstalledComponentVersion struct
 func (cv *InstalledComponentVersion) String() string {
 	var b bytes.Buffer
 	b.WriteString(fmt.Sprintf("  Installed Component:\n   Name: %s\n   Type: %s\n   Version: %s\n   Image: %s\n", cv.Name, cv.Type, cv.Version, cv.Image))
@@ -116,12 +120,14 @@ func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to
 	}
 }
 
+//Environment struct holds all information about managed environment with list of InstalledComponentVersion
 type Environment struct {
 	Name      string                      `yaml:"name"`
 	Uuid      uuid.UUID                   `yaml:"uuid"`
 	Installed []InstalledComponentVersion `yaml:"installed"`
 }
 
+//Save updated Environment to file
 func (e *Environment) Save() error {
 	if e.Uuid == uuid.Nil {
 		return errors.New(fmt.Sprintf("unexpected UUID on Save: %s", e.Uuid))
@@ -140,6 +146,7 @@ func (e *Environment) Save() error {
 	return nil
 }
 
+//The String method is used to pretty-print Environment struct
 func (e *Environment) String() string {
 	var b bytes.Buffer
 	b.WriteString("Environment info:\n")
@@ -169,6 +176,7 @@ func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 	return e.Save()
 }
 
+//GetComponentByName returns first InstalledComponentVersion found by name
 func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersion, error) {
 	for _, ic := range e.Installed {
 		if ic.Name == name {
@@ -199,6 +207,7 @@ func create(name string, uuid uuid.UUID) (*Environment, error) {
 	return environment, nil
 }
 
+//GetAll existing Environment
 func GetAll() ([]*Environment, error) {
 	debug("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
 	items, err := ioutil.ReadDir(util.UsedEnvironmentDirectory)
@@ -220,6 +229,7 @@ func GetAll() ([]*Environment, error) {
 	return environments, nil
 }
 
+//Get Environment bu uuid
 func Get(uuid uuid.UUID) (*Environment, error) {
 	expectedFile := path.Join(util.UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
 	debug("will try to get environment config from file %s", expectedFile)
