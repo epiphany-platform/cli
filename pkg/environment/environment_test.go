@@ -5,6 +5,7 @@
 package environment
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -318,6 +319,226 @@ func Test_create(t *testing.T) {
 			expectedConfigFile := path.Join(util.UsedEnvironmentDirectory, got.Uuid.String(), util.DefaultEnvironmentConfigFileName)
 			if _, err := os.Stat(expectedConfigFile); os.IsNotExist(err) {
 				t.Errorf("expected to find file %s but didn't find", expectedConfigFile)
+			}
+		})
+	}
+}
+
+func TestEnvironment_Save(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "env-save")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name        string
+		environment *Environment
+		wantContent []byte
+		wantErr     error
+	}{
+		{
+			name: "correct",
+			environment: &Environment{
+				Name: "e1",
+				Uuid: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+			},
+			wantContent: []byte(`name: e1
+uuid: 10d52c05-029e-4794-a790-79d6c2af40b6
+installed: []
+`),
+			wantErr: nil,
+		},
+		{
+			name: "missing uuid",
+			environment: &Environment{
+				Name: "e1",
+			},
+			wantErr: errors.New("unexpected UUID on Save: 00000000-0000-0000-0000-000000000000"),
+		},
+		{
+			name: "missing name",
+			environment: &Environment{
+				Uuid: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+			},
+			wantContent: []byte(`name: ""
+uuid: 10d52c05-029e-4794-a790-79d6c2af40b6
+installed: []
+`),
+			wantErr: nil,
+		},
+		{
+			name: "with installed components",
+			environment: &Environment{
+				Name: "x",
+				Uuid: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
+				Installed: []InstalledComponentVersion{
+					{
+						EnvironmentRef: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
+						Name:           "x",
+						Type:           "x",
+						Version:        "x",
+						Image:          "x",
+						WorkDirectory:  "x",
+						Mounts:         []string{"x"},
+						Commands:       []InstalledComponentCommand{},
+					},
+				},
+			},
+			wantContent: []byte(`name: x
+uuid: 3e5b7269-1b3d-4003-9454-9f472857633a
+installed:
+- environment_ref: 3e5b7269-1b3d-4003-9454-9f472857633a
+  name: x
+  type: x
+  version: x
+  image: x
+  workdir: x
+  mounts:
+  - x
+  commands: []
+`),
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := path.Join(util.UsedEnvironmentDirectory, tt.environment.Uuid.String())
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				t.Fatal(err)
+			}
+			e := &Environment{
+				Name:      tt.environment.Name,
+				Uuid:      tt.environment.Uuid,
+				Installed: tt.environment.Installed,
+			}
+			err = e.Save()
+			if isWrongResult(t, err, tt.wantErr) {
+				return
+			}
+			if len(tt.wantContent) > 0 {
+				expectedConfigFile := path.Join(dir, util.DefaultEnvironmentConfigFileName)
+				if _, err := os.Stat(expectedConfigFile); os.IsNotExist(err) {
+					t.Errorf("expected to find file %s but didn't find", expectedConfigFile)
+					return
+				}
+				savedBytes, _ := ioutil.ReadFile(expectedConfigFile)
+				if !bytes.Equal(tt.wantContent, savedBytes) {
+					t.Errorf("saved file is \n%s\n\n but expected is \n\n%s\n", string(savedBytes), string(tt.wantContent))
+				}
+			}
+		})
+	}
+}
+
+func TestEnvironment_GetComponentByName(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "env-get-by-name")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name          string
+		environment   *Environment
+		componentName string
+		want          *InstalledComponentVersion
+		wantErr       error
+	}{
+		{
+			name: "correct single",
+			environment: &Environment{
+				Name: "e1",
+				Uuid: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+				Installed: []InstalledComponentVersion{
+					{
+						EnvironmentRef: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+						Name:           "c1",
+						Type:           "docker",
+						Version:        "v1",
+						Image:          "i1",
+					},
+				},
+			},
+			componentName: "c1",
+			want: &InstalledComponentVersion{
+				EnvironmentRef: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+				Name:           "c1",
+				Type:           "docker",
+				Version:        "v1",
+				Image:          "i1",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "correct multiple",
+			environment: &Environment{
+				Name: "e1",
+				Uuid: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+				Installed: []InstalledComponentVersion{
+					{
+						EnvironmentRef: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+						Name:           "c1",
+						Type:           "d2",
+						Version:        "v1",
+						Image:          "i1",
+					},
+					{
+						EnvironmentRef: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+						Name:           "c2",
+						Type:           "d2",
+						Version:        "v2",
+						Image:          "i3",
+					},
+				},
+			},
+			componentName: "c1",
+			want: &InstalledComponentVersion{
+				EnvironmentRef: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+				Name:           "c1",
+				Type:           "d2",
+				Version:        "v1",
+				Image:          "i1",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "missing",
+			environment: &Environment{
+				Name: "e1",
+				Uuid: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+				Installed: []InstalledComponentVersion{
+					{
+						EnvironmentRef: uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+						Name:           "c2",
+						Type:           "d2",
+						Version:        "v2",
+						Image:          "i3",
+					},
+				},
+			},
+			componentName: "c1",
+			wantErr:       errors.New("no such component installed"),
+		},
+		{
+			name: "empty",
+			environment: &Environment{
+				Name:      "e1",
+				Uuid:      uuid.MustParse("10d52c05-029e-4794-a790-79d6c2af40b6"),
+				Installed: []InstalledComponentVersion{},
+			},
+			componentName: "c1",
+			wantErr:       errors.New("no such component installed"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := &Environment{
+				Name:      tt.environment.Name,
+				Uuid:      tt.environment.Uuid,
+				Installed: tt.environment.Installed,
+			}
+			got, err := e.GetComponentByName(tt.componentName)
+			if isWrongResult(t, err, tt.wantErr) {
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got = %#v, want %#v", got, tt.want)
 			}
 		})
 	}

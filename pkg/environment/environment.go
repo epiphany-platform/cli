@@ -26,6 +26,7 @@ type InstalledComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
+//TODO add tests
 func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mountPath string, mounts []string) error {
 	for _, m := range mounts {
 		util.EnsureDirectory(path.Join(mountPath, m))
@@ -58,6 +59,7 @@ type InstalledComponentVersion struct {
 	Commands       []InstalledComponentCommand `yaml:"commands"`
 }
 
+//TODO add tests
 func (cv *InstalledComponentVersion) Run(command string) error {
 	if cv.Type == "docker" {
 		mountPath := path.Join(
@@ -85,6 +87,7 @@ func (cv *InstalledComponentVersion) String() string {
 	return b.String()
 }
 
+//TODO add tests
 func (cv *InstalledComponentVersion) Download() error {
 	if cv.Type == "docker" {
 		dockerImage := &docker.Image{Name: cv.Image}
@@ -120,6 +123,9 @@ type Environment struct {
 }
 
 func (e *Environment) Save() error {
+	if e.Uuid == uuid.Nil {
+		return errors.New(fmt.Sprintf("unexpected UUID on Save: %s", e.Uuid))
+	}
 	debug("will try to marshal environment %+v", e)
 	data, err := yaml.Marshal(e)
 	if err != nil {
@@ -144,6 +150,7 @@ func (e *Environment) String() string {
 	return b.String()
 }
 
+//TODO add tests
 func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 	for _, ic := range e.Installed {
 		if ic.Name == newComponent.Name && ic.Version == newComponent.Version {
