@@ -121,7 +121,7 @@ func GetRepository() *V1 {
 	return v1
 }
 
-func (v V1) List() string {
+func (v V1) ComponentsString() string {
 	var b bytes.Buffer
 	for _, c := range v.Components {
 		for _, v := range c.Versions {

@@ -200,6 +200,7 @@ func GetAll() ([]*Environment, error) {
 	}
 	var environments []*Environment
 	for _, i := range items {
+		debug("entered directory %s", i.Name())
 		if i.IsDir() {
 			e, err := Get(uuid.MustParse(i.Name()))
 			if err == nil {
@@ -219,27 +220,19 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 		warnEnvironmentConfigFileNotFound(err, expectedFile)
 		return nil, err
 	} else {
-		e, err := loadEnvironmentFromConfigFile(expectedFile)
+		e := &Environment{}
+		debug("trying to open %s file", expectedFile)
+		file, err := os.Open(expectedFile)
 		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+		d := yaml.NewDecoder(file)
+		debug("will try to decode file %s to yaml", expectedFile)
+		if err := d.Decode(&e); err != nil {
 			return nil, err
 		}
 		debug("got environment config %+v", e)
 		return e, nil
 	}
-}
-
-func loadEnvironmentFromConfigFile(configPath string) (*Environment, error) {
-	e := &Environment{}
-	debug("trying to open %s file", configPath)
-	file, err := os.Open(configPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	d := yaml.NewDecoder(file)
-	debug("will try to decode file %s to yaml", configPath)
-	if err := d.Decode(&e); err != nil {
-		return nil, err
-	}
-	return e, nil
 }

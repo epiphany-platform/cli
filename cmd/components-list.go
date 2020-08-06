@@ -17,7 +17,7 @@ var componentsListCmd = &cobra.Command{
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
 		debug("component list called")
-		fmt.Println(repository.GetRepository().List())
+		fmt.Println(repository.GetRepository().ComponentsString())
 	},
 }
 

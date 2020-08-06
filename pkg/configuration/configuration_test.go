@@ -60,7 +60,6 @@ func TestConfig_GetConfigFilePath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			util.UsedConfigFile = tt.mocked
 			c := &Config{}
-			defer func() { recover() }()
 			f := func() {
 				if got := c.GetConfigFilePath(); got != tt.want {
 					t.Errorf("got %s, want %s", got, tt.want)
@@ -68,8 +67,9 @@ func TestConfig_GetConfigFilePath(t *testing.T) {
 			}
 			if tt.shouldPanic {
 				assertPanic(t, f)
+			} else {
+				f()
 			}
-			f()
 		})
 	}
 }
