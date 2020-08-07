@@ -19,6 +19,19 @@ func init() {
 		Logger()
 }
 
+func debugJson(json []byte, format string, v ...interface{}) {
+	logger.
+		Debug().
+		RawJSON("json", json).
+		Msgf(format, v...)
+}
+
+func debug(format string, v ...interface{}) {
+	logger.
+		Debug().
+		Msgf(format, v...)
+}
+
 func warnRemovingContainer(err error) {
 	logger.
 		Warn().

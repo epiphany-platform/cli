@@ -1,0 +1,16 @@
+E wrapper allows to interact with epiphany
+
+Usage:
+  e [command]
+
+Available Commands:
+  components   Allows to inspect and install available components
+  environments Allows various interactions with environments
+  help         Help about any command
+
+Flags:
+      --configDir string   config directory (default is .e)
+  -d, --debug              enable debug loglevel
+  -h, --help               help for e
+
+Use "e [command] --help" for more information about a command.

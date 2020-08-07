@@ -16,8 +16,10 @@ var componentsInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Displays information about component",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("components info called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			errTooFewArguments(errors.New(fmt.Sprintf("found %d args", len(args))))
 		}
@@ -29,7 +31,7 @@ var componentsInfoCmd = &cobra.Command{
 		if err != nil {
 			errGetComponentWithLatestVersion(err)
 		}
-		fmt.Println(c.String())
+		fmt.Print(c.String())
 	},
 }
 

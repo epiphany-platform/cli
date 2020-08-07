@@ -5,6 +5,7 @@
 package docker
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"github.com/docker/docker/api/types/mount"
@@ -23,7 +24,8 @@ type Image struct {
 	Name string
 }
 
-func (i *Image) Pull() (string, error) { //TODO consider passing log file directly here to write to it on the fly
+func (i *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
+	debug("will try to pull")
 	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return "", err
@@ -36,9 +38,12 @@ func (i *Image) Pull() (string, error) { //TODO consider passing log file direct
 	defer close(done)
 
 	var result string
-
 	go func() {
-		_, _ = io.Copy(os.Stdout, stdoutR)
+		s := bufio.NewScanner(stdoutR)
+		for s.Scan() {
+			txt := s.Text()
+			debugJson([]byte(txt), "pulling")
+		}
 		done <- true
 	}()
 

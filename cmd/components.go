@@ -18,7 +18,7 @@ var componentsCmd = &cobra.Command{
  - get information about component
 
 Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("components called")
 	},
 }

@@ -16,8 +16,10 @@ var environmentsUseCmd = &cobra.Command{
 	Use:   "use",
 	Short: "Allows to select environment to be used",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments use called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
 			errGetConfig(err)
@@ -25,12 +27,19 @@ var environmentsUseCmd = &cobra.Command{
 		if config.CurrentEnvironment == uuid.Nil {
 			errNilEnvironment()
 		}
-		uuid, err := promptui.PromptForEnvironmentSelect("Environments")
-		if err != nil {
-			errPrompt(err)
+
+		var u uuid.UUID
+		if len(args) == 1 {
+			u = uuid.MustParse(args[0])
+		} else {
+			u, err = promptui.PromptForEnvironmentSelect("Environments")
+			if err != nil {
+				errPrompt(err)
+			}
 		}
-		infoChosenEnvironment(uuid.String())
-		err = config.SetUsedEnvironment(uuid)
+
+		infoChosenEnvironment(u.String())
+		err = config.SetUsedEnvironment(u)
 		if err != nil {
 			errSetEnvironment(err)
 		}

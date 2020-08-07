@@ -13,7 +13,7 @@ var environmentsCmd = &cobra.Command{
 	Use:   "environments",
 	Short: "Allows various interactions with environments",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments called")
 	},
 }

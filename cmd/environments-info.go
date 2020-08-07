@@ -17,8 +17,10 @@ var environmentsInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Displays information about currently selected environment",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments info called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
 			errGetConfig(err)
@@ -30,7 +32,7 @@ var environmentsInfoCmd = &cobra.Command{
 		if err != nil {
 			errGetEnvironmentDetails(err)
 		}
-		fmt.Println(environment.String())
+		fmt.Print(environment.String())
 	},
 }
 

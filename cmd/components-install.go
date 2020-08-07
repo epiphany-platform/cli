@@ -19,8 +19,10 @@ var componentsInstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Installs component into currently used environment",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("components install called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
 			errIncorrectNumberOfArguments(errors.New(fmt.Sprintf("found %d args", len(args))))
 		}

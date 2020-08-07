@@ -14,12 +14,14 @@ import (
 )
 
 // environmentsRunCmd represents the run command
-var environmentsRunCmd = &cobra.Command{
+var environmentsRunCmd = &cobra.Command{ //TODO consider what are options to create integration tests here. For me it seams that it would be testing of docker
 	Use:   "run",
 	Short: "Runs installed component command in environment",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments run called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 2 {
 			config, err := configuration.GetConfig()
 			if err != nil {

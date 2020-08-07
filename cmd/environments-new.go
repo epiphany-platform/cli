@@ -15,8 +15,10 @@ var environmentsNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Creates new environment",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments new called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
 			errGetConfig(err)
