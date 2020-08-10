@@ -14,34 +14,35 @@ BUILD_DIR := ./output/
 APP_REPO := github.com/mkyc/epiphany-wrapper-poc
 APP_NAME := e
 
-all: clean get build
-run: build run-empty
-licenses: clean get build licences-task
-test: clean get build test-task
+all: clean-task get-task janitor-task build-task test-task
+licenses: licences-task
+test: get-task janitor-task test-task
+clean: clean-task
+build: get-task janitor-task build-task
+get: get-update-task
+install: install-task
 
-get:
+test-task:
+	$(TEST) -race -v ./...
+
+clean-task:
+	$(CLEAN) -x ./cmd/... ./pkg/...
+	rm -rf $(BUILD_DIR)
+
+get-task:
+	$(GET) -d -v ./...
+
+get-update-task:
 	$(GET) -u -d -v ./...
 
-build:
-	$(GET) -d -v ./...
+janitor-task:
 	$(TIDY)
 	$(VENDOR)
 	$(VET) ./cmd/... ./pkg/...
 	$(FMT) ./cmd/... ./pkg/...
+
+build-task:
 	$(BUILD) -x -o $(BUILD_DIR)$(APP_NAME) $(APP_REPO)
-
-clean:
-	$(CLEAN) ./cmd/... ./pkg/...
-	rm -rf $(BUILD_DIR)
-
-install:
-	$(INSTALL) -v ./...
-
-run-empty:
-	$(BUILD_DIR)$(APP_NAME)
-
-run-help:
-	$(BUILD_DIR)$(APP_NAME) --help
 
 #go get github.com/google/go-licenses first
 licences-task:
@@ -50,5 +51,5 @@ licences-task:
 	go-licenses check $(APP_REPO)
 	go-licenses csv $(APP_REPO)
 
-test-task:
-	$(TEST) -race -v ./...
+install-task:
+	$(INSTALL) -v ./...
