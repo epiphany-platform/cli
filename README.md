@@ -8,7 +8,7 @@ PoC application to wrap containerised modules of epiphany
 #### e help 
 
 ```shell
-> e --help                        
+> e --help                          
 E wrapper allows to interact with epiphany
 
 Usage:
@@ -20,8 +20,9 @@ Available Commands:
   help         Help about any command
 
 Flags:
-      --config string   config file (default is /Users/mateusz/.e/config.yaml)
-  -h, --help            help for e
+      --configDir string   config directory (default is .e)
+  -d, --debug              enable debug loglevel
+  -h, --help               help for e
 
 Use "e [command] --help" for more information about a command.
 
@@ -41,7 +42,6 @@ This command provides way to:
 Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml
 
 Usage:
-  e components [flags]
   e components [command]
 
 Available Commands:
@@ -53,7 +53,8 @@ Flags:
   -h, --help   help for components
 
 Global Flags:
-      --config string   config file (default is /Users/mateusz/.e/config.yaml)
+      --configDir string   config directory (default is .e)
+  -d, --debug              enable debug loglevel
 
 Use "e components [command] --help" for more information about a command.
 
@@ -63,28 +64,27 @@ Use "e components [command] --help" for more information about a command.
 
 ```shell
 > e components list  
-Using config file: /Users/mateusz/.e/config.yaml
-list called
-c1 0.1.0
-luuk-c1 0.0.1
+Component: c1:0.1.0
+Component: luuk-c1:0.0.1
 ```
 
 #### e components info
 
 ```shell
 > e components info c1
-Using config file: /Users/mateusz/.e/config.yaml
-components info called
 Component:
  Name: c1
  Type: docker
- Version: 0.1.0
- Image: docker.io/hashicorp/terraform:0.12.28
- Commands:
-  Name: init
-  Description: initializes terraform in local directory
-  Name: apply
-  Description: applies terraform in local directory
+  Component Version:
+   Version: 0.1.0
+   Image: docker.io/hashicorp/terraform:0.12.28
+    Command:
+     Name init
+     Description initializes terraform in local directory
+    Command:
+     Name apply
+     Description applies terraform in local directory
+
 ```
 
 #### e components install
@@ -93,11 +93,6 @@ Use you created environment with `e environment new e1`
 
 ```shell
 > e components install c1
-Using config file: /Users/mateusz/.e/config.yaml
-install called
-{"status":"Pulling from hashicorp/terraform","id":"0.12.28"}
-{"status":"Digest: sha256:19a84a76564c9bea081b405f458a51107cf2abbafba34af2f02774e72d551ad1"}
-{"status":"Status: Image is up to date for hashicorp/terraform:0.12.28"}
 Installed component c1 0.1.0 to environment e1
 ```
 
@@ -110,7 +105,6 @@ Installed component c1 0.1.0 to environment e1
 TODO
 
 Usage:
-  e environments [flags]
   e environments [command]
 
 Available Commands:
@@ -123,7 +117,8 @@ Flags:
   -h, --help   help for environments
 
 Global Flags:
-      --config string   config file (default is /Users/mateusz/.e/config.yaml)
+      --configDir string   config directory (default is .e)
+  -d, --debug              enable debug loglevel
 
 Use "e environments [command] --help" for more information about a command.
 ```
@@ -132,10 +127,9 @@ Use "e environments [command] --help" for more information about a command.
 
 ```shell
 > e environments new e1
-Using config file: /Users/mateusz/.e/config.yaml
-new called
-new created environment is: e1
 ```
+
+no output expected
 
 #### e environments info
 
@@ -143,8 +137,6 @@ Here used after command `e components install c1`
 
 ```shell
 > e environments info    
-Using config file: /Users/mateusz/.e/config.yaml
-enviroments info called
 Environment info:
  Name: e1
  UUID: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
@@ -164,19 +156,14 @@ Environment info:
 #### e environments use
 
 ```shell 
-> e environments use
-Using config file: /Users/mateusz/.e/config.yaml
-use called
+> e environments use     
 ✔ e1 (ade1b8ad-3723-4f85-b51a-3cffa057b2c8, current)
-Choosen environment UUID is: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
 ```
 
 #### e environments run
 
 ```shell
 > e environments run c1 init
-Using config file: /Users/mateusz/.e/config.yaml
-run called
 2020/07/28 15:39:17 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
   Use TF_LOG=TRACE to see Terraform's internal logs.
   ----
@@ -184,7 +171,6 @@ Terraform initialized in an empty directory!
 
 The directory has no Terraform configuration files. You may begin working
 with Terraform immediately by creating Terraform configuration files.
-running command completed!
 ```
 
 ## configuration directory structure
