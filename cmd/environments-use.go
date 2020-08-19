@@ -5,7 +5,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/google/uuid"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/promptui"
 	"github.com/spf13/cobra"
@@ -16,20 +16,32 @@ var environmentsUseCmd = &cobra.Command{
 	Use:   "use",
 	Short: "Allows to select environment to be used",
 	Long:  `TODO`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		debug("environments use called")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("use called")
 		config, err := configuration.GetConfig()
 		if err != nil {
-			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+			errGetConfig(err)
 		}
-		uuid, err := promptui.PromptForEnvironmentSelect("Environments") //TODO check if any environment exists
-		if err != nil {
-			panic(fmt.Sprintf("prompt for environment select failed: %v\n", err)) //TODO err
+		if config.CurrentEnvironment == uuid.Nil {
+			errNilEnvironment()
 		}
-		fmt.Printf("Choosen environment UUID is: %s\v", uuid)
-		err = config.SetUsedEnvironment(uuid)
+
+		var u uuid.UUID
+		if len(args) == 1 {
+			u = uuid.MustParse(args[0])
+		} else {
+			u, err = promptui.PromptForEnvironmentSelect("Environments")
+			if err != nil {
+				errPrompt(err)
+			}
+		}
+
+		infoChosenEnvironment(u.String())
+		err = config.SetUsedEnvironment(u)
 		if err != nil {
-			panic(fmt.Sprintf("setting used environment failed: %v\n", err)) //TODO err
+			errSetEnvironment(err)
 		}
 	},
 }

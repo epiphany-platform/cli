@@ -18,10 +18,7 @@ import (
 	"time"
 )
 
-var (
-	usedEnvironmentDirectory string
-)
-
+//InstalledComponentCommand holds information about specific command of installed component
 type InstalledComponentCommand struct {
 	Name        string            `yaml:"name"`
 	Description string            `yaml:"description"`
@@ -30,6 +27,7 @@ type InstalledComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
+//TODO add tests
 func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mountPath string, mounts []string) error {
 	for _, m := range mounts {
 		util.EnsureDirectory(path.Join(mountPath, m))
@@ -43,13 +41,16 @@ func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory strin
 		MountPath:            mountPath,
 		EnvironmentVariables: cc.Envs,
 	}
+	debug("will try to run docker job %+v", dockerJob)
 	return dockerJob.Run()
 }
 
+//The String method is used to pretty-print InstalledComponentCommand struct
 func (cc *InstalledComponentCommand) String() string {
 	return fmt.Sprintf("    Command:\n     Name %s\n     Description %s\n", cc.Name, cc.Description)
 }
 
+//InstalledComponentVersion struct holds information about installed components with its details.
 type InstalledComponentVersion struct {
 	EnvironmentRef uuid.UUID                   `yaml:"environment_ref"` //TODO try to remove it
 	Name           string                      `yaml:"name"`
@@ -61,10 +62,11 @@ type InstalledComponentVersion struct {
 	Commands       []InstalledComponentCommand `yaml:"commands"`
 }
 
+//TODO add tests
 func (cv *InstalledComponentVersion) Run(command string) error {
 	if cv.Type == "docker" {
 		mountPath := path.Join(
-			usedEnvironmentDirectory,
+			util.UsedEnvironmentDirectory,
 			cv.EnvironmentRef.String(),
 			cv.Name,
 			cv.Version,
@@ -79,6 +81,7 @@ func (cv *InstalledComponentVersion) Run(command string) error {
 	return errors.New("nothing to run for this version")
 }
 
+//The String method is used to pretty-print InstalledComponentVersion struct
 func (cv *InstalledComponentVersion) String() string {
 	var b bytes.Buffer
 	b.WriteString(fmt.Sprintf("  Installed Component:\n   Name: %s\n   Type: %s\n   Version: %s\n   Image: %s\n", cv.Name, cv.Type, cv.Version, cv.Image))
@@ -88,6 +91,7 @@ func (cv *InstalledComponentVersion) String() string {
 	return b.String()
 }
 
+//TODO add tests
 func (cv *InstalledComponentVersion) Download() error {
 	if cv.Type == "docker" {
 		dockerImage := &docker.Image{Name: cv.Image}
@@ -101,9 +105,9 @@ func (cv *InstalledComponentVersion) Download() error {
 	return nil
 }
 
-func (cv *InstalledComponentVersion) PersistLogs(logs string) {
+func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to zerolog
 	logsPath := path.Join(
-		usedEnvironmentDirectory,
+		util.UsedEnvironmentDirectory,
 		cv.EnvironmentRef.String(),
 		cv.Name,
 		cv.Version,
@@ -112,28 +116,37 @@ func (cv *InstalledComponentVersion) PersistLogs(logs string) {
 	)
 	err := ioutil.WriteFile(logsPath, []byte(logs), 0644)
 	if err != nil {
-		panic("failed when writing logs")
+		errFailedToWriteFile(err)
 	}
 }
 
+//Environment struct holds all information about managed environment with list of InstalledComponentVersion
 type Environment struct {
 	Name      string                      `yaml:"name"`
 	Uuid      uuid.UUID                   `yaml:"uuid"`
 	Installed []InstalledComponentVersion `yaml:"installed"`
 }
 
+//Save updated Environment to file
 func (e *Environment) Save() error {
+	if e.Uuid == uuid.Nil {
+		return errors.New(fmt.Sprintf("unexpected UUID on Save: %s", e.Uuid))
+	}
+	debug("will try to marshal environment %+v", e)
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path.Join(usedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName), data, 0644)
+	ep := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName)
+	debug("will try to write marshaled data to file %s", ep)
+	err = ioutil.WriteFile(ep, data, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+//The String method is used to pretty-print Environment struct
 func (e *Environment) String() string {
 	var b bytes.Buffer
 	b.WriteString("Environment info:\n")
@@ -144,15 +157,16 @@ func (e *Environment) String() string {
 	return b.String()
 }
 
+//TODO add tests
 func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 	for _, ic := range e.Installed {
 		if ic.Name == newComponent.Name && ic.Version == newComponent.Version {
-			return errors.New("there is this version of component already installed in environment")
+			return errors.New("this version of component is already installed in environment")
 		}
 	}
 	e.Installed = append(e.Installed, newComponent)
-	newComponentRunsDirectory := path.Join(usedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentRunsSubdirectory)
-	newComponentMountsDirectory := path.Join(usedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentMountsSubdirectory)
+	newComponentRunsDirectory := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentRunsSubdirectory)
+	newComponentMountsDirectory := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), newComponent.Name, newComponent.Version, util.DefaultComponentMountsSubdirectory)
 	util.EnsureDirectory(newComponentRunsDirectory)
 	util.EnsureDirectory(newComponentMountsDirectory)
 	err := newComponent.Download()
@@ -162,6 +176,7 @@ func (e *Environment) Install(newComponent InstalledComponentVersion) error {
 	return e.Save()
 }
 
+//GetComponentByName returns first InstalledComponentVersion found by name
 func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersion, error) {
 	for _, ic := range e.Installed {
 		if ic.Name == name {
@@ -171,67 +186,70 @@ func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersio
 	return nil, errors.New("no such component installed")
 }
 
-func init() {
-	usedEnvironmentDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
-	util.EnsureDirectory(usedEnvironmentDirectory)
+//Create new environment with given name
+func Create(name string) (*Environment, error) {
+	return create(name, uuid.New())
 }
 
-func Create(name string) (*Environment, error) {
+//create new environment with given name and uuid
+func create(name string, uuid uuid.UUID) (*Environment, error) {
+	debug("will try to create environment with uuid %s and name %s", uuid.String(), name)
 	environment := &Environment{
 		Name: name,
-		Uuid: uuid.New(),
+		Uuid: uuid,
 	}
-
-	newEnvironmentDirectory := path.Join(usedEnvironmentDirectory, environment.Uuid.String())
+	newEnvironmentDirectory := path.Join(util.UsedEnvironmentDirectory, environment.Uuid.String())
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
-		panic("I wansnt able to save: " + environment.Uuid.String())
+		errSaveEnvironment(err, environment.Uuid.String())
 	}
 	return environment, nil
 }
 
+//GetAll existing Environment
 func GetAll() ([]*Environment, error) {
-	items, err := ioutil.ReadDir(usedEnvironmentDirectory)
+	debug("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
+	items, err := ioutil.ReadDir(util.UsedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
 	}
 	var environments []*Environment
 	for _, i := range items {
+		debug("entered directory %s", i.Name())
 		if i.IsDir() {
 			e, err := Get(uuid.MustParse(i.Name()))
 			if err == nil {
 				environments = append(environments, e)
+			} else {
+				warnNotEnvironmentDirectory(err)
 			}
 		}
 	}
 	return environments, nil
 }
 
+//Get Environment bu uuid
 func Get(uuid uuid.UUID) (*Environment, error) {
-	expectedFile := path.Join(usedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
+	expectedFile := path.Join(util.UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
+	debug("will try to get environment config from file %s", expectedFile)
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-		fmt.Println("file " + expectedFile + " does not exist!") //TODO err?
+		warnEnvironmentConfigFileNotFound(err, expectedFile)
 		return nil, err
 	} else {
-		e, err := loadEnvironmentFromConfigFile(expectedFile)
+		e := &Environment{}
+		debug("trying to open %s file", expectedFile)
+		file, err := os.Open(expectedFile)
 		if err != nil {
-			fmt.Println("incorrect file?") //TODO warn?
+			return nil, err
 		}
+		defer file.Close()
+		d := yaml.NewDecoder(file)
+		debug("will try to decode file %s to yaml", expectedFile)
+		if err := d.Decode(&e); err != nil {
+			return nil, err
+		}
+		debug("got environment config %+v", e)
 		return e, nil
 	}
-}
-
-func loadEnvironmentFromConfigFile(configPath string) (*Environment, error) {
-	e := &Environment{}
-	file, err := os.Open(configPath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	d := yaml.NewDecoder(file)
-	if err := d.Decode(&e); err != nil {
-		return nil, err
-	}
-	return e, nil
 }

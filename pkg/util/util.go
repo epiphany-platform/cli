@@ -5,7 +5,6 @@
 package util
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -16,19 +15,35 @@ const (
 	DefaultEnvironmentConfigFileName   string = "config.yaml"
 	DefaultComponentRunsSubdirectory   string = "runs"
 	DefaultComponentMountsSubdirectory string = "mounts"
+
+	GithubUrl                   = "https://raw.githubusercontent.com"
+	DefaultRepository           = "mkyc/epiphany-wrapper-poc-repo"
+	DefaultRepositoryBranch     = "master"
+	DefaultV1RepositoryFileName = "v1.yaml"
+)
+
+var (
+	UsedConfigFile             string
+	UsedConfigurationDirectory string
+	UsedEnvironmentDirectory   string
+	UsedRepositoryFile         string
 )
 
 func EnsureDirectory(directory string) {
+	debug("will try to ensure directory %s", directory)
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
-		panic(fmt.Sprintf("directory creation failed: %v\n", err)) //TODO err
+		errDirectoryCreation(err, directory)
 	}
+	debug("directory %s created", directory)
 }
 
 func GetHomeDirectory() string {
+	debug("will try to get home directory")
 	home, err := os.UserHomeDir()
 	if err != nil {
-		panic(fmt.Sprintf("finding home dir failed: %v\n", err)) //TODO err
+		errFindingHome(err)
 	}
+	debug("got user home directory: %s", home)
 	return home
 }

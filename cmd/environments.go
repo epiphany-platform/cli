@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -14,8 +13,8 @@ var environmentsCmd = &cobra.Command{
 	Use:   "environments",
 	Short: "Allows various interactions with environments",
 	Long:  `TODO`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("environments called")
+	PreRun: func(cmd *cobra.Command, args []string) {
+		debug("environments called")
 	},
 }
 

@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
@@ -18,27 +19,29 @@ var componentsInstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Installs component into currently used environment",
 	Long:  `TODO`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		debug("components install called")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("install called")
 		if len(args) != 1 {
-			panic(fmt.Sprintf("incorrect number of arguments: %v", len(args)))
+			errIncorrectNumberOfArguments(errors.New(fmt.Sprintf("found %d args", len(args))))
 		}
 		config, err := configuration.GetConfig()
 		if err != nil {
-			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+			errGetConfig(err)
 		}
 		e, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
-			panic(fmt.Sprintf("environemtns get failed: %v\n", err)) //TODO err
+			errGetEnvironments(err)
 		}
 
 		tc, err := repository.GetRepository().GetComponentByName(args[0])
 		if err != nil {
-			panic(fmt.Sprintf("get component by name failed: %v\n", err)) //TODO err
+			errGetComponentByName(err)
 		}
 		c, err := tc.JustLatestVersion()
 		if err != nil {
-			panic(fmt.Sprintf("get component latest version failed: %v\n", err)) //TODO err
+			errGetComponentWithLatestVersion(err)
 		}
 
 		newComponent := environment.InstalledComponentVersion{
@@ -62,7 +65,7 @@ var componentsInstallCmd = &cobra.Command{
 		}
 		err = e.Install(newComponent)
 		if err != nil {
-			panic(fmt.Sprintf("install component in environment failed: %v\n", err)) //TODO err
+			errInstallComponent(err)
 		}
 		fmt.Printf("Installed component %s %s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
 	},

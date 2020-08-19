@@ -9,8 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -19,21 +17,22 @@ var environmentsInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Displays information about currently selected environment",
 	Long:  `TODO`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		debug("environments info called")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("enviroments info called")
 		config, err := configuration.GetConfig()
 		if err != nil {
-			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+			errGetConfig(err)
 		}
 		if config.CurrentEnvironment == uuid.Nil {
-			fmt.Println("no environment used") //TODO warn?
-			os.Exit(1)
+			errNilEnvironment()
 		}
 		environment, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
-			panic(fmt.Sprintf("environemtns details failed: %v\n", err)) //TODO err
+			errGetEnvironmentDetails(err)
 		}
-		fmt.Println(environment.String())
+		fmt.Print(environment.String())
 	},
 }
 

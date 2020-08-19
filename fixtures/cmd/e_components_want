@@ -1,0 +1,23 @@
+This command provides way to:
+ - list available components, 
+ - install new component to environment
+ - get information about component
+
+Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml
+
+Usage:
+  e components [command]
+
+Available Commands:
+  info        Displays information about component
+  install     Installs component into currently used environment
+  list        Lists all existing components in repository
+
+Flags:
+  -h, --help   help for components
+
+Global Flags:
+      --configDir string   config directory (default is .e)
+  -d, --debug              enable debug loglevel
+
+Use "e components [command] --help" for more information about a command.

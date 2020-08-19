@@ -7,11 +7,16 @@ package cmd
 import (
 	"fmt"
 	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
+	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgDir      string
+	enableDebug bool
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -27,23 +32,19 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		panic(fmt.Sprintf("root execute failed: %v\n", err)) //TODO err
+		errRootExecute(err)
 	}
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	config, err := configuration.GetConfig()
-	if err != nil {
-		panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
-	}
-
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is %s)", config.GetConfigFilePath()))
+	rootCmd.PersistentFlags().StringVar(&cfgDir, "configDir", "", fmt.Sprintf("config directory (default is %s)", util.DefaultConfigurationDirectory))
+	rootCmd.PersistentFlags().BoolVarP(&enableDebug, "debug", "d", false, "enable debug loglevel")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -52,26 +53,32 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		config, err := configuration.SetConfig(cfgFile)
+	if enableDebug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	}
+	debug("initializing root config")
+	if cfgDir != "" {
+		config, err := configuration.SetConfigDirectory(cfgDir)
 		if err != nil {
-			panic(fmt.Sprintf("set config failed: %v\n", err)) //TODO err
+			errSetConfigFile(err)
 		}
 		// Use config file from the flag.
 		viper.SetConfigFile(config.GetConfigFilePath())
 	} else {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			panic(fmt.Sprintf("get config failed: %v\n", err)) //TODO err
+			errGetConfig(err)
 		}
 		// setup default
 		viper.SetConfigFile(config.GetConfigFilePath())
 	}
-
+	debug("read config variables")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		infoConfigFile(viper.ConfigFileUsed())
 	}
 }
