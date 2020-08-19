@@ -24,9 +24,9 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.1
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
-	golang.org/x/sys v0.0.0-20200808120158-1030fc2bf1d9 // indirect
+	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
+	golang.org/x/sys v0.0.0-20200819091447-39769834ee22 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/ini.v1 v1.57.0 // indirect
+	gopkg.in/ini.v1 v1.60.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )

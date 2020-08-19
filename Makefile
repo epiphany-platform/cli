@@ -14,7 +14,9 @@ BUILD_DIR := ./output/
 APP_REPO := github.com/mkyc/epiphany-wrapper-poc
 APP_NAME := e
 
-all: clean-task get-task janitor-task build-task test-task
+.PHONY: all licenses test clean build get install test-task clean-task get-task get-update-task janitor-task build-task licences-task install-task
+
+all: janitor-task clean-task get-task janitor-task build-task test-task
 licenses: licences-task
 test: get-task janitor-task test-task
 clean: clean-task
