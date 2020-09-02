@@ -1,4 +1,4 @@
-# epiphany-wrapper-poc
+# epiphany wrapper cli
 PoC application to wrap containerised modules of epiphany
 
 ## example run
