@@ -74,7 +74,7 @@ func TestCmd(t *testing.T) {
 		},
 		{
 			name:     "e components",
-			args:     []string{"components"},
+			args:     []string{"componentando"},
 			mockRepo: false,
 			mockEnv:  false,
 		},
