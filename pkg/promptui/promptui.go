@@ -7,9 +7,9 @@ package promptui
 import (
 	"errors"
 	"fmt"
+	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/google/uuid"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
 	"sort"
 
 	"github.com/manifoldco/promptui"

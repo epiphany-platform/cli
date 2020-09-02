@@ -1,4 +1,4 @@
-module github.com/mkyc/epiphany-wrapper-poc
+module github.com/epiphany-platform/cli
 
 go 1.14
 

@@ -7,9 +7,9 @@ package configuration
 import (
 	"errors"
 	"fmt"
+	"github.com/epiphany-platform/cli/pkg/environment"
+	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/google/uuid"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
