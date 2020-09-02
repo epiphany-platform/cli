@@ -16,8 +16,8 @@ const (
 	DefaultComponentRunsSubdirectory   string = "runs"
 	DefaultComponentMountsSubdirectory string = "mounts"
 
-	GithubUrl                   = "https://raw.githubusercontent.com"
-	DefaultRepository           = "mkyc/epiphany-wrapper-poc-repo"
+	GithubUrl                   = "https://api.github.com/repos"
+	DefaultRepository           = "epiphany-platform/modules"
 	DefaultRepositoryBranch     = "master"
 	DefaultV1RepositoryFileName = "v1.yaml"
 )

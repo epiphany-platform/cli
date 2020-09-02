@@ -128,8 +128,11 @@ func GetRepository() *V1 {
 	repo, err := loadRepository(util.UsedRepositoryFile)
 	if err != nil {
 		debug("error while loading local repo: %#v", err)
-		debug("will try to download repo")
-		repo, err = downloadAndPersistRepositoryV1(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, util.DefaultRepository, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
+		//github API repo: https://api.github.com/repos/:owner/:repo/contents/:path?ref=branch
+		//for references look here: https://developer.github.com/v3/repos/contents/#get-repository-content
+		repoUrl := fmt.Sprintf("%s/%s/contents/%s?ref=%s", util.GithubUrl, util.DefaultRepository, util.DefaultV1RepositoryFileName, util.DefaultRepositoryBranch)
+		debug("will try to download repo from %s", repoUrl)
+		repo, err = downloadAndPersistRepositoryV1(repoUrl)
 		if err != nil {
 			errGetRepository(err)
 		}
@@ -141,7 +144,14 @@ func GetRepository() *V1 {
 //The downloadAndPersistRepositoryV1 method retrieves file from provided url, unmarshalls it to V1 and writes file to
 //util.UsedRepositoryFile. Eventually it also returns obtained V1 struct.
 func downloadAndPersistRepositoryV1(url string) (*V1, error) {
-	res, err := http.Get(url)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	//add custom header due to https://developer.github.com/v3/repos/contents/#custom-media-types
+	req.Header.Set("Accept", "application/vnd.github.v3.raw")
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
