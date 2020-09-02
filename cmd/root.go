@@ -6,8 +6,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

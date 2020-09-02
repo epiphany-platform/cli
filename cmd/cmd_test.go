@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/epiphany-platform/cli/pkg/util"
 	"io/ioutil"
 	"os"
 	"os/exec"

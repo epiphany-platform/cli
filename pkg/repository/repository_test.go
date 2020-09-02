@@ -7,7 +7,7 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/rs/zerolog"
 	"io/ioutil"
 	"os"

@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/util"
+	"github.com/epiphany-platform/cli/pkg/util"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"

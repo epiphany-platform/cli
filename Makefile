@@ -11,7 +11,7 @@ TEST := $(CMD) test
 
 BUILD_DIR := ./output/
 
-APP_REPO := github.com/mkyc/epiphany-wrapper-poc
+APP_REPO := github.com/epiphany-platform/cli
 APP_NAME := e
 
 .PHONY: all licenses test clean build get install test-task clean-task get-task get-update-task janitor-task build-task licences-task install-task

@@ -4,7 +4,7 @@ Copyright © 2020 Mateusz Kyc
 package main
 
 import (
-	"github.com/mkyc/epiphany-wrapper-poc/cmd"
+	"github.com/epiphany-platform/cli/cmd"
 	"github.com/rs/zerolog"
 )
 

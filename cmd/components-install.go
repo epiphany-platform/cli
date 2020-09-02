@@ -7,9 +7,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/configuration"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/environment"
-	"github.com/mkyc/epiphany-wrapper-poc/pkg/repository"
+	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/epiphany-platform/cli/pkg/environment"
+	"github.com/epiphany-platform/cli/pkg/repository"
 
 	"github.com/spf13/cobra"
 )
