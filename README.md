@@ -1,4 +1,4 @@
-# epiphany-wrapper-poc
+# epiphany wrapper cli
 PoC application to wrap containerised modules of epiphany
 
 ## example run
@@ -39,7 +39,7 @@ This command provides way to:
  - install new component to environment
  - get information about component
 
-Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml
+Information about available components are taken from https://raw.githubusercontent.com/epiphany-platform/modules/master/v1.yaml
 
 Usage:
   e components [command]
