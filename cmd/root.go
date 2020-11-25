@@ -1,11 +1,8 @@
-/*
-Copyright © 2020 Mateusz Kyc
-*/
-
 package cmd
 
 import (
 	"fmt"
+
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/rs/zerolog"
@@ -56,7 +53,7 @@ func initConfig() {
 	if enableDebug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	} else {
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 	debug("initializing root config")
 	if cfgDir != "" {

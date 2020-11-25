@@ -1,15 +1,12 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package util
 
 import (
-	"github.com/rs/zerolog"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/rs/zerolog"
 )
 
 func setup() {

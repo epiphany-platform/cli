@@ -15,8 +15,7 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/spf13/cobra"
 )
 
@@ -26,21 +25,14 @@ var azCmd = &cobra.Command{
 	Short: "Enable access to set of commands used to work with Azure cloud",
 	Long: `Enable access to set of commands used to work with Azure cloud:
 	- authentication - let you access authentication options - e.g. create Service Principal`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		debug("az called")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("az called")
+		az.CreateSP()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(azCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// azCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// azCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

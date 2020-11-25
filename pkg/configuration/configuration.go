@@ -1,19 +1,16 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package configuration
 
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"os"
-	"path"
 )
 
 type Kind string

@@ -3,7 +3,6 @@ module github.com/epiphany-platform/cli
 go 1.14
 
 require (
-	github.com/Azure/azure-sdk-for-go v48.2.0+incompatible // indirect
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1

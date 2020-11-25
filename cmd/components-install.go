@@ -1,12 +1,9 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package cmd
 
 import (
 	"errors"
 	"fmt"
+
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/repository"

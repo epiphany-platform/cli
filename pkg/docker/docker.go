@@ -1,19 +1,16 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package docker
 
 import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/pkg/stdcopy"
 	"io"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/pkg/stdcopy"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"

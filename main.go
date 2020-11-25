@@ -1,6 +1,3 @@
-/*
-Copyright © 2020 Mateusz Kyc
-*/
 package main
 
 import (

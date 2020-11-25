@@ -1,21 +1,18 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package environment
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/pkg/docker"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"github.com/google/uuid"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
+
+	"github.com/epiphany-platform/cli/pkg/docker"
+	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/google/uuid"
+	"gopkg.in/yaml.v2"
 )
 
 //InstalledComponentCommand holds information about specific command of installed component

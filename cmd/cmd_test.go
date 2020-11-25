@@ -1,12 +1,7 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package cmd
 
 import (
 	"fmt"
-	"github.com/epiphany-platform/cli/pkg/util"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -14,6 +9,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/epiphany-platform/cli/pkg/util"
 )
 
 func setup(t *testing.T, suffix string) (string, string, string, string) {

@@ -1,11 +1,8 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package cmd
 
 import (
 	"fmt"
+
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/google/uuid"
@@ -38,14 +35,4 @@ var environmentsInfoCmd = &cobra.Command{
 
 func init() {
 	environmentsCmd.AddCommand(environmentsInfoCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// environmentsInfoCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// environmentsInfoCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

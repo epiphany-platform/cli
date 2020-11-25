@@ -1,16 +1,13 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package promptui
 
 import (
 	"errors"
 	"fmt"
+	"sort"
+
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/google/uuid"
-	"sort"
 
 	"github.com/manifoldco/promptui"
 )

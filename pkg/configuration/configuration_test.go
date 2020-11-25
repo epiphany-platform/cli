@@ -1,21 +1,18 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package configuration
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
 	"testing"
+
+	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 func setup(t *testing.T, suffix string) (string, string) {

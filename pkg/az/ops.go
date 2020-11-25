@@ -1,4 +1,4 @@
-package repository
+package az
 
 import (
 	"github.com/rs/zerolog"
@@ -10,8 +10,12 @@ var (
 )
 
 func init() {
+	// logLevel := zerolog.InfoLevel
+	// zerolog.SetGlobalLevel(logLevel)
+	// logger = zerolog.New(os.Stdout).With().Str("package", "az").Logger()
+
 	logger = log.With().
-		Str("package", "repository").
+		Str("package", "az").
 		Logger()
 }
 
@@ -21,9 +25,6 @@ func debug(format string, v ...interface{}) {
 		Msgf(format, v...)
 }
 
-func errGetRepository(err error) {
-	logger.
-		Panic().
-		Err(err).
-		Msg("get repository failed")
+func info(msg string) {
+	logger.Info().Msg(msg)
 }

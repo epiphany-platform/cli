@@ -1,18 +1,15 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package repository
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/epiphany-platform/cli/pkg/util"
+	"gopkg.in/yaml.v2"
 )
 
 //ComponentCommand struct contains information about specific command provided by component to be executed
