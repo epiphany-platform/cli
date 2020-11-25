@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	cfgDir      string
-	enableDebug bool
+	cfgDir   string
+	logLevel string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -41,7 +41,7 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "configDir", "", fmt.Sprintf("config directory (default is %s)", util.DefaultConfigurationDirectory))
-	rootCmd.PersistentFlags().BoolVarP(&enableDebug, "debug", "d", false, "enable debug loglevel")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "", fmt.Sprintf("log level (default is warn, values: [debug, info, error, fatal])"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -50,11 +50,19 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if enableDebug {
+	switch logLevel {
+	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	} else {
+	case "info":
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	case "fatal":
+		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
+
 	debug("initializing root config")
 	if cfgDir != "" {
 		config, err := configuration.SetConfigDirectory(cfgDir)
