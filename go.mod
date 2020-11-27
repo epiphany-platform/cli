@@ -3,6 +3,11 @@ module github.com/epiphany-platform/cli
 go 1.14
 
 require (
+	github.com/Azure/azure-sdk-for-go v48.2.0+incompatible
+	github.com/Azure/go-autorest/autorest v0.11.9
+	github.com/Azure/go-autorest/autorest/azure/auth v0.5.3
+	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
+	github.com/Azure/go-autorest/autorest/validation v0.3.0 // indirect
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1
