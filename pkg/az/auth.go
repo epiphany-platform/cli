@@ -27,24 +27,6 @@ func CreateSP(tenantID, spName string) {
 	subscriptionsClient := subscriptions.NewClient()
 	subscriptionsClient.Authorizer = authorizer
 
-	subscriptionsIterator, err := subscriptionsClient.ListComplete(context.TODO())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	subscriptionsCount := 0
-	for subscriptionsIterator.NotDone() {
-		subscriptionsCount++
-		sub := subscriptionsIterator.Value()
-		log.Printf("Subscription name: %s and ID: %s\n", *sub.DisplayName, *sub.ID)
-		subscriptionID := *sub.SubscriptionID
-		err = subscriptionsIterator.NextWithContext(context.TODO())
-		info(subscriptionID)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	env, err := azure.EnvironmentFromName(cloudName)
 	if err != nil {
 		log.Fatal(err)
