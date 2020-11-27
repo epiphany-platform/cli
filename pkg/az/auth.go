@@ -19,13 +19,8 @@ const (
 	appName          = "20201031-auto-test-1"
 )
 
-var (
-	//spNAme = "epiphany-test"
-	spNAme = "Workflow"
-)
-
 // CreateSP function is used to create Service Principal
-func CreateSP() {
+func CreateSP(tenantID, spName string) {
 	info("Start creating of Azure Service Principal...")
 	authorizer := getAuthrorizerFromCli()
 
@@ -61,12 +56,12 @@ func CreateSP() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var tenantID string
+
 	tenantsCount := 0
 	for tenantsIterator.NotDone() {
 		tenantsCount++
 		ten := tenantsIterator.Value()
-		if *ten.TenantID == "your_tennant_id" {
+		if *ten.TenantID == tenantID {
 			log.Printf("Tenantid: %s, name: %s found.\n", *ten.TenantID, *ten.DisplayName)
 			tenantID = *ten.TenantID
 		}
@@ -82,7 +77,7 @@ func CreateSP() {
 	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
 	spClient.Authorizer = graphAuthorizer
 
-	spPresent := checkIfSPWithDisplayNamePresent(spClient, spNAme)
+	spPresent := checkIfSPWithDisplayNamePresent(spClient, spName)
 
 	if spPresent {
 		info("Service Principal with name already exists.")
@@ -104,7 +99,7 @@ func getAuthrorizerFromCli() autorest.Authorizer {
 
 func checkIfSPWithDisplayNamePresent(spClient graphrbac.ServicePrincipalsClient, spName string) bool {
 	info("Getting SP iterator")
-	spFilter := "displayname eq '" + spNAme + "'"
+	spFilter := "displayname eq '" + spName + "'"
 	spIterator, err := spClient.ListComplete(context.TODO(), spFilter)
 	if err != nil {
 		log.Fatal(err)

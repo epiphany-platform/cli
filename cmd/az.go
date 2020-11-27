@@ -15,8 +15,15 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/spf13/cobra"
+)
+
+var (
+	tenantID string
+	spName   string
 )
 
 // azCmd represents the az command
@@ -29,10 +36,12 @@ var azCmd = &cobra.Command{
 		debug("az called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		az.CreateSP()
+		az.CreateSP(tenantID, spName)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(azCmd)
+	azCmd.PersistentFlags().StringVar(&tenantID, "tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
+	azCmd.PersistentFlags().StringVar(&spName, "spName", "", fmt.Sprintf("Display Name of Service Principal"))
 }
