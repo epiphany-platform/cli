@@ -37,7 +37,7 @@ var azCmd = &cobra.Command{
 		debug("az called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		az.CreateSP(tenantID, subsciptionID, spName)
+		az.CreateSP(subsciptionID, tenantID, spName)
 	},
 }
 

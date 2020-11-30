@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
@@ -21,65 +20,89 @@ const (
 	cloudName        = "AzurePublicCloud"
 	defaultPublisher = "Microsoft Services"
 	roleName         = "Contributor"
-	appName          = ""
 )
 
+// Credentials structure is used to format display information for Service Principal
 type Credentials struct {
-	appID        string
-	password     string
-	tenant       string
-	subscription string
+	appID          string
+	password       string
+	tenant         string
+	subscriptionID string
 }
 
 // CreateSP function is used to create Service Principal
-func CreateSP(tenantID, subscriptionID, spName string) {
+func CreateSP(subscriptionID, tenantID, spName string) {
 	info("Start creating of Azure Service Principal...")
 	resourceManagerAuthorizer := getAuthrorizerFromCli()
 
-	subscriptionsClient := subscriptions.NewClient()
-	subscriptionsClient.Authorizer = resourceManagerAuthorizer
+	env := getEnvironment(cloudName)
 
-	env, err := azure.EnvironmentFromName(cloudName)
-	if err != nil {
-		log.Fatal(err)
+	graphAuthorizer := getGraphAuthorizer(env)
+
+	pass := generatePassword()
+
+	app := createApplication(tenantID, spName, pass, graphAuthorizer)
+
+	sp := createServicePrincipal(tenantID, app, graphAuthorizer)
+
+	assignRoleToServicePrincipal(subscriptionID, sp, resourceManagerAuthorizer)
+
+	creds := &Credentials{
+		appID:          *sp.AppID,
+		password:       pass,
+		tenant:         tenantID,
+		subscriptionID: subscriptionID,
 	}
+	log.Printf("\n===========\nCREDENCIALS\n%+v\n===========\n", creds)
+	info("Azure Service Principal created.")
+}
 
-	tenantsClient := subscriptions.NewTenantsClient()
-	tenantsClient.Authorizer = resourceManagerAuthorizer
-	tenantsIterator, err := tenantsClient.ListComplete(context.TODO())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tenantsCount := 0
-	for tenantsIterator.NotDone() {
-		tenantsCount++
-		ten := tenantsIterator.Value()
-		if *ten.TenantID == tenantID {
-			log.Printf("Tenantid: %s, name: %s found.\n", *ten.TenantID, *ten.DisplayName)
-			tenantID = *ten.TenantID
-		}
-		err = tenantsIterator.NextWithContext(context.TODO())
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
-
-	info("Getting SP Client")
-	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
-	spClient.Authorizer = graphAuthorizer
-
-	// application
-	appClient := graphrbac.NewApplicationsClient(tenantID)
-	appClient.Authorizer = graphAuthorizer
-
-	keyID := uuid.NewV4()
+func generatePassword() string {
 	pass, err := password.Generate(32, 10, 0, false, false)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return pass
+}
+
+// getAuthrorizerFromCli returns authorizer based on local az login session
+func getAuthrorizerFromCli() autorest.Authorizer {
+	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
+	if err != nil {
+		log.Fatal("Ups...", err)
+	} else {
+		info("Got Azure CLI authorizer successfully .")
+	}
+	return cliAuthorizer
+}
+
+// getEnvironment returns Azure Environment based on cloudName
+func getEnvironment(cloudName string) azure.Environment {
+	env, err := azure.EnvironmentFromName(cloudName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return env
+}
+
+// getGraphAuthorizer return graph authorizer based on Azure Environment
+func getGraphAuthorizer(env azure.Environment) autorest.Authorizer {
+	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
+	if err != nil {
+		log.Fatal("Ups...", err)
+	} else {
+		info("Got Azure Graph authorizer successfully .")
+	}
+	return graphAuthorizer
+}
+
+// createApplication creates an application that is used with Service Principal based on tenantID, spName, pass and graphAuthorizer (autorest.Authorizer)
+func createApplication(tenantID, spName, pass string, graphAuthorizer autorest.Authorizer) graphrbac.Application {
+	info("Creating an application")
+	appClient := graphrbac.NewApplicationsClient(tenantID)
+	appClient.Authorizer = graphAuthorizer
+
+	keyID := uuid.NewV4()
 	t := &date.Time{
 		Time: time.Now(),
 	}
@@ -108,7 +131,15 @@ func CreateSP(tenantID, subscriptionID, spName string) {
 	}
 	log.Println("App: ", string(appJSON))
 
-	// sp creation
+	return app
+}
+
+// createServicePrincipal creates Service Principal based on tenantID, application (graphrbac.Application) using graphAuthorizer (autorest.Authorizer)
+func createServicePrincipal(tenantID string, app graphrbac.Application, graphAuthorizer autorest.Authorizer) graphrbac.ServicePrincipal {
+	info("Creating a Service Principal")
+	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
+	spClient.Authorizer = graphAuthorizer
+
 	sp, err := spClient.Create(context.TODO(), graphrbac.ServicePrincipalCreateParameters{
 		AppID:          app.AppID,
 		AccountEnabled: to.BoolPtr(true),
@@ -121,7 +152,13 @@ func CreateSP(tenantID, subscriptionID, spName string) {
 		log.Fatal(err)
 	}
 	log.Println("App: ", string(spJSON))
+	return sp
+}
 
+// assignRoleToServicePrincipal assigns role from RBAC to Service Principal
+// based on subscriptionID string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer
+func assignRoleToServicePrincipal(subscriptionID string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer) {
+	info("Assigning a role to Service Principal")
 	roleAssignmentClient := authorization.NewRoleAssignmentsClient(subscriptionID)
 	roleAssignmentClient.Authorizer = resourceManagerAuthorizer
 
@@ -147,23 +184,4 @@ func CreateSP(tenantID, subscriptionID, spName string) {
 			break
 		}
 	}
-
-	c := &Credentials{
-		appID:        *sp.AppID,
-		password:     pass,
-		tenant:       tenantID,
-		subscription: subscriptionID,
-	}
-	log.Printf("\n===========\nCREDENCIALS\n%+v\n===========\n", c)
-
-}
-
-func getAuthrorizerFromCli() autorest.Authorizer {
-	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
-	if err != nil {
-		log.Fatal("Ups...")
-	} else {
-		info("Got Azure CLI authorizer successfully .")
-	}
-	return cliAuthorizer
 }
