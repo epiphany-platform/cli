@@ -163,6 +163,27 @@ func assignRoleToServicePrincipal(subscriptionID string, sp graphrbac.ServicePri
 	roleAssignmentClient.Authorizer = resourceManagerAuthorizer
 
 	var roleID string
+
+	roleDefinitionClient := authorization.NewRoleDefinitionsClient(subscriptionID)
+	roleDefinitionClient.Authorizer = resourceManagerAuthorizer
+
+	roleDefinitionIterator, err := roleDefinitionClient.ListComplete(context.TODO(), "/subscriptions/"+subscriptionID, "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for roleDefinitionIterator.NotDone() {
+		rd := roleDefinitionIterator.Value()
+		if *rd.RoleName == roleName {
+			roleID = *rd.ID
+			log.Printf("RoleDefinition: %s\n", *rd.RoleName)
+		}
+		err = roleDefinitionIterator.NextWithContext(context.TODO())
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	roleAssignmentName := uuid.NewV4()
 	for i := 0; i < 30; i++ {
 		ra, err := roleAssignmentClient.Create(context.TODO(), "/subscriptions/"+subscriptionID, roleAssignmentName.String(), authorization.RoleAssignmentCreateParameters{
