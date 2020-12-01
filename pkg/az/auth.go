@@ -45,7 +45,7 @@ func CreateSP(subscriptionID, tenantID, spName string) {
 
 	sp := createServicePrincipal(tenantID, app, graphAuthorizer)
 
-	assignRoleToServicePrincipal(subscriptionID, sp, resourceManagerAuthorizer)
+	assignRoleToServicePrincipal(subscriptionID, roleName, sp, resourceManagerAuthorizer)
 
 	creds := &Credentials{
 		appID:          *sp.AppID,
@@ -157,32 +157,12 @@ func createServicePrincipal(tenantID string, app graphrbac.Application, graphAut
 
 // assignRoleToServicePrincipal assigns role from RBAC to Service Principal
 // based on subscriptionID string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer
-func assignRoleToServicePrincipal(subscriptionID string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer) {
+func assignRoleToServicePrincipal(subscriptionID, roleName string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer) {
 	info("Assigning a role to Service Principal")
 	roleAssignmentClient := authorization.NewRoleAssignmentsClient(subscriptionID)
 	roleAssignmentClient.Authorizer = resourceManagerAuthorizer
 
-	var roleID string
-
-	roleDefinitionClient := authorization.NewRoleDefinitionsClient(subscriptionID)
-	roleDefinitionClient.Authorizer = resourceManagerAuthorizer
-
-	roleDefinitionIterator, err := roleDefinitionClient.ListComplete(context.TODO(), "/subscriptions/"+subscriptionID, "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for roleDefinitionIterator.NotDone() {
-		rd := roleDefinitionIterator.Value()
-		if *rd.RoleName == roleName {
-			roleID = *rd.ID
-			log.Printf("RoleDefinition: %s\n", *rd.RoleName)
-		}
-		err = roleDefinitionIterator.NextWithContext(context.TODO())
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
+	roleID := getRoleID(subscriptionID, roleName, resourceManagerAuthorizer)
 
 	roleAssignmentName := uuid.NewV4()
 	for i := 0; i < 30; i++ {
@@ -205,4 +185,31 @@ func assignRoleToServicePrincipal(subscriptionID string, sp graphrbac.ServicePri
 			break
 		}
 	}
+}
+
+// getRoleID finds roleID that is equal to roleName from given subscription
+func getRoleID(subscriptionID, roleName string, resourceManagerAuthorizer autorest.Authorizer) string {
+
+	roleDefinitionClient := authorization.NewRoleDefinitionsClient(subscriptionID)
+	roleDefinitionClient.Authorizer = resourceManagerAuthorizer
+
+	var roleID string
+
+	roleDefinitionIterator, err := roleDefinitionClient.ListComplete(context.TODO(), "/subscriptions/"+subscriptionID, "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for roleDefinitionIterator.NotDone() {
+		rd := roleDefinitionIterator.Value()
+		if *rd.RoleName == roleName {
+			roleID = *rd.ID
+			log.Printf("RoleDefinition: %s\n", *rd.RoleName)
+		}
+		err = roleDefinitionIterator.NextWithContext(context.TODO())
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	return roleID
 }
