@@ -2,7 +2,7 @@ package az
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
@@ -53,14 +53,14 @@ func CreateSP(subscriptionID, tenantID, spName string) {
 		tenant:         tenantID,
 		subscriptionID: subscriptionID,
 	}
-	log.Printf("\n===========\nCREDENCIALS\n%+v\n===========\n", creds)
+	info(fmt.Sprintf("\n===========\nCREDENCIALS\n%+v\n===========\n", creds))
 	info("Azure Service Principal created.")
 }
 
 func generatePassword() string {
 	pass, err := password.Generate(32, 10, 0, false, false)
 	if err != nil {
-		log.Fatal(err)
+		errFailedToGeneratePassword(err)
 	}
 	return pass
 }
@@ -69,7 +69,7 @@ func generatePassword() string {
 func getAuthrorizerFromCli() autorest.Authorizer {
 	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		log.Fatal("Ups...", err)
+		errFailedToGetAuthrorizerFromCli(err)
 	} else {
 		info("Got Azure CLI authorizer successfully .")
 	}
@@ -80,7 +80,7 @@ func getAuthrorizerFromCli() autorest.Authorizer {
 func getEnvironment(cloudName string) azure.Environment {
 	env, err := azure.EnvironmentFromName(cloudName)
 	if err != nil {
-		log.Fatal(err)
+		errFailedToGetEnvironment(err)
 	}
 	return env
 }
@@ -89,7 +89,7 @@ func getEnvironment(cloudName string) azure.Environment {
 func getGraphAuthorizer(env azure.Environment) autorest.Authorizer {
 	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
 	if err != nil {
-		log.Fatal("Ups...", err)
+		errFailedToGetGraphAuthrorizer(err)
 	} else {
 		info("Got Azure Graph authorizer successfully .")
 	}
@@ -123,14 +123,13 @@ func createApplication(tenantID, spName, pass string, graphAuthorizer autorest.A
 		}},
 	})
 	if err != nil {
-		log.Fatal(err)
+		errFailedToCreateApplication(err)
 	}
 	appJSON, err := app.MarshalJSON()
 	if err != nil {
-		log.Fatal(err)
+		errFailedToMarshalJSON(err)
 	}
-	log.Println("App: ", string(appJSON))
-
+	info(fmt.Sprint("App: ", string(appJSON)))
 	return app
 }
 
@@ -145,13 +144,13 @@ func createServicePrincipal(tenantID string, app graphrbac.Application, graphAut
 		AccountEnabled: to.BoolPtr(true),
 	})
 	if err != nil {
-		log.Fatal(err)
+		errFailedToCreateApplication(err)
 	}
 	spJSON, err := sp.MarshalJSON()
 	if err != nil {
-		log.Fatal(err)
+		errFailedToMarshalJSON(err)
 	}
-	log.Println("App: ", string(spJSON))
+	info(fmt.Sprint("App: ", string(spJSON)))
 	return sp
 }
 
@@ -173,15 +172,15 @@ func assignRoleToServicePrincipal(subscriptionID, roleName string, sp graphrbac.
 			},
 		})
 		if err != nil {
-			log.Println(err)
+			warnAssignRoleToServicePrincipal(err)
 			time.Sleep(1 * time.Second)
 			continue
 		} else {
 			raJSON, err := ra.MarshalJSON()
 			if err != nil {
-				log.Fatal(err)
+				errFailedToMarshalJSON(err)
 			}
-			log.Printf("\n===========\nROLE ASSIGNMENT\n%v\n===========\n", string(raJSON))
+			info(fmt.Sprintf("\n===========\nROLE ASSIGNMENT\n%v\n===========\n", string(raJSON)))
 			break
 		}
 	}
@@ -197,18 +196,18 @@ func getRoleID(subscriptionID, roleName string, resourceManagerAuthorizer autore
 
 	roleDefinitionIterator, err := roleDefinitionClient.ListComplete(context.TODO(), "/subscriptions/"+subscriptionID, "")
 	if err != nil {
-		log.Fatal(err)
+		errFailedToGetRoleDefinitionIterator(err)
 	}
 
 	for roleDefinitionIterator.NotDone() {
 		rd := roleDefinitionIterator.Value()
 		if *rd.RoleName == roleName {
 			roleID = *rd.ID
-			log.Printf("RoleDefinition: %s\n", *rd.RoleName)
+			info(fmt.Sprintf("RoleDefinition: %s\n", *rd.RoleName))
 		}
 		err = roleDefinitionIterator.NextWithContext(context.TODO())
 		if err != nil {
-			log.Fatal(err)
+			errFailedToIterateOverRoleDefinitions(err)
 		}
 	}
 	return roleID
