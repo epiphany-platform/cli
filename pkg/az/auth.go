@@ -129,7 +129,7 @@ func createApplication(tenantID, spName, pass string, graphAuthorizer autorest.A
 	if err != nil {
 		errFailedToMarshalJSON(err)
 	}
-	info(fmt.Sprint("App: ", string(appJSON)))
+	debug(fmt.Sprint("App: ", string(appJSON)))
 	return app
 }
 
@@ -150,7 +150,7 @@ func createServicePrincipal(tenantID string, app graphrbac.Application, graphAut
 	if err != nil {
 		errFailedToMarshalJSON(err)
 	}
-	info(fmt.Sprint("App: ", string(spJSON)))
+	debug(fmt.Sprint("App: ", string(spJSON)))
 	return sp
 }
 
@@ -180,7 +180,7 @@ func assignRoleToServicePrincipal(subscriptionID, roleName string, sp graphrbac.
 			if err != nil {
 				errFailedToMarshalJSON(err)
 			}
-			info(fmt.Sprintf("\n===========\nROLE ASSIGNMENT\n%v\n===========\n", string(raJSON)))
+			debug(fmt.Sprintf("\n===========\nROLE ASSIGNMENT\n%v\n===========\n", string(raJSON)))
 			break
 		}
 	}
@@ -203,7 +203,7 @@ func getRoleID(subscriptionID, roleName string, resourceManagerAuthorizer autore
 		rd := roleDefinitionIterator.Value()
 		if *rd.RoleName == roleName {
 			roleID = *rd.ID
-			info(fmt.Sprintf("RoleDefinition: %s\n", *rd.RoleName))
+			debug(fmt.Sprintf("RoleDefinition: %s\n", *rd.RoleName))
 		}
 		err = roleDefinitionIterator.NextWithContext(context.TODO())
 		if err != nil {
