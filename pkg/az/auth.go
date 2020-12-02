@@ -30,8 +30,8 @@ type Credentials struct {
 	subscriptionID string
 }
 
-// CreateSP function is used to create Service Principal
-func CreateSP(subscriptionID, tenantID, spName string) {
+// CreateSP function is used to create Service Principal, returns Credentials
+func CreateSP(subscriptionID, tenantID, spName string) *Credentials {
 	info("Start creating of Azure Service Principal...")
 	resourceManagerAuthorizer := getAuthrorizerFromCli()
 
@@ -53,8 +53,10 @@ func CreateSP(subscriptionID, tenantID, spName string) {
 		tenant:         tenantID,
 		subscriptionID: subscriptionID,
 	}
-	info(fmt.Sprintf("\n===========\nCREDENCIALS\n%+v\n===========\n", creds))
+
 	info("Azure Service Principal created.")
+
+	return creds
 }
 
 func generatePassword() string {
@@ -146,11 +148,13 @@ func createServicePrincipal(tenantID string, app graphrbac.Application, graphAut
 	if err != nil {
 		errFailedToCreateApplication(err)
 	}
+
 	spJSON, err := sp.MarshalJSON()
 	if err != nil {
 		errFailedToMarshalJSON(err)
 	}
 	debug(fmt.Sprint("App: ", string(spJSON)))
+	fmt.Println(fmt.Sprint("App: ", string(spJSON)))
 	return sp
 }
 

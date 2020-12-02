@@ -23,9 +23,9 @@ import (
 )
 
 var (
-	tenantID      string
-	subsciptionID string
-	spName        string
+	tenantID       string
+	subscriptionID string
+	spName         string
 )
 
 // createServicePrincipalCmd represents the createServicePrincipal command
@@ -37,7 +37,7 @@ var createServicePrincipalCmd = &cobra.Command{
 		fmt.Println("createServicePrincipal called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		az.CreateSP(subsciptionID, tenantID, spName)
+		az.CreateSP(subscriptionID, tenantID, spName)
 	},
 }
 
@@ -45,6 +45,6 @@ func init() {
 	azCmd.AddCommand(createServicePrincipalCmd)
 
 	createServicePrincipalCmd.PersistentFlags().StringVar(&tenantID, "tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
-	createServicePrincipalCmd.PersistentFlags().StringVar(&subsciptionID, "subsciptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
+	createServicePrincipalCmd.PersistentFlags().StringVar(&subscriptionID, "subscriptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
 	createServicePrincipalCmd.PersistentFlags().StringVar(&spName, "spName", "", fmt.Sprintf("Display Name of Service Principal"))
 }
