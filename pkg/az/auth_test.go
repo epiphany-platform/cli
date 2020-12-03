@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
@@ -60,7 +61,7 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 	// when
 	creds := CreateSP(subscriptionID, tenantID, spName)
 
-	t.Log(fmt.Sprintf("\n===========\nCREDENCIALS\n%+v\n===========\n", creds))
+	t.Log(fmt.Sprintf("\n===========\nCREDENTIALS\n%+v\n===========\n", creds))
 
 	env := getEnvironment(cloudTestName)
 
@@ -68,12 +69,55 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 
 	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
 	spClient.Authorizer = graphAuthorizer
+	sp, err := spClient.Get(context.TODO(), creds.spObjectID)
+	if err != nil {
+		t.Error(err)
+	}
 
-	sp, err := spClient.Get(context.TODO(), creds.appID)
+	spJSON, err := sp.MarshalJSON()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(sp)
+	t.Log(fmt.Sprint("App: ", string(spJSON)))
+
+	if *sp.ObjectID != creds.spObjectID {
+		t.Error("Different object ID of Service Principal.")
+	}
+
+	if *sp.AppID != creds.appID {
+		t.Error("Different object ID of Service Principal.")
+	}
+
+	// app, err := appClient.Get(context.TODO(), creds.appObjectID)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+
+	// if *sp.AppDisplayName != app.Homepage {
+	// 	t.Error("Different object ID of Service Principal.")
+	// }
+
+	timeout := 60 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	resp, err := spClient.Delete(ctx, creds.spObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("SP Resp: ", resp.Response)
+
+	appClient := graphrbac.NewApplicationsClient(tenantID)
+	appClient.Authorizer = graphAuthorizer
+
+	ctxApp, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	respApp, errApp := appClient.Delete(ctxApp, creds.appObjectID)
+	if errApp != nil {
+		t.Fatal(err)
+	}
+
+	t.Log("App Resp: ", respApp.Response)
 	// then
 	// if !matched {
 	// 	t.Error("Expected to find expression matching:\n", expectedFileContentRegexp, "\nbut found:\n", fileContent)

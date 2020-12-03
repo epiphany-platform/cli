@@ -24,6 +24,8 @@ const (
 
 // Credentials structure is used to format display information for Service Principal
 type Credentials struct {
+	spObjectID     string
+	appObjectID    string
 	appID          string
 	password       string
 	tenant         string
@@ -48,7 +50,9 @@ func CreateSP(subscriptionID, tenantID, spName string) *Credentials {
 	assignRoleToServicePrincipal(subscriptionID, roleName, sp, resourceManagerAuthorizer)
 
 	creds := &Credentials{
-		appID:          *sp.AppID,
+		spObjectID:     *sp.ObjectID,
+		appObjectID:    *app.ObjectID,
+		appID:          *app.AppID,
 		password:       pass,
 		tenant:         tenantID,
 		subscriptionID: subscriptionID,
@@ -149,12 +153,13 @@ func createServicePrincipal(tenantID string, app graphrbac.Application, graphAut
 		errFailedToCreateApplication(err)
 	}
 
+	fmt.Println("objectID: ", *sp.ObjectID)
 	spJSON, err := sp.MarshalJSON()
 	if err != nil {
 		errFailedToMarshalJSON(err)
 	}
-	debug(fmt.Sprint("App: ", string(spJSON)))
-	fmt.Println(fmt.Sprint("App: ", string(spJSON)))
+	debug(fmt.Sprint("SP: ", string(spJSON)))
+	fmt.Println(fmt.Sprint("SP: ", string(spJSON)))
 	return sp
 }
 
