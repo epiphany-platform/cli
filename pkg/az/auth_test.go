@@ -53,14 +53,21 @@ func setup() {
 
 }
 
+func TestShouldSuccessfullyGeneratePassword(t *testing.T) {
+	pass := GenerateServicePrincipalPassword()
+	if len(pass) < 32 {
+		t.Error("Generated password too short.")
+	}
+}
+
 func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 
 	// given
 
 	// when
-	creds := CreateSP(subscriptionID, tenantID, spName)
+	pass := GenerateServicePrincipalPassword()
 
-	t.Log(fmt.Sprintf("\n===========\nCREDENTIALS\n%+v\n===========\n", creds))
+	sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 
 	env := getEnvironment(cloudTestName)
 
@@ -68,7 +75,8 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 
 	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
 	spClient.Authorizer = graphAuthorizer
-	sp, err := spClient.Get(context.TODO(), creds.spObjectID)
+
+	spTest, err := spClient.Get(context.TODO(), *sp.ObjectID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,41 +87,113 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 	}
 	t.Log(fmt.Sprint("App: ", string(spJSON)))
 
-	if *sp.ObjectID != creds.spObjectID {
+	if *spTest.ObjectID != *spTest.ObjectID {
 		t.Error("Different object ID of Service Principal.")
 	}
 
-	if *sp.AppID != creds.appID {
+	if *sp.AppID != *spTest.AppID {
 		t.Error("Different object ID of Service Principal.")
-	}
-
-	// app, err := appClient.Get(context.TODO(), creds.appObjectID)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-
-	// if *sp.AppDisplayName != app.Homepage {
-	// 	t.Error("Different object ID of Service Principal.")
-	// }
-
-	_, err = spClient.Delete(context.TODO(), creds.spObjectID)
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	appClient := graphrbac.NewApplicationsClient(tenantID)
 	appClient.Authorizer = graphAuthorizer
 
-	_, err = appClient.Delete(context.TODO(), creds.appObjectID)
+	appTest, err := appClient.Get(context.TODO(), *app.ObjectID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// then
-	// if !matched {
-	// 	t.Error("Expected to find expression matching:\n", expectedFileContentRegexp, "\nbut found:\n", fileContent)
-	// }
+	if *app.AppID != *appTest.AppID {
+		t.Error("Different AppID of application.")
+	}
 
+	if *app.DisplayName != *appTest.DisplayName {
+		t.Error("Different DisplayName of application.")
+	}
+
+	_, err = spClient.Delete(context.TODO(), *sp.ObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = appClient.Delete(context.TODO(), *app.ObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestShouldSuccessfullyCreateServicePrincipalCredentialsStruct(t *testing.T) {
+
+	env := getEnvironment(cloudTestName)
+
+	graphAuthorizer := getGraphAuthorizer(env)
+
+	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
+	spClient.Authorizer = graphAuthorizer
+
+	appClient := graphrbac.NewApplicationsClient(tenantID)
+	appClient.Authorizer = graphAuthorizer
+
+	pass := GenerateServicePrincipalPassword()
+	sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
+
+	creds := GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, sp, app)
+
+	if creds.appID != *sp.AppID {
+		t.Error("Different AppID in creds.")
+	}
+
+	if creds.password != pass {
+		t.Error("Different password in creds.")
+	}
+
+	if creds.subscriptionID != subscriptionID {
+		t.Error("Different subscriptionID in creds.")
+	}
+
+	if creds.tenant != tenantID {
+		t.Error("Different tenantID in creds.")
+	}
+
+	_, err := spClient.Delete(context.TODO(), *sp.ObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = appClient.Delete(context.TODO(), *app.ObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestShouldSuccessfullyCreateServicePrincipalAuthJSON(t *testing.T) {
+
+	env := getEnvironment(cloudTestName)
+
+	graphAuthorizer := getGraphAuthorizer(env)
+
+	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
+	spClient.Authorizer = graphAuthorizer
+
+	appClient := graphrbac.NewApplicationsClient(tenantID)
+	appClient.Authorizer = graphAuthorizer
+
+	pass := GenerateServicePrincipalPassword()
+	sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
+
+	creds := GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, sp, app)
+
+	GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds)
+
+	_, err := spClient.Delete(context.TODO(), *sp.ObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = appClient.Delete(context.TODO(), *app.ObjectID)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 // getEnvironment returns Azure Environment based on cloudName
@@ -130,8 +210,6 @@ func getTestGraphAuthorizer(env azure.Environment) autorest.Authorizer {
 	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
 	if err != nil {
 		errFailedToGetGraphAuthrorizer(err)
-	} else {
-		info("Got Azure Graph authorizer successfully .")
 	}
 	return graphAuthorizer
 }

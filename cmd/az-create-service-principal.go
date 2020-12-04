@@ -37,7 +37,9 @@ var createServicePrincipalCmd = &cobra.Command{
 		fmt.Println("createServicePrincipal called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		az.CreateSP(subscriptionID, tenantID, spName)
+		pass := az.GenerateServicePrincipalPassword()
+		sp, app := az.CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
+		az.GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, sp, app)
 	},
 }
 

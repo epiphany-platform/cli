@@ -2,6 +2,7 @@ package az
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -24,16 +25,14 @@ const (
 
 // Credentials structure is used to format display information for Service Principal
 type Credentials struct {
-	spObjectID     string
-	appObjectID    string
 	appID          string
 	password       string
 	tenant         string
 	subscriptionID string
 }
 
-// CreateSP function is used to create Service Principal, returns Credentials
-func CreateSP(subscriptionID, tenantID, spName string) *Credentials {
+// CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
+func CreateServicePrincipal(pass, subscriptionID, tenantID, spName string) (graphrbac.ServicePrincipal, graphrbac.Application) {
 	info("Start creating of Azure Service Principal...")
 	resourceManagerAuthorizer := getAuthrorizerFromCli()
 
@@ -41,29 +40,38 @@ func CreateSP(subscriptionID, tenantID, spName string) *Credentials {
 
 	graphAuthorizer := getGraphAuthorizer(env)
 
-	pass := generatePassword()
-
 	app := createApplication(tenantID, spName, pass, graphAuthorizer)
 
 	sp := createServicePrincipal(tenantID, app, graphAuthorizer)
 
 	assignRoleToServicePrincipal(subscriptionID, roleName, sp, resourceManagerAuthorizer)
 
+	return sp, app
+}
+
+// GenerateServicePrincipalCredentialsStruct generate and returns Credentials structure
+func GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID string, sp graphrbac.ServicePrincipal, app graphrbac.Application) *Credentials {
+	debug("Generate struct.")
 	creds := &Credentials{
-		spObjectID:     *sp.ObjectID,
-		appObjectID:    *app.ObjectID,
 		appID:          *app.AppID,
 		password:       pass,
 		tenant:         tenantID,
 		subscriptionID: subscriptionID,
 	}
-
-	info("Azure Service Principal created.")
-
 	return creds
 }
 
-func generatePassword() string {
+// GenerateServicePrincipalAuthJSONFromCredentialsStruct generate JSON that can be used for
+func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds *Credentials) {
+	credsJSON, err := json.Marshal(creds)
+	if err != nil {
+		errFailedToMarshalJSON(err)
+	}
+	debug(string(credsJSON))
+}
+
+// GenerateServicePrincipalPassword generates Service Principal password
+func GenerateServicePrincipalPassword() string {
 	pass, err := password.Generate(32, 10, 0, false, false)
 	if err != nil {
 		errFailedToGeneratePassword(err)
