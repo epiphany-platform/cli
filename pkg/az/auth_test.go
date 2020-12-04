@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
@@ -97,27 +96,19 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 	// 	t.Error("Different object ID of Service Principal.")
 	// }
 
-	timeout := 60 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	resp, err := spClient.Delete(ctx, creds.spObjectID)
+	_, err = spClient.Delete(context.TODO(), creds.spObjectID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log("SP Resp: ", resp.Response)
-
 	appClient := graphrbac.NewApplicationsClient(tenantID)
 	appClient.Authorizer = graphAuthorizer
 
-	ctxApp, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	respApp, errApp := appClient.Delete(ctxApp, creds.appObjectID)
-	if errApp != nil {
+	_, err = appClient.Delete(context.TODO(), creds.appObjectID)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Log("App Resp: ", respApp.Response)
 	// then
 	// if !matched {
 	// 	t.Error("Expected to find expression matching:\n", expectedFileContentRegexp, "\nbut found:\n", fileContent)
