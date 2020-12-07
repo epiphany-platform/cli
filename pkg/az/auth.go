@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
@@ -25,10 +26,10 @@ const (
 
 // Credentials structure is used to format display information for Service Principal
 type Credentials struct {
-	appID          string
-	password       string
-	tenant         string
-	subscriptionID string
+	AppID          string
+	Password       string
+	Tenant         string
+	SubscriptionID string
 }
 
 // CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
@@ -50,25 +51,35 @@ func CreateServicePrincipal(pass, subscriptionID, tenantID, spName string) (grap
 }
 
 // GenerateServicePrincipalCredentialsStruct generate and returns Credentials structure
-func GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID string, sp graphrbac.ServicePrincipal, app graphrbac.Application) *Credentials {
+func GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, appID string) *Credentials {
 	debug("Generate struct.")
 	creds := &Credentials{
-		appID:          *app.AppID,
-		password:       pass,
-		tenant:         tenantID,
-		subscriptionID: subscriptionID,
+		AppID:          appID,
+		Password:       pass,
+		Tenant:         tenantID,
+		SubscriptionID: subscriptionID,
 	}
+	debug("Creds %v: ", *creds)
 	return creds
 }
 
 // GenerateServicePrincipalAuthJSONFromCredentialsStruct generate JSON that can be used for
-func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds *Credentials) []byte {
+func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds Credentials) []byte {
+	debug("Marshaling to JSON.")
 	credsJSON, err := json.Marshal(creds)
 	if err != nil {
 		errFailedToMarshalJSON(err)
 	}
 	debug(string(credsJSON))
 	return credsJSON
+}
+
+// WriteServicePrincipalAuthJSON to JSON authorization file
+func WriteServicePrincipalAuthJSON(credsJSON []byte) {
+	err := ioutil.WriteFile("/tmp/dat1", credsJSON, 0644)
+	if err != nil {
+		errFailedToWriteJSONAuthFile(err)
+	}
 }
 
 // GenerateServicePrincipalPassword generates Service Principal password

@@ -91,3 +91,10 @@ func errFailedToIterateOverRoleDefinitions(err error) {
 		Err(err).
 		Msg("Failed to iterate over role definition iterator.")
 }
+
+func errFailedToWriteJSONAuthFile(err error) {
+	logger.
+		Panic().
+		Err(err).
+		Msg("Failed to iterate over role definition iterator.")
+}
