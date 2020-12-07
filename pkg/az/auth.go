@@ -62,12 +62,13 @@ func GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID st
 }
 
 // GenerateServicePrincipalAuthJSONFromCredentialsStruct generate JSON that can be used for
-func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds *Credentials) {
+func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds *Credentials) []byte {
 	credsJSON, err := json.Marshal(creds)
 	if err != nil {
 		errFailedToMarshalJSON(err)
 	}
 	debug(string(credsJSON))
+	return credsJSON
 }
 
 // GenerateServicePrincipalPassword generates Service Principal password

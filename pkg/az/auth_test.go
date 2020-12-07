@@ -55,18 +55,14 @@ func setupTestAll() {
 // cleanupTestServicePrincipal cleans up Service Principal and related resources based on app and sp object ID
 func cleanupTestServicePrincipal(spObjectID, appObjectID string, t *testing.T) {
 	t.Log("Start deleting Service Prnicipal.")
-	spClient := getTestServicePrincipalClient(tenantID, cloudTestName)
-	appClient := getTestAppClient(tenantID, cloudTestName)
+	spClient := getTestServicePrincipalClient(tenantID, cloudTestName, t)
+	appClient := getTestAppClient(tenantID, cloudTestName, t)
 
 	_, err := spClient.Delete(context.TODO(), spObjectID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	catch(err, t)
 
 	_, err = appClient.Delete(context.TODO(), appObjectID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	catch(err, t)
 }
 
 func TestShouldSuccessfullyGeneratePassword(t *testing.T) {
@@ -86,18 +82,15 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 
 	sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 
-	spClient := getTestServicePrincipalClient(tenantID, cloudTestName)
+	spClient := getTestServicePrincipalClient(tenantID, cloudTestName, t)
 
 	spTest, err := spClient.Get(context.TODO(), *sp.ObjectID)
-	if err != nil {
-		t.Error(err)
-	}
+	catch(err, t)
 
 	// then
 	spJSON, err := sp.MarshalJSON()
-	if err != nil {
-		t.Fatal(err)
-	}
+	catch(err, t)
+
 	t.Log(fmt.Sprint("App: ", string(spJSON)))
 
 	if *spTest.ObjectID != *spTest.ObjectID {
@@ -108,12 +101,10 @@ func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 		t.Error("Different object ID of Service Principal.")
 	}
 
-	appClient := getTestAppClient(tenantID, cloudTestName)
+	appClient := getTestAppClient(tenantID, cloudTestName, t)
 
 	appTest, err := appClient.Get(context.TODO(), *app.ObjectID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	catch(err, t)
 
 	if *app.AppID != *appTest.AppID {
 		t.Error("Different AppID of application.")
@@ -163,33 +154,30 @@ func TestShouldSuccessfullyCreateServicePrincipalAuthJSON(t *testing.T) {
 	creds := GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, sp, app)
 
 	// then
-	GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds)
+	spJSON := GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds)
+	t.Log(string(spJSON))
 
 	cleanupTestServicePrincipal(*sp.ObjectID, *app.ObjectID, t)
 }
 
 // getEnvironment returns Azure Environment based on cloudName
-func getTestEnvironment(cloudName string) azure.Environment {
+func getTestEnvironment(cloudName string, t *testing.T) azure.Environment {
 	env, err := azure.EnvironmentFromName(cloudName)
-	if err != nil {
-		errFailedToGetEnvironment(err)
-	}
+	catch(err, t)
 	return env
 }
 
 // getGraphAuthorizer return graph authorizer based on Azure Environment
-func getTestGraphAuthorizer(env azure.Environment) autorest.Authorizer {
+func getTestGraphAuthorizer(env azure.Environment, t *testing.T) autorest.Authorizer {
 	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
-	if err != nil {
-		errFailedToGetGraphAuthrorizer(err)
-	}
+	catch(err, t)
 	return graphAuthorizer
 }
 
 // getTestAppClient gets application client for test purposes
-func getTestAppClient(tenantID, cloudTestName string) graphrbac.ApplicationsClient {
-	env := getTestEnvironment(cloudTestName)
-	graphAuthorizer := getTestGraphAuthorizer(env)
+func getTestAppClient(tenantID, cloudTestName string, t *testing.T) graphrbac.ApplicationsClient {
+	env := getTestEnvironment(cloudTestName, t)
+	graphAuthorizer := getTestGraphAuthorizer(env, t)
 
 	appClient := graphrbac.NewApplicationsClient(tenantID)
 	appClient.Authorizer = graphAuthorizer
@@ -198,12 +186,18 @@ func getTestAppClient(tenantID, cloudTestName string) graphrbac.ApplicationsClie
 }
 
 // getTestServicePrincipalClient gets service principal client for test purposes
-func getTestServicePrincipalClient(tenantID, cloudTestName string) graphrbac.ServicePrincipalsClient {
-	env := getTestEnvironment(cloudTestName)
-	graphAuthorizer := getTestGraphAuthorizer(env)
+func getTestServicePrincipalClient(tenantID, cloudTestName string, t *testing.T) graphrbac.ServicePrincipalsClient {
+	env := getTestEnvironment(cloudTestName, t)
+	graphAuthorizer := getTestGraphAuthorizer(env, t)
 
 	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
 	spClient.Authorizer = graphAuthorizer
 
 	return spClient
+}
+
+func catch(err error, t *testing.T) {
+	if err != nil {
+		t.Fatal(err)
+	}
 }
