@@ -144,7 +144,11 @@ func cleanupTestServicePrincipal(spObjectID, appObjectID string, t *testing.T) {
 // 	cleanupTestServicePrincipal(*sp.ObjectID, *app.ObjectID, t)
 // }
 
-func TestShouldSuccessfullyCreateServicePrincipalAuthJSON(t *testing.T) {
+func TestShouldSuccessfullyCreateServicePrincipalAuthJSONIntegration(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	// when
 	pass := GenerateServicePrincipalPassword()
@@ -162,7 +166,11 @@ func TestShouldSuccessfullyCreateServicePrincipalAuthJSON(t *testing.T) {
 	//cleanupTestServicePrincipal(*sp.ObjectID, *app.ObjectID, t)
 }
 
-func TestShouldSuccessfullyWriteAuthJSONToFile(t *testing.T) {
+func TestShouldSuccessfullyWriteAuthJSONToFileIntegration(t *testing.T) {
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	// when
 	pass := GenerateServicePrincipalPassword()

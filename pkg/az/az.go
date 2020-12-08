@@ -35,7 +35,7 @@ type Credentials struct {
 // CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
 func CreateServicePrincipal(pass, subscriptionID, tenantID, spName string) (graphrbac.ServicePrincipal, graphrbac.Application) {
 	info("Start creating of Azure Service Principal...")
-	resourceManagerAuthorizer := getAuthrorizerFromCli()
+	resourceManagerAuthorizer := getAuthorizerFromCli()
 
 	env := getEnvironment(cloudName)
 
@@ -74,6 +74,7 @@ func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds Credentials) []
 	return credsJSON
 }
 
+// TODO fix that to add SP to environment and not to separate file
 // WriteServicePrincipalAuthJSON to JSON authorization file
 func WriteServicePrincipalAuthJSON(credsJSON []byte) {
 	err := ioutil.WriteFile("/tmp/dat1", credsJSON, 0644)
@@ -91,8 +92,8 @@ func GenerateServicePrincipalPassword() string {
 	return pass
 }
 
-// getAuthrorizerFromCli returns authorizer based on local az login session
-func getAuthrorizerFromCli() autorest.Authorizer {
+// getAuthorizerFromCli returns authorizer based on local az login session
+func getAuthorizerFromCli() autorest.Authorizer {
 	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
 		errFailedToGetAuthrorizerFromCli(err)
@@ -102,6 +103,7 @@ func getAuthrorizerFromCli() autorest.Authorizer {
 	return cliAuthorizer
 }
 
+// TODO consider removal
 // getEnvironment returns Azure Environment based on cloudName
 func getEnvironment(cloudName string) azure.Environment {
 	env, err := azure.EnvironmentFromName(cloudName)

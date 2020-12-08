@@ -22,6 +22,7 @@ var createCmd = &cobra.Command{
 		fmt.Println("create pre run called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		//TODO verify if environment is created and selected
 		pass := az.GenerateServicePrincipalPassword()
 		sp, app := az.CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 		debug("Create Service Principal with ObjectID: %s, AppID: %s", *sp.ObjectID, *sp.AppID)
