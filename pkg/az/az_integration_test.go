@@ -27,7 +27,7 @@ func setup(t *testing.T) (name, subscriptionID, tenantID string) {
 		t.Fatalf("expected non-empty SUBSCRIPTION_ID environment variable")
 	}
 
-	name = "epiphany-cli-tests-" + randomizer(6)
+	name = "epiphany-cli-tests-" + generateRandomString(6)
 	t.Logf("integration tests will use name %s as created application name", name)
 	return
 }
@@ -35,7 +35,7 @@ func setup(t *testing.T) (name, subscriptionID, tenantID string) {
 func TestCreateServicePrincipal(t *testing.T) {
 	//given
 	name, subscriptionID, tenantID := setup(t)
-	pass := randomizer(10)
+	pass := generateRandomString(10)
 	env, err := azure.EnvironmentFromName(cloudName)
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +45,7 @@ func TestCreateServicePrincipal(t *testing.T) {
 		t.Fatal(err)
 	}
 	spClient := getTestServicePrincipalClient(tenantID, authorizer)
-	appClient := getTestAppClient(tenantID, authorizer)
+	appClient := getTestApplicationClient(tenantID, authorizer)
 
 	// when
 	appID, spID, err := CreateServicePrincipal(pass, subscriptionID, tenantID, name)
@@ -53,7 +53,7 @@ func TestCreateServicePrincipal(t *testing.T) {
 		if appID == "" && spID == "" {
 			t.Fatal(err)
 		} else {
-			//appID and spID are there so there is potential to cleanup
+			//appID and spID were returned so there is potential to cleanup
 			t.Error(err)
 		}
 	}
@@ -84,12 +84,12 @@ func TestCreateServicePrincipal(t *testing.T) {
 
 	t.Logf("created credentials: %#v", credentials)
 
-	cleanupTestServicePrincipal(spID, appID, spClient, appClient, t)
+	cleanupTestResources(spID, appID, spClient, appClient, t)
 }
 
-// cleanupTestServicePrincipal cleans up Service Principal and related resources based on app and sp object ID
-func cleanupTestServicePrincipal(spObjectID, appObjectID string, servicePrincipalClient graphrbac.ServicePrincipalsClient, applicationsClient graphrbac.ApplicationsClient, t *testing.T) {
-	t.Log("Start deleting Service Prnicipal.")
+// cleanupTestResources cleans up Service Principal and related resources based on app and sp object ID
+func cleanupTestResources(spObjectID, appObjectID string, servicePrincipalClient graphrbac.ServicePrincipalsClient, applicationsClient graphrbac.ApplicationsClient, t *testing.T) {
+	t.Log("start deleting service principal.")
 
 	_, err := servicePrincipalClient.Delete(context.TODO(), spObjectID)
 	if err != nil {
@@ -110,15 +110,15 @@ func getTestServicePrincipalClient(tenantID string, authorizer autorest.Authoriz
 	return spClient
 }
 
-// getTestAppClient gets application client for test purposes
-func getTestAppClient(tenantID string, authorizer autorest.Authorizer) graphrbac.ApplicationsClient {
+// getTestApplicationClient gets application client for test purposes
+func getTestApplicationClient(tenantID string, authorizer autorest.Authorizer) graphrbac.ApplicationsClient {
 	appClient := graphrbac.NewApplicationsClient(tenantID)
 	appClient.Authorizer = authorizer
 
 	return appClient
 }
 
-func randomizer(length int) string {
+func generateRandomString(length int) string {
 	hexBytes := "1234567890abcdef"
 	b := make([]byte, length)
 	for i := range b {
