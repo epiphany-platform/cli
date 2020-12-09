@@ -6,12 +6,13 @@ import (
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
 	tenantID       string
 	subscriptionID string
-	spName         string
+	name           string
 )
 
 // createCmd represents the create command
@@ -20,7 +21,25 @@ var createCmd = &cobra.Command{
 	Short: "Create Service Principal",
 	Long:  `Create Service Principal that can be used for authentication with Azure.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("create pre run called")
+		logger.Debug().Msg("create pre run called")
+
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			logger.Fatal().Err(err)
+		}
+
+		tenantID = viper.GetString("tenantID")
+		subscriptionID = viper.GetString("subscriptionID")
+		name = viper.GetString("name")
+
+		if tenantID == "" {
+			//TODO get default tenant
+			logger.Fatal().Msg("no tenantID defined")
+		}
+		if subscriptionID == "" {
+			//TODO get default subscription
+			logger.Fatal().Msg("no subscriptionID defined")
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if !isEnvPresentAndSelected() {
@@ -28,20 +47,28 @@ var createCmd = &cobra.Command{
 		}
 		pass, err := az.GeneratePassword(32, 10)
 		if err != nil {
-			logger.Panic().Err(err).Msg("failed to generate password")
+			logger.Fatal().Err(err).Msg("failed to generate password")
 		}
-		sp, app := az.CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
-		debug("Create Service Principal with ObjectID: %s, AppID: %s", *sp.ObjectID, *sp.AppID)
-		az.GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, *app.AppID)
+		appID, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, name)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("creation of service principal on Azure failed")
+		}
+		credentials := az.Credentials{
+			AppID:          appID,
+			Password:       pass,
+			Tenant:         tenantID,
+			SubscriptionID: subscriptionID,
+		}
+		logger.Debug().Msgf("prepared credentials for further consumption: %#v", credentials)
 	},
 }
 
 func init() {
 	spCmd.AddCommand(createCmd)
 
-	createCmd.PersistentFlags().StringVar(&tenantID, "tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
-	createCmd.PersistentFlags().StringVar(&subscriptionID, "subscriptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
-	createCmd.PersistentFlags().StringVar(&spName, "name", "", fmt.Sprintf("Display Name of Service Principal"))
+	createCmd.Flags().String("tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
+	createCmd.Flags().String("subscriptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
+	createCmd.Flags().String("name", "e-wrapper", fmt.Sprintf("Display Name of Service Principal"))
 }
 
 func isEnvPresentAndSelected() bool {
