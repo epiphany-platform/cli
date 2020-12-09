@@ -14,10 +14,10 @@ var listCmd = &cobra.Command{
 	Short: "TODO",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		fmt.Println("environments list pre run called")
+		debug("environments list pre run called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		debug("list called")
 		config, err := configuration.GetConfig()
 		if err != nil {
 			errGetConfig(err)

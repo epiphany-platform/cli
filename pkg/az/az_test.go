@@ -4,9 +4,9 @@ package az
 
 import (
 	"context"
-	"log"
 	"os"
 	"testing"
+	"unicode"
 
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
@@ -26,30 +26,22 @@ var (
 	spName         string
 )
 
-func TestMain(m *testing.M) {
-	setupTestAll()
-	log.Println("Run tests")
-	exitVal := m.Run()
-	log.Println("Finish test")
-	os.Exit(exitVal)
-}
-
 // setupTestAll setups parameters needed to run all tests
-func setupTestAll() {
-	log.Println("Initialize test")
+func setupTestAll(t *testing.T) {
+	t.Log("Initialize test")
 	tenantID = os.Getenv("TENANT_ID")
 	if len(tenantID) == 0 {
-		log.Fatalf("expected non-empty TENANT_ID environment variable")
+		t.Fatalf("expected non-empty TENANT_ID environment variable")
 	}
 
 	subscriptionID = os.Getenv("SUBSCRIPTION_ID")
 	if len(subscriptionID) == 0 {
-		log.Fatalf("expected non-empty SUBSCRIPTION_ID environment variable")
+		t.Fatalf("expected non-empty SUBSCRIPTION_ID environment variable")
 	}
 
 	spName = os.Getenv("SP_NAME")
 	if len(spName) == 0 {
-		log.Fatalf("expected non-empty SP_NAME environment variable")
+		t.Fatalf("expected non-empty SP_NAME environment variable")
 	}
 }
 
@@ -148,12 +140,17 @@ func cleanupTestServicePrincipal(spObjectID, appObjectID string, t *testing.T) {
 
 func TestShouldSuccessfullyCreateServicePrincipalAuthJSONIntegration(t *testing.T) {
 
+	setupTestAll(t)
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	// when
-	pass := GenerateServicePrincipalPassword()
+	pass, err := GenerateServicePrincipalPassword(32, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
 	//sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 
 	appID := "111111111111"
@@ -170,12 +167,17 @@ func TestShouldSuccessfullyCreateServicePrincipalAuthJSONIntegration(t *testing.
 
 func TestShouldSuccessfullyWriteAuthJSONToFileIntegration(t *testing.T) {
 
+	setupTestAll(t)
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	// when
-	pass := GenerateServicePrincipalPassword()
+	pass, err := GenerateServicePrincipalPassword(32, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
 	//sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 
 	//creds := GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, *app.AppID)
@@ -233,4 +235,73 @@ func catch(err error, t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestGenerateServicePrincipalPassword(t *testing.T) {
+	type args struct {
+		length    int
+		numDigits int
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "happy path",
+			args: args{
+				length:    32,
+				numDigits: 10,
+			},
+			wantErr: false,
+		},
+		{
+			name: "too long pass",
+			args: args{
+				length:    100000,
+				numDigits: 10000,
+			},
+			wantErr: true,
+		},
+		{
+			name: "too many digits",
+			args: args{
+				length:    10,
+				numDigits: 11,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := GenerateServicePrincipalPassword(tt.args.length, tt.args.numDigits)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GenerateServicePrincipalPassword() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				letters, digits, others := passwordCharactersCounter(got)
+				if letters != (tt.args.length-tt.args.numDigits) || digits != tt.args.numDigits || others != 0 {
+					t.Errorf(`GenerateServicePrincipalPassword() generated = %v.
+It has %d letters, %d digits and %d other characters, but expected was %d letters, %d digits and 0 others`, got, letters, digits, others, tt.args.length-tt.args.numDigits, tt.args.numDigits)
+				}
+			}
+		})
+	}
+}
+
+func passwordCharactersCounter(password string) (int, int, int) {
+	letters := 0
+	digits := 0
+	others := 0
+	for _, r := range password {
+		if unicode.IsLetter(r) {
+			letters++
+		} else if unicode.IsDigit(r) {
+			digits++
+		} else {
+			others++
+		}
+	}
+	return letters, digits, others
 }

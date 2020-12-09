@@ -84,12 +84,17 @@ func WriteServicePrincipalAuthJSON(credsJSON []byte) {
 }
 
 // GenerateServicePrincipalPassword generates Service Principal password
-func GenerateServicePrincipalPassword() string {
-	pass, err := password.Generate(32, 10, 0, false, false)
-	if err != nil {
-		errFailedToGeneratePassword(err)
+func GenerateServicePrincipalPassword(length, numDigits int) (string, error) {
+	debug("will generate password of length %d with %d digits", length, numDigits)
+	if numDigits > length {
+		return "", fmt.Errorf("parameter 'numDigits' cannot be greater than parameter 'length'")
 	}
-	return pass
+	pass, err := password.Generate(length, numDigits, 0, false, false)
+	if err != nil {
+		return "", err
+	}
+	debug("generated password was: %s", pass)
+	return pass, nil
 }
 
 // getAuthorizerFromCli returns authorizer based on local az login session

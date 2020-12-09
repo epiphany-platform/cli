@@ -125,6 +125,13 @@ func errSetEnvironment(err error) {
 		Msg("setting used environment failed")
 }
 
+func errGeneratePassword(err error) {
+	logger.
+		Panic().
+		Err(err).
+		Msg("failed to generate password")
+}
+
 func infoConfigFile(filePath string) {
 	logger.
 		Info().

@@ -57,13 +57,6 @@ func errFailedToGetGraphAuthorizer(err error) {
 		Msg("Failed to get Graph Authrorizer.")
 }
 
-func errFailedToGeneratePassword(err error) {
-	logger.
-		Panic().
-		Err(err).
-		Msg("Failed to generate password.")
-}
-
 func errFailedToCreateApplication(err error) {
 	logger.
 		Panic().
