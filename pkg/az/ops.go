@@ -43,14 +43,14 @@ func errFailedToGetEnvironment(err error) {
 		Msg("Failed to get environment.")
 }
 
-func errFailedToGetAuthrorizerFromCli(err error) {
+func errFailedToGetAuthorizerFromCli(err error) {
 	logger.
 		Panic().
 		Err(err).
 		Msg("Failed to get Authrorizer from CLI.")
 }
 
-func errFailedToGetGraphAuthrorizer(err error) {
+func errFailedToGetGraphAuthorizer(err error) {
 	logger.
 		Panic().
 		Err(err).

@@ -13,7 +13,7 @@ var componentsCmd = &cobra.Command{
  - install new component to environment
  - get information about component
 
-Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml`,
+Information about available components are taken from https://github.com/epiphany-platform/modules/blob/develop/v1.yaml`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("components called")
 	},

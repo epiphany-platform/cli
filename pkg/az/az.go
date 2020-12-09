@@ -96,7 +96,7 @@ func GenerateServicePrincipalPassword() string {
 func getAuthorizerFromCli() autorest.Authorizer {
 	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		errFailedToGetAuthrorizerFromCli(err)
+		errFailedToGetAuthorizerFromCli(err)
 	} else {
 		info("Got Azure CLI authorizer successfully .")
 	}
@@ -117,7 +117,7 @@ func getEnvironment(cloudName string) azure.Environment {
 func getGraphAuthorizer(env azure.Environment) autorest.Authorizer {
 	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
 	if err != nil {
-		errFailedToGetGraphAuthrorizer(err)
+		errFailedToGetGraphAuthorizer(err)
 	} else {
 		info("Got Azure Graph authorizer successfully .")
 	}
