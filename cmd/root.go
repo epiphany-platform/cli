@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/util"
@@ -13,6 +15,7 @@ import (
 var (
 	cfgDir   string
 	logLevel string
+	logger   zerolog.Logger
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -29,11 +32,17 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		errRootExecute(err)
+		logger.
+			Fatal().
+			Err(err).
+			Msg("root execute failed")
 	}
 }
 
 func init() {
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	logger = zerolog.New(output).With().Str("package", "cmd").Caller().Timestamp().Logger()
+
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
@@ -67,14 +76,14 @@ func initConfig() {
 	if cfgDir != "" {
 		config, err := configuration.SetConfigDirectory(cfgDir)
 		if err != nil {
-			errSetConfigFile(err)
+			logger.Fatal().Err(err).Msg("set config failed")
 		}
 		// Use config file from the flag.
 		viper.SetConfigFile(config.GetConfigFilePath())
 	} else {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		// setup default
 		viper.SetConfigFile(config.GetConfigFilePath())
@@ -84,6 +93,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		infoConfigFile(viper.ConfigFileUsed())
+		logger.Info().Msgf("used config file: %s", viper.ConfigFileUsed())
 	}
 }

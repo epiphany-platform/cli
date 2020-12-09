@@ -18,15 +18,15 @@ var componentsInfoCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			errTooFewArguments(errors.New(fmt.Sprintf("found %d args", len(args))))
+			logger.Fatal().Err(errors.New(fmt.Sprintf("found %d args", len(args)))).Msg("too few arguments")
 		}
 		tc, err := repository.GetRepository().GetComponentByName(args[0])
 		if err != nil {
-			errGetComponentByName(err)
+			logger.Fatal().Err(err).Msg("getting component by name failed")
 		}
 		c, err := tc.JustLatestVersion()
 		if err != nil {
-			errGetComponentWithLatestVersion(err)
+			logger.Fatal().Err(err).Msg("getting component with latest version failed")
 		}
 		fmt.Print(c.String())
 	},

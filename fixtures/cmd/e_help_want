@@ -4,13 +4,14 @@ Usage:
   e [command]
 
 Available Commands:
+  az           Commands used to work with Azure cloud.
   components   Allows to inspect and install available components
   environments Allows various interactions with environments
   help         Help about any command
 
 Flags:
       --configDir string   config directory (default is .e)
-  -d, --debug              enable debug loglevel
   -h, --help               help for e
+      --logLevel string    log level (default is warn, values: [debug, info, error, fatal])
 
 Use "e [command] --help" for more information about a command.

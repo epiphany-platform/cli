@@ -35,7 +35,7 @@ type Credentials struct {
 // CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
 func CreateServicePrincipal(pass, subscriptionID, tenantID, spName string) (graphrbac.ServicePrincipal, graphrbac.Application) {
 	info("Start creating of Azure Service Principal...")
-	resourceManagerAuthorizer := getAuthrorizerFromCli()
+	resourceManagerAuthorizer := getAuthorizerFromCli()
 
 	env := getEnvironment(cloudName)
 
@@ -74,6 +74,7 @@ func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds Credentials) []
 	return credsJSON
 }
 
+// TODO fix that to add SP to environment and not to separate file
 // WriteServicePrincipalAuthJSON to JSON authorization file
 func WriteServicePrincipalAuthJSON(credsJSON []byte) {
 	err := ioutil.WriteFile("/tmp/dat1", credsJSON, 0644)
@@ -82,26 +83,32 @@ func WriteServicePrincipalAuthJSON(credsJSON []byte) {
 	}
 }
 
-// GenerateServicePrincipalPassword generates Service Principal password
-func GenerateServicePrincipalPassword() string {
-	pass, err := password.Generate(32, 10, 0, false, false)
-	if err != nil {
-		errFailedToGeneratePassword(err)
+// GeneratePassword generates Service Principal password
+func GeneratePassword(length, numDigits int) (string, error) {
+	debug("will generate password of length %d with %d digits", length, numDigits)
+	if numDigits > length {
+		return "", fmt.Errorf("parameter 'numDigits' cannot be greater than parameter 'length'")
 	}
-	return pass
+	pass, err := password.Generate(length, numDigits, 0, false, false)
+	if err != nil {
+		return "", err
+	}
+	debug("generated password was: %s", pass)
+	return pass, nil
 }
 
-// getAuthrorizerFromCli returns authorizer based on local az login session
-func getAuthrorizerFromCli() autorest.Authorizer {
+// getAuthorizerFromCli returns authorizer based on local az login session
+func getAuthorizerFromCli() autorest.Authorizer {
 	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		errFailedToGetAuthrorizerFromCli(err)
+		errFailedToGetAuthorizerFromCli(err)
 	} else {
 		info("Got Azure CLI authorizer successfully .")
 	}
 	return cliAuthorizer
 }
 
+// TODO consider removal
 // getEnvironment returns Azure Environment based on cloudName
 func getEnvironment(cloudName string) azure.Environment {
 	env, err := azure.EnvironmentFromName(cloudName)
@@ -115,7 +122,7 @@ func getEnvironment(cloudName string) azure.Environment {
 func getGraphAuthorizer(env azure.Environment) autorest.Authorizer {
 	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
 	if err != nil {
-		errFailedToGetGraphAuthrorizer(err)
+		errFailedToGetGraphAuthorizer(err)
 	} else {
 		info("Got Azure Graph authorizer successfully .")
 	}

@@ -17,7 +17,7 @@ var environmentsNewCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		var name string
 		if len(args) == 1 {
@@ -25,13 +25,13 @@ var environmentsNewCmd = &cobra.Command{
 		} else {
 			name, err = promptui.PromptForString("Environment name")
 			if err != nil {
-				errPrompt(err)
+				logger.Fatal().Err(err).Msg("prompt failed")
 			}
 		}
 		debug("new environment name is: %s", name)
 		err = config.CreateNewEnvironment(name)
 		if err != nil {
-			errCreateEnvironment(err)
+			logger.Fatal().Err(err).Msg("create new environment failed")
 		}
 	},
 }

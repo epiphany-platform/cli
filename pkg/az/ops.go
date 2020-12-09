@@ -43,25 +43,18 @@ func errFailedToGetEnvironment(err error) {
 		Msg("Failed to get environment.")
 }
 
-func errFailedToGetAuthrorizerFromCli(err error) {
+func errFailedToGetAuthorizerFromCli(err error) {
 	logger.
 		Panic().
 		Err(err).
 		Msg("Failed to get Authrorizer from CLI.")
 }
 
-func errFailedToGetGraphAuthrorizer(err error) {
+func errFailedToGetGraphAuthorizer(err error) {
 	logger.
 		Panic().
 		Err(err).
 		Msg("Failed to get Graph Authrorizer.")
-}
-
-func errFailedToGeneratePassword(err error) {
-	logger.
-		Panic().
-		Err(err).
-		Msg("Failed to generate password.")
 }
 
 func errFailedToCreateApplication(err error) {

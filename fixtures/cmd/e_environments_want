@@ -5,6 +5,7 @@ Usage:
 
 Available Commands:
   info        Displays information about currently selected environment
+  list        TODO
   new         Creates new environment
   run         Runs installed component command in environment
   use         Allows to select environment to be used
@@ -14,6 +15,6 @@ Flags:
 
 Global Flags:
       --configDir string   config directory (default is .e)
-  -d, --debug              enable debug loglevel
+      --logLevel string    log level (default is warn, values: [debug, info, error, fatal])
 
 Use "e environments [command] --help" for more information about a command.
