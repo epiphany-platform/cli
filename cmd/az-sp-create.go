@@ -22,7 +22,7 @@ var createCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		//TODO verify if environment is created and selected
-		pass, err := az.GenerateServicePrincipalPassword(32, 10)
+		pass, err := az.GeneratePassword(32, 10)
 		if err != nil {
 			errGeneratePassword(err)
 		}

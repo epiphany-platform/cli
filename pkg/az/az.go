@@ -83,8 +83,8 @@ func WriteServicePrincipalAuthJSON(credsJSON []byte) {
 	}
 }
 
-// GenerateServicePrincipalPassword generates Service Principal password
-func GenerateServicePrincipalPassword(length, numDigits int) (string, error) {
+// GeneratePassword generates Service Principal password
+func GeneratePassword(length, numDigits int) (string, error) {
 	debug("will generate password of length %d with %d digits", length, numDigits)
 	if numDigits > length {
 		return "", fmt.Errorf("parameter 'numDigits' cannot be greater than parameter 'length'")

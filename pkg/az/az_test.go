@@ -60,7 +60,7 @@ func cleanupTestServicePrincipal(spObjectID, appObjectID string, t *testing.T) {
 
 // func TestShouldSuccessfullyGeneratePassword(t *testing.T) {
 // 	// when
-// 	pass := GenerateServicePrincipalPassword()
+// 	pass := GeneratePassword()
 
 // 	// then
 // 	if len(pass) < 32 {
@@ -71,7 +71,7 @@ func cleanupTestServicePrincipal(spObjectID, appObjectID string, t *testing.T) {
 // func TestShouldSuccessfullyCreateServicePrincipal(t *testing.T) {
 
 // 	// when
-// 	pass := GenerateServicePrincipalPassword()
+// 	pass := GeneratePassword()
 
 // 	sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 
@@ -113,7 +113,7 @@ func cleanupTestServicePrincipal(spObjectID, appObjectID string, t *testing.T) {
 // func TestShouldSuccessfullyCreateServicePrincipalCredentialsStruct(t *testing.T) {
 
 // 	// when
-// 	pass := GenerateServicePrincipalPassword()
+// 	pass := GeneratePassword()
 // 	sp, app := CreateServicePrincipal(pass, subscriptionID, tenantID, spName)
 
 // 	creds := GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, *app.AppID)
@@ -147,7 +147,7 @@ func TestShouldSuccessfullyCreateServicePrincipalAuthJSONIntegration(t *testing.
 	}
 
 	// when
-	pass, err := GenerateServicePrincipalPassword(32, 10)
+	pass, err := GeneratePassword(32, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestShouldSuccessfullyWriteAuthJSONToFileIntegration(t *testing.T) {
 	}
 
 	// when
-	pass, err := GenerateServicePrincipalPassword(32, 10)
+	pass, err := GeneratePassword(32, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +237,7 @@ func catch(err error, t *testing.T) {
 	}
 }
 
-func TestGenerateServicePrincipalPassword(t *testing.T) {
+func TestGeneratePassword(t *testing.T) {
 	type args struct {
 		length    int
 		numDigits int
@@ -274,15 +274,15 @@ func TestGenerateServicePrincipalPassword(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := GenerateServicePrincipalPassword(tt.args.length, tt.args.numDigits)
+			got, err := GeneratePassword(tt.args.length, tt.args.numDigits)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GenerateServicePrincipalPassword() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GeneratePassword() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr {
 				letters, digits, others := passwordCharactersCounter(got)
 				if letters != (tt.args.length-tt.args.numDigits) || digits != tt.args.numDigits || others != 0 {
-					t.Errorf(`GenerateServicePrincipalPassword() generated = %v.
+					t.Errorf(`GeneratePassword() generated = %v.
 It has %d letters, %d digits and %d other characters, but expected was %d letters, %d digits and 0 others`, got, letters, digits, others, tt.args.length-tt.args.numDigits, tt.args.numDigits)
 				}
 			}
