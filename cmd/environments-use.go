@@ -18,10 +18,10 @@ var environmentsUseCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		if config.CurrentEnvironment == uuid.Nil {
-			errNilEnvironment()
+			logger.Fatal().Msg("no environment selected")
 		}
 
 		var u uuid.UUID
@@ -30,14 +30,14 @@ var environmentsUseCmd = &cobra.Command{
 		} else {
 			u, err = promptui.PromptForEnvironmentSelect("Environments")
 			if err != nil {
-				errPrompt(err)
+				logger.Fatal().Err(err).Msg("prompt failed")
 			}
 		}
 
-		infoChosenEnvironment(u.String())
+		logger.Info().Msgf("Chosen environment UUID is %s", u.String())
 		err = config.SetUsedEnvironment(u)
 		if err != nil {
-			errSetEnvironment(err)
+			logger.Fatal().Err(err).Msg("setting used environment failed")
 		}
 	},
 }

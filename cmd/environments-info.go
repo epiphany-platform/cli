@@ -20,14 +20,14 @@ var environmentsInfoCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		if config.CurrentEnvironment == uuid.Nil {
-			errNilEnvironment()
+			logger.Fatal().Msg("no environment selected")
 		}
 		environment, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
-			errGetEnvironmentDetails(err)
+			logger.Fatal().Err(err).Msg("get environments details failed")
 		}
 		fmt.Print(environment.String())
 	},

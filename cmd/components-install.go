@@ -21,24 +21,27 @@ var componentsInstallCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			errIncorrectNumberOfArguments(errors.New(fmt.Sprintf("found %d args", len(args))))
+			logger.
+				Fatal().
+				Err(errors.New(fmt.Sprintf("found %d args", len(args)))).
+				Msg("incorrect number of arguments")
 		}
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		e, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
-			errGetEnvironments(err)
+			logger.Fatal().Err(err).Msg("environments get failed")
 		}
 
 		tc, err := repository.GetRepository().GetComponentByName(args[0])
 		if err != nil {
-			errGetComponentByName(err)
+			logger.Fatal().Err(err).Msg("getting component by name failed")
 		}
 		c, err := tc.JustLatestVersion()
 		if err != nil {
-			errGetComponentWithLatestVersion(err)
+			logger.Fatal().Err(err).Msg("getting component with latest version failed")
 		}
 
 		newComponent := environment.InstalledComponentVersion{
@@ -62,7 +65,7 @@ var componentsInstallCmd = &cobra.Command{
 		}
 		err = e.Install(newComponent)
 		if err != nil {
-			errInstallComponent(err)
+			logger.Fatal().Err(err).Msg("install component in environment failed")
 		}
 		fmt.Printf("Installed component %s %s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
 	},

@@ -20,11 +20,11 @@ var listCmd = &cobra.Command{
 		debug("list called")
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		environments, err := environment.GetAll()
 		if err != nil {
-			errGetEnvironments(err)
+			logger.Fatal().Err(err).Msg("environments get all failed")
 		}
 		for _, e := range environments {
 			if e.Uuid.String() == config.CurrentEnvironment.String() {
