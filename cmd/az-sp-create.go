@@ -49,12 +49,12 @@ var createCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Err(err).Msg("failed to generate password")
 		}
-		appID, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, name)
+		app, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, name)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("creation of service principal on Azure failed")
 		}
 		credentials := az.Credentials{
-			AppID:          appID,
+			AppID:          *app.AppID,
 			Password:       pass,
 			Tenant:         tenantID,
 			SubscriptionID: subscriptionID,
@@ -68,7 +68,7 @@ func init() {
 
 	createCmd.Flags().String("tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
 	createCmd.Flags().String("subscriptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
-	createCmd.Flags().String("name", "e-wrapper", fmt.Sprintf("Display Name of Service Principal"))
+	createCmd.Flags().String("name", "epiphany-cli", fmt.Sprintf("Display Name of Service Principal"))
 }
 
 func isEnvPresentAndSelected() bool {

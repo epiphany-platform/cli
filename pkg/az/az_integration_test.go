@@ -48,7 +48,9 @@ func TestCreateServicePrincipal(t *testing.T) {
 	appClient := getTestApplicationClient(tenantID, authorizer)
 
 	// when
-	appID, spID, err := CreateServicePrincipal(pass, subscriptionID, tenantID, name)
+	app, sp, err := CreateServicePrincipal(pass, subscriptionID, tenantID, name)
+	spID := *sp.ObjectID
+	appID := *app.ObjectID
 	if err != nil {
 		if appID == "" && spID == "" {
 			t.Fatal(err)

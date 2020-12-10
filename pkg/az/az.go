@@ -42,7 +42,7 @@ type Credentials struct {
 
 // TODO CreateServicePrincipal has to be CLI independent for test reasons
 // CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
-func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (appID, spID string, err error) {
+func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (app graphrbac.Application, sp graphrbac.ServicePrincipal, err error) {
 	logger.Debug().Msg("begin CreateServicePrincipal(...)")
 
 	authorizer, err := auth.NewAuthorizerFromCLI()
@@ -63,19 +63,25 @@ func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (appID,
 	}
 	logger.Debug().Msg("graph authorizer created from az cli command")
 
-	app, err := createApplication(tenantID, name, pass, graphAuthorizer)
+	app, err = createApplication(tenantID, name, pass, graphAuthorizer)
 	if err != nil {
 		return
 	}
-	appID = *app.AppID
-	logger.Debug().Msgf("created application: \n %#v", app)
+	appBytes, err := app.MarshalJSON()
+	if err != nil {
+		logger.Warn().Err(err).Msg("wasn't able to marshall application structure")
+	}
+	logger.Debug().Msgf("created application: \n %s", string(appBytes))
 
-	sp, err := createServicePrincipal(tenantID, app, graphAuthorizer)
+	sp, err = createServicePrincipal(tenantID, app, graphAuthorizer)
 	if err != nil {
 		return
 	}
-	spID = *sp.ObjectID
-	logger.Debug().Msgf("created service principal: \n %#v", sp)
+	spBytes, err := sp.MarshalJSON()
+	if err != nil {
+		logger.Warn().Err(err).Msg("wasn't able to marshall service principal structure")
+	}
+	logger.Debug().Msgf("created service principal: \n %s", string(spBytes))
 
 	roleID, err := getRoleID(subscriptionID, roleName, authorizer)
 	if err != nil {
@@ -87,7 +93,11 @@ func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (appID,
 	if err != nil {
 		return
 	}
-	logger.Debug().Msgf("created role assignment: \n %#v", ra)
+	raBytes, err := ra.MarshalJSON()
+	if err != nil {
+		logger.Warn().Err(err).Msg("wasn't able to marshall role assignment structure")
+	}
+	logger.Debug().Msgf("created role assignment: \n %s", string(raBytes))
 
 	logger.Debug().Msg("end CreateServicePrincipal(...)")
 	return
