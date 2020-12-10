@@ -2,9 +2,9 @@ package az
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"github.com/rs/zerolog"
+	"os"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
@@ -14,15 +14,23 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/to"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/sethvargo/go-password/password"
 )
 
 const (
-	cloudName        = "AzurePublicCloud"
-	defaultPublisher = "Microsoft Services"
-	roleName         = "Contributor"
+	cloudName = "AzurePublicCloud"
+	roleName  = "Contributor"
 )
+
+var (
+	logger zerolog.Logger
+)
+
+func init() {
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	logger = zerolog.New(output).With().Str("package", "az").Caller().Timestamp().Logger()
+}
 
 // Credentials structure is used to format display information for Service Principal
 type Credentials struct {
@@ -32,60 +40,72 @@ type Credentials struct {
 	SubscriptionID string
 }
 
+// TODO CreateServicePrincipal has to be CLI independent for test reasons
 // CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
-func CreateServicePrincipal(pass, subscriptionID, tenantID, spName string) (graphrbac.ServicePrincipal, graphrbac.Application) {
-	info("Start creating of Azure Service Principal...")
-	resourceManagerAuthorizer := getAuthorizerFromCli()
+func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (app graphrbac.Application, sp graphrbac.ServicePrincipal, err error) {
+	logger.Debug().Msg("begin CreateServicePrincipal(...)")
 
-	env := getEnvironment(cloudName)
-
-	graphAuthorizer := getGraphAuthorizer(env)
-
-	app := createApplication(tenantID, spName, pass, graphAuthorizer)
-
-	sp := createServicePrincipal(tenantID, app, graphAuthorizer)
-
-	assignRoleToServicePrincipal(subscriptionID, roleName, sp, resourceManagerAuthorizer)
-
-	return sp, app
-}
-
-// GenerateServicePrincipalCredentialsStruct generate and returns Credentials structure
-func GenerateServicePrincipalCredentialsStruct(pass, tenantID, subscriptionID, appID string) *Credentials {
-	debug("Generate struct.")
-	creds := &Credentials{
-		AppID:          appID,
-		Password:       pass,
-		Tenant:         tenantID,
-		SubscriptionID: subscriptionID,
-	}
-	debug("Creds %v: ", *creds)
-	return creds
-}
-
-// GenerateServicePrincipalAuthJSONFromCredentialsStruct generate JSON that can be used for
-func GenerateServicePrincipalAuthJSONFromCredentialsStruct(creds Credentials) []byte {
-	debug("Marshaling to JSON.")
-	credsJSON, err := json.Marshal(creds)
+	authorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		errFailedToMarshalJSON(err)
+		return
 	}
-	debug(string(credsJSON))
-	return credsJSON
-}
+	logger.Debug().Msg("authorizer created from az cli command")
 
-// TODO fix that to add SP to environment and not to separate file
-// WriteServicePrincipalAuthJSON to JSON authorization file
-func WriteServicePrincipalAuthJSON(credsJSON []byte) {
-	err := ioutil.WriteFile("/tmp/dat1", credsJSON, 0644)
+	env, err := azure.EnvironmentFromName(cloudName)
 	if err != nil {
-		errFailedToWriteJSONAuthFile(err)
+		return
 	}
+	logger.Debug().Msg("azure cloud endpoints information obtained")
+
+	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
+	if err != nil {
+		return
+	}
+	logger.Debug().Msg("graph authorizer created from az cli command")
+
+	app, err = createApplication(tenantID, name, pass, graphAuthorizer)
+	if err != nil {
+		return
+	}
+	appBytes, err := app.MarshalJSON()
+	if err != nil {
+		logger.Warn().Err(err).Msg("wasn't able to marshall application structure")
+	}
+	logger.Debug().Msgf("created application: \n %s", string(appBytes))
+
+	sp, err = createServicePrincipal(tenantID, app, graphAuthorizer)
+	if err != nil {
+		return
+	}
+	spBytes, err := sp.MarshalJSON()
+	if err != nil {
+		logger.Warn().Err(err).Msg("wasn't able to marshall service principal structure")
+	}
+	logger.Debug().Msgf("created service principal: \n %s", string(spBytes))
+
+	roleID, err := getRoleID(subscriptionID, roleName, authorizer)
+	if err != nil {
+		return
+	}
+	logger.Debug().Msgf("obtained id %s for role %s", roleID, roleName)
+
+	ra, err := assignRoleToServicePrincipalWithRetries(subscriptionID, roleID, sp, authorizer)
+	if err != nil {
+		return
+	}
+	raBytes, err := ra.MarshalJSON()
+	if err != nil {
+		logger.Warn().Err(err).Msg("wasn't able to marshall role assignment structure")
+	}
+	logger.Debug().Msgf("created role assignment: \n %s", string(raBytes))
+
+	logger.Debug().Msg("end CreateServicePrincipal(...)")
+	return
 }
 
 // GeneratePassword generates Service Principal password
 func GeneratePassword(length, numDigits int) (string, error) {
-	debug("will generate password of length %d with %d digits", length, numDigits)
+	logger.Debug().Msgf("will generate password of length %d with %d digits", length, numDigits)
 	if numDigits > length {
 		return "", fmt.Errorf("parameter 'numDigits' cannot be greater than parameter 'length'")
 	}
@@ -93,158 +113,98 @@ func GeneratePassword(length, numDigits int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	debug("generated password was: %s", pass)
+	logger.Debug().Msgf("generated password was: %s", pass)
 	return pass, nil
 }
 
-// getAuthorizerFromCli returns authorizer based on local az login session
-func getAuthorizerFromCli() autorest.Authorizer {
-	cliAuthorizer, err := auth.NewAuthorizerFromCLI()
-	if err != nil {
-		errFailedToGetAuthorizerFromCli(err)
-	} else {
-		info("Got Azure CLI authorizer successfully .")
-	}
-	return cliAuthorizer
-}
+// createApplication creates an application that is used with Service Principal based on tenantID, name, pass and graphAuthorizer (autorest.Authorizer)
+func createApplication(tenantID, name, password string, authorizer autorest.Authorizer) (graphrbac.Application, error) {
+	logger.Debug().Msg("will create application")
+	client := graphrbac.NewApplicationsClient(tenantID)
+	client.Authorizer = authorizer
 
-// TODO consider removal
-// getEnvironment returns Azure Environment based on cloudName
-func getEnvironment(cloudName string) azure.Environment {
-	env, err := azure.EnvironmentFromName(cloudName)
-	if err != nil {
-		errFailedToGetEnvironment(err)
-	}
-	return env
-}
-
-// getGraphAuthorizer return graph authorizer based on Azure Environment
-func getGraphAuthorizer(env azure.Environment) autorest.Authorizer {
-	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
-	if err != nil {
-		errFailedToGetGraphAuthorizer(err)
-	} else {
-		info("Got Azure Graph authorizer successfully .")
-	}
-	return graphAuthorizer
-}
-
-// createApplication creates an application that is used with Service Principal based on tenantID, spName, pass and graphAuthorizer (autorest.Authorizer)
-func createApplication(tenantID, spName, pass string, graphAuthorizer autorest.Authorizer) graphrbac.Application {
-	info("Creating an application")
-	appClient := graphrbac.NewApplicationsClient(tenantID)
-	appClient.Authorizer = graphAuthorizer
-
-	keyID := uuid.NewV4()
+	keyID := uuid.New()
 	t := &date.Time{
 		Time: time.Now(),
 	}
 	t2 := &date.Time{
 		Time: t.AddDate(2, 0, 0),
 	}
-	app, err := appClient.Create(context.TODO(), graphrbac.ApplicationCreateParameters{
-		DisplayName:             to.StringPtr(spName),
-		IdentifierUris:          &[]string{"https://" + spName},
+	return client.Create(context.TODO(), graphrbac.ApplicationCreateParameters{
+		DisplayName:             to.StringPtr(name),
+		IdentifierUris:          &[]string{"https://" + name},
 		AvailableToOtherTenants: to.BoolPtr(false),
-		Homepage:                to.StringPtr("https://" + spName),
+		Homepage:                to.StringPtr("https://" + name),
 		PasswordCredentials: &[]graphrbac.PasswordCredential{{
 			StartDate:           t,
 			EndDate:             t2,
 			KeyID:               to.StringPtr(keyID.String()),
-			Value:               to.StringPtr(pass),
-			CustomKeyIdentifier: to.ByteSlicePtr([]byte(spName)),
+			Value:               to.StringPtr(password),
+			CustomKeyIdentifier: to.ByteSlicePtr([]byte(name)),
 		}},
 	})
-	if err != nil {
-		errFailedToCreateApplication(err)
-	}
-	appJSON, err := app.MarshalJSON()
-	if err != nil {
-		errFailedToMarshalJSON(err)
-	}
-	debug(fmt.Sprint("App: ", string(appJSON)))
-	return app
 }
 
 // createServicePrincipal creates Service Principal based on tenantID, application (graphrbac.Application) using graphAuthorizer (autorest.Authorizer)
-func createServicePrincipal(tenantID string, app graphrbac.Application, graphAuthorizer autorest.Authorizer) graphrbac.ServicePrincipal {
-	info("Creating a Service Principal")
-	spClient := graphrbac.NewServicePrincipalsClient(tenantID)
-	spClient.Authorizer = graphAuthorizer
+func createServicePrincipal(tenantID string, app graphrbac.Application, authorizer autorest.Authorizer) (graphrbac.ServicePrincipal, error) {
+	logger.Debug().Msg("will create service principal")
+	client := graphrbac.NewServicePrincipalsClient(tenantID)
+	client.Authorizer = authorizer
 
-	sp, err := spClient.Create(context.TODO(), graphrbac.ServicePrincipalCreateParameters{
+	return client.Create(context.TODO(), graphrbac.ServicePrincipalCreateParameters{
 		AppID:          app.AppID,
 		AccountEnabled: to.BoolPtr(true),
 	})
-	if err != nil {
-		errFailedToCreateApplication(err)
-	}
-
-	fmt.Println("objectID: ", *sp.ObjectID)
-	spJSON, err := sp.MarshalJSON()
-	if err != nil {
-		errFailedToMarshalJSON(err)
-	}
-	debug(fmt.Sprint("SP: ", string(spJSON)))
-	fmt.Println(fmt.Sprint("SP: ", string(spJSON)))
-	return sp
 }
 
-// assignRoleToServicePrincipal assigns role from RBAC to Service Principal
+// assignRoleToServicePrincipalWithRetries assigns role from RBAC to Service Principal
 // based on subscriptionID string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer
-func assignRoleToServicePrincipal(subscriptionID, roleName string, sp graphrbac.ServicePrincipal, resourceManagerAuthorizer autorest.Authorizer) {
-	info("Assigning a role to Service Principal")
-	roleAssignmentClient := authorization.NewRoleAssignmentsClient(subscriptionID)
-	roleAssignmentClient.Authorizer = resourceManagerAuthorizer
+func assignRoleToServicePrincipalWithRetries(subscriptionID, roleID string, sp graphrbac.ServicePrincipal, authorizer autorest.Authorizer) (ra authorization.RoleAssignment, err error) {
+	logger.Debug().Msg("will assign role to service principal")
+	client := authorization.NewRoleAssignmentsClient(subscriptionID)
+	client.Authorizer = authorizer
 
-	roleID := getRoleID(subscriptionID, roleName, resourceManagerAuthorizer)
-
-	roleAssignmentName := uuid.NewV4()
 	for i := 0; i < 30; i++ {
-		ra, err := roleAssignmentClient.Create(context.TODO(), "/subscriptions/"+subscriptionID, roleAssignmentName.String(), authorization.RoleAssignmentCreateParameters{
+		ra, err = client.Create(context.TODO(), "/subscriptions/"+subscriptionID, uuid.New().String(), authorization.RoleAssignmentCreateParameters{
 			Properties: &authorization.RoleAssignmentProperties{
 				RoleDefinitionID: to.StringPtr(roleID),
 				PrincipalID:      sp.ObjectID,
 			},
 		})
 		if err != nil {
-			warnAssignRoleToServicePrincipal(err)
+			logger.Warn().Err(err).Msgf("(%d) failed to assign role to service principal.", i)
 			time.Sleep(1 * time.Second)
 			continue
 		} else {
-			raJSON, err := ra.MarshalJSON()
-			if err != nil {
-				errFailedToMarshalJSON(err)
-			}
-			debug(fmt.Sprintf("\n===========\nROLE ASSIGNMENT\n%v\n===========\n", string(raJSON)))
-			break
+			return
 		}
 	}
+	err = fmt.Errorf("maximum retries count achieved")
+	return
 }
 
 // getRoleID finds roleID that is equal to roleName from given subscription
-func getRoleID(subscriptionID, roleName string, resourceManagerAuthorizer autorest.Authorizer) string {
+func getRoleID(subscriptionID, roleName string, authorizer autorest.Authorizer) (roleID string, err error) {
+	logger.Debug().Msg("will search for role")
+	client := authorization.NewRoleDefinitionsClient(subscriptionID)
+	client.Authorizer = authorizer
 
-	roleDefinitionClient := authorization.NewRoleDefinitionsClient(subscriptionID)
-	roleDefinitionClient.Authorizer = resourceManagerAuthorizer
-
-	var roleID string
-
-	roleDefinitionIterator, err := roleDefinitionClient.ListComplete(context.TODO(), "/subscriptions/"+subscriptionID, "")
+	roleDefinitionIterator, err := client.ListComplete(context.TODO(), "/subscriptions/"+subscriptionID, "")
 	if err != nil {
-		errFailedToGetRoleDefinitionIterator(err)
+		return
 	}
 
 	for roleDefinitionIterator.NotDone() {
 		rd := roleDefinitionIterator.Value()
 		if *rd.RoleName == roleName {
 			roleID = *rd.ID
-			debug(fmt.Sprintf("RoleDefinition: %s\n", *rd.RoleName))
+			return
 		}
 		err = roleDefinitionIterator.NextWithContext(context.TODO())
 		if err != nil {
-			errFailedToIterateOverRoleDefinitions(err)
+			return
 		}
 	}
-	return roleID
+	err = fmt.Errorf("required role not found")
+	return
 }
