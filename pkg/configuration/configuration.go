@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/google/uuid"
@@ -19,10 +20,15 @@ const (
 	KindConfig Kind = "Config"
 )
 
+type AzureConfig struct {
+	Credentials az.Credentials `yaml:"credentials"`
+}
+
 type Config struct {
-	Version            string    `yaml:"version"`
-	Kind               Kind      `yaml:"kind"`
-	CurrentEnvironment uuid.UUID `yaml:"current-environment"`
+	Version            string      `yaml:"version"`
+	Kind               Kind        `yaml:"kind"`
+	CurrentEnvironment uuid.UUID   `yaml:"current-environment"`
+	AzureConfig        AzureConfig `yaml:"azure-config,omitempty"`
 }
 
 //TODO return newly created environment uuid
@@ -67,6 +73,10 @@ func (c *Config) Save() error {
 		return err
 	}
 	return nil
+}
+
+func (c *Config) AddAzureCredentials(credentials az.Credentials) {
+	c.AzureConfig.Credentials = credentials
 }
 
 //GetConfig sets usedConfigFile and usedConfigurationDirectory to default values and returns (existing or just initialized) Config
