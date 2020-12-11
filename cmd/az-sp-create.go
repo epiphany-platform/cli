@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/configuration"
@@ -42,7 +43,8 @@ var createCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if !isEnvPresentAndSelected() {
+		config, err := isEnvPresentAndSelected()
+		if err != nil {
 			logger.Fatal().Msg("no environment selected")
 		}
 		pass, err := az.GeneratePassword(32, 10)
@@ -60,6 +62,11 @@ var createCmd = &cobra.Command{
 			SubscriptionID: subscriptionID,
 		}
 		logger.Debug().Msgf("prepared credentials for further consumption: %#v", credentials)
+		config.AddAzureCredentials(credentials)
+		err = config.Save()
+		if err != nil {
+			logger.Fatal().Err(err).Msg("failed to save config file")
+		}
 	},
 }
 
@@ -71,22 +78,23 @@ func init() {
 	createCmd.Flags().String("name", "epiphany-cli", fmt.Sprintf("Display Name of Service Principal"))
 }
 
-func isEnvPresentAndSelected() bool {
+func isEnvPresentAndSelected() (config *configuration.Config, err error) {
 	debug("will check if isEnvPresentAndSelected()")
-	config, err := configuration.GetConfig()
+	config, err = configuration.GetConfig()
 	if err != nil {
-		logger.Fatal().Err(err).Msg("get config failed")
+		return
 	}
 	environments, err := environment.GetAll()
 	if err != nil {
-		logger.Fatal().Err(err).Msg("environments get all failed")
+		return
 	}
 	for _, e := range environments {
 		if e.Uuid.String() == config.CurrentEnvironment.String() {
 			debug("found currently selected environment %s", e.Uuid.String())
-			return true
+			return
 		}
 	}
 	debug("currently selected environment not found")
-	return false
+	err = errors.New("currently selected environment not found")
+	return
 }
