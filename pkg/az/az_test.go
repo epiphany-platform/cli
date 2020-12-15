@@ -26,6 +26,15 @@ func TestGeneratePassword(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "happy path with symbol",
+			args: args{
+				length:     32,
+				numDigits:  8,
+				numSymbols: 2,
+			},
+			wantErr: false,
+		},
+		{
 			name: "too many digits",
 			args: args{
 				length:     10,
@@ -44,9 +53,17 @@ func TestGeneratePassword(t *testing.T) {
 			}
 			if !tt.wantErr {
 				letters, digits, others := passwordCharactersCounter(got)
-				if letters != (tt.args.length-(tt.args.numDigits-1-tt.args.numSymbols)) || digits != (tt.args.numDigits-1-tt.args.numSymbols) || others != tt.args.numSymbols {
-					t.Errorf(`GeneratePassword() generated = %v.
-It has %d letters, %d digits and %d other characters, but expected was %d letters, %d digits and 0 others`, got, letters, digits, others, tt.args.length-tt.args.numDigits, tt.args.numDigits)
+				// expectedLettersNumber is the total length of generated Password, where first character is a letter due to Azure password requirements
+				// number of letters is a difference between total length and the rest of possible symbols
+				expectedLettersNumber := (tt.args.length - (tt.args.numDigits + tt.args.numSymbols))
+				if letters != expectedLettersNumber {
+					t.Errorf(`GeneratePassword() generated = %v. It has %d letters, but expected was %d letters`, got, letters, expectedLettersNumber)
+				}
+				if digits != tt.args.numDigits {
+					t.Errorf(`GeneratePassword() generated = %v. It has %d digits, but expected was %d digits`, got, digits, tt.args.numDigits)
+				}
+				if others != tt.args.numSymbols {
+					t.Errorf(`GeneratePassword() generated = %v. It has %d others, but expected was %d others`, got, others, tt.args.numSymbols)
 				}
 			}
 		})

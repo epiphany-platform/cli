@@ -107,7 +107,10 @@ func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (app gr
 // GeneratePassword generates Service Principal password
 func GeneratePassword(length, numDigits, numSymbols int) (string, error) {
 	logger.Debug().Msgf("will generate password of length %d with %d digits", length, numDigits)
-	if numDigits > length {
+	// the total length of generated Password is dimnished by 1, because first character is a letter due to Azure
+	// password requirements (needs to be alphanumeric)
+	// TODO: Add possibility that the first character can be a number
+	if numDigits+numSymbols > length-1 {
 		return "", fmt.Errorf("parameter 'numDigits' cannot be greater than parameter 'length'")
 	}
 
@@ -125,7 +128,7 @@ func GeneratePassword(length, numDigits, numSymbols int) (string, error) {
 		return "", err
 	}
 
-	passRest, err := newPassGenerator.Generate(length-1, numDigits-1, numSymbols, false, false)
+	passRest, err := newPassGenerator.Generate(length-1, numDigits, numSymbols, false, false)
 
 	pass := passStart + passRest
 
