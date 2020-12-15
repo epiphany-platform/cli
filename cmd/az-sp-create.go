@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -47,7 +48,7 @@ var createCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Msg("no environment selected")
 		}
-		pass, err := az.GeneratePassword(32, 10)
+		pass, err := az.GeneratePassword(32, 10, 5)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("failed to generate password")
 		}

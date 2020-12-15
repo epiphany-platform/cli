@@ -3,9 +3,10 @@ package az
 import (
 	"context"
 	"fmt"
-	"github.com/rs/zerolog"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
@@ -104,15 +105,30 @@ func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (app gr
 }
 
 // GeneratePassword generates Service Principal password
-func GeneratePassword(length, numDigits int) (string, error) {
+func GeneratePassword(length, numDigits, numSymbols int) (string, error) {
 	logger.Debug().Msgf("will generate password of length %d with %d digits", length, numDigits)
 	if numDigits > length {
 		return "", fmt.Errorf("parameter 'numDigits' cannot be greater than parameter 'length'")
 	}
-	pass, err := password.Generate(length, numDigits, 0, false, false)
+
+	passStart, err := password.Generate(1, 0, 0, false, false)
 	if err != nil {
 		return "", err
 	}
+
+	restPassGenInput := &password.GeneratorInput{
+		Symbols: "-_.~'",
+	}
+
+	newPassGenerator, err := password.NewGenerator(restPassGenInput)
+	if err != nil {
+		return "", err
+	}
+
+	passRest, err := newPassGenerator.Generate(length-1, numDigits-1, numSymbols, false, false)
+
+	pass := passStart + passRest
+
 	logger.Debug().Msgf("generated password was: %s", pass)
 	return pass, nil
 }
