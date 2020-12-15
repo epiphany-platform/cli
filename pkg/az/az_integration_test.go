@@ -4,12 +4,13 @@ package az
 
 import (
 	"context"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"math/rand"
 	"os"
 	"testing"
+
+	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 )
@@ -27,6 +28,7 @@ func setup(t *testing.T) (name, subscriptionID, tenantID string) {
 		t.Fatalf("expected non-empty SUBSCRIPTION_ID environment variable")
 	}
 
+	// TODO: Check possibility of using https://github.com/google/uuid instead of generateRandomString()
 	name = "epiphany-cli-tests-" + generateRandomString(6)
 	t.Logf("integration tests will use name %s as created application name", name)
 	return
