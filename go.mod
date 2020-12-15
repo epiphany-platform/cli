@@ -1,6 +1,6 @@
 module github.com/epiphany-platform/cli
 
-go 1.14
+go 1.15
 
 require (
 	github.com/Azure/azure-sdk-for-go v48.2.0+incompatible
