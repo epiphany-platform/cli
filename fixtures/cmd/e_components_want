@@ -8,6 +8,9 @@ Information about available components are taken from https://github.com/epiphan
 Usage:
   e components [command]
 
+Aliases:
+  components, cmp
+
 Available Commands:
   info        Displays information about component
   install     Installs component into currently used environment

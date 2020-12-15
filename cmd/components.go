@@ -14,6 +14,7 @@ var componentsCmd = &cobra.Command{
  - get information about component
 
 Information about available components are taken from https://github.com/epiphany-platform/modules/blob/develop/v1.yaml`,
+	Aliases: []string{"cmp"},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("components called")
 	},

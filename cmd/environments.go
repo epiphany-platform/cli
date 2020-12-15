@@ -6,9 +6,10 @@ import (
 
 // environmentsCmd represents the environments command
 var environmentsCmd = &cobra.Command{
-	Use:   "environments",
-	Short: "Allows various interactions with environments",
-	Long:  `TODO`,
+	Use:     "environments",
+	Short:   "Allows various interactions with environments",
+	Long:    `TODO`,
+	Aliases: []string{"env"},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments called")
 	},

@@ -3,6 +3,9 @@ TODO
 Usage:
   e environments [command]
 
+Aliases:
+  environments, env
+
 Available Commands:
   info        Displays information about currently selected environment
   list        TODO
