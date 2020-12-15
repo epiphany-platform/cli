@@ -1,21 +1,19 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package configuration
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
 	"testing"
+
+	"github.com/epiphany-platform/cli/pkg/az"
+	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 func setup(t *testing.T, suffix string) (string, string) {
@@ -252,6 +250,62 @@ func TestConfig_Save(t *testing.T) {
 	}
 }
 
+func TestConfig_AddAzureCredentials(t *testing.T) {
+	type fields struct {
+		CurrentEnvironment uuid.UUID
+	}
+	type args struct {
+		credentials az.Credentials
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *Config
+	}{
+		{
+			name: "happy path",
+			fields: fields{
+				CurrentEnvironment: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
+			},
+			args: args{
+				credentials: az.Credentials{
+					AppID:          "app-id-1",
+					Password:       "some-strong-pass",
+					Tenant:         "some-tenant-id",
+					SubscriptionID: "some-subscription-id",
+				},
+			},
+			want: &Config{
+				Version:            "v1",
+				Kind:               "Config",
+				CurrentEnvironment: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
+				AzureConfig: AzureConfig{
+					Credentials: az.Credentials{
+						AppID:          "app-id-1",
+						Password:       "some-strong-pass",
+						Tenant:         "some-tenant-id",
+						SubscriptionID: "some-subscription-id",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Config{
+				Version:            "v1",
+				Kind:               KindConfig,
+				CurrentEnvironment: tt.fields.CurrentEnvironment,
+			}
+			c.AddAzureCredentials(tt.args.credentials)
+			if !reflect.DeepEqual(c, tt.want) {
+				t.Errorf("got = %v, want %v", c, tt.want)
+			}
+		})
+	}
+}
+
 func Test_setUsedConfigPaths(t *testing.T) {
 	tempFile, tempDir := setup(t, "set")
 	defer os.RemoveAll(tempDir)
@@ -342,10 +396,10 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			got, err := setUsedConfigPaths(tt.configDir, tt.configFile)
 
 			if isWrongResult(t, err, tt.wantErr) {
-				return
+				t.Errorf("got err = %v, want err %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got = %v, want %v", got, tt.wantErr)
+				t.Errorf("got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -419,7 +473,7 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			defer ioutil.WriteFile(tt.configPath, []byte(""), 0664)
 			got, err := makeOrGetConfig()
 			if isWrongResult(t, err, tt.wantErr) {
-				return
+				t.Errorf("got err = %v, want err %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("got = %v, want %v", got, tt.want)

@@ -1,7 +1,3 @@
-/*
- * Copyright © 2020 Mateusz Kyc
- */
-
 package cmd
 
 import (
@@ -17,7 +13,7 @@ var componentsCmd = &cobra.Command{
  - install new component to environment
  - get information about component
 
-Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml`,
+Information about available components are taken from https://github.com/epiphany-platform/modules/blob/develop/v1.yaml`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("components called")
 	},
@@ -25,14 +21,4 @@ Information about available components are taken from https://github.com/mkyc/ep
 
 func init() {
 	rootCmd.AddCommand(componentsCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// componentsCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// componentsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

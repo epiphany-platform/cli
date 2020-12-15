@@ -3,7 +3,7 @@ This command provides way to:
  - install new component to environment
  - get information about component
 
-Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml
+Information about available components are taken from https://github.com/epiphany-platform/modules/blob/develop/v1.yaml
 
 Usage:
   e components [command]
@@ -18,6 +18,6 @@ Flags:
 
 Global Flags:
       --configDir string   config directory (default is .e)
-  -d, --debug              enable debug loglevel
+      --logLevel string    log level (default is warn, values: [debug, info, error, fatal])
 
 Use "e components [command] --help" for more information about a command.

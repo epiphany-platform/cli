@@ -1,11 +1,10 @@
-/*
-Copyright © 2020 Mateusz Kyc
-*/
-
 package cmd
 
 import (
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/rs/zerolog"
@@ -14,8 +13,9 @@ import (
 )
 
 var (
-	cfgDir      string
-	enableDebug bool
+	cfgDir   string
+	logLevel string
+	logger   zerolog.Logger
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -32,11 +32,17 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		errRootExecute(err)
+		logger.
+			Fatal().
+			Err(err).
+			Msg("root execute failed")
 	}
 }
 
 func init() {
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	logger = zerolog.New(output).With().Str("package", "cmd").Caller().Timestamp().Logger()
+
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
@@ -44,7 +50,7 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "configDir", "", fmt.Sprintf("config directory (default is %s)", util.DefaultConfigurationDirectory))
-	rootCmd.PersistentFlags().BoolVarP(&enableDebug, "debug", "d", false, "enable debug loglevel")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "", fmt.Sprintf("log level (default is warn, values: [debug, info, error, fatal])"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -53,23 +59,31 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if enableDebug {
+	switch logLevel {
+	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	} else {
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	case "fatal":
+		zerolog.SetGlobalLevel(zerolog.FatalLevel)
+	default:
 		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
+
 	debug("initializing root config")
 	if cfgDir != "" {
 		config, err := configuration.SetConfigDirectory(cfgDir)
 		if err != nil {
-			errSetConfigFile(err)
+			logger.Fatal().Err(err).Msg("set config failed")
 		}
 		// Use config file from the flag.
 		viper.SetConfigFile(config.GetConfigFilePath())
 	} else {
 		config, err := configuration.GetConfig()
 		if err != nil {
-			errGetConfig(err)
+			logger.Fatal().Err(err).Msg("get config failed")
 		}
 		// setup default
 		viper.SetConfigFile(config.GetConfigFilePath())
@@ -79,6 +93,6 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		infoConfigFile(viper.ConfigFileUsed())
+		logger.Info().Msgf("used config file: %s", viper.ConfigFileUsed())
 	}
 }
