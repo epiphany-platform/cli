@@ -74,7 +74,7 @@ func init() {
 
 	createCmd.Flags().String("tenantID", "", "TenantID of AAD where service principal should be created")
 	createCmd.Flags().String("subscriptionID", "", "SubscriptionID of subscription where service principal should have access")
-	createCmd.Flags().String("newServicePrincipalName", "epiphany-cli", "Display Name of service principal")
+	createCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
 func isEnvPresentAndSelected() (config *configuration.Config, err error) {
