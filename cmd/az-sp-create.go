@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -74,9 +72,9 @@ var createCmd = &cobra.Command{
 func init() {
 	spCmd.AddCommand(createCmd)
 
-	createCmd.Flags().String("tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
-	createCmd.Flags().String("subscriptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
-	createCmd.Flags().String("name", "epiphany-cli", fmt.Sprintf("Display Name of Service Principal"))
+	createCmd.Flags().String("tenantID", "", "TenantID of AAD where service principal should be created")
+	createCmd.Flags().String("subscriptionID", "", "SubscriptionID of subscription where service principal should have access")
+	createCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
 func isEnvPresentAndSelected() (config *configuration.Config, err error) {
