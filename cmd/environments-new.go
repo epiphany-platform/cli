@@ -4,7 +4,10 @@ import (
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+var newEnvName string
 
 // environmentsNewCmd represents the new command
 var environmentsNewCmd = &cobra.Command{
@@ -13,23 +16,33 @@ var environmentsNewCmd = &cobra.Command{
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		debug("environments new called")
+
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			logger.Fatal().Err(err)
+		}
+
+		newEnvName = viper.GetString("name")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get config failed")
 		}
-		var name string
-		if len(args) == 1 {
-			name = args[0]
-		} else {
-			name, err = promptui.PromptForString("Environment name")
-			if err != nil {
-				logger.Fatal().Err(err).Msg("prompt failed")
+
+		if newEnvName == "" {
+			if len(args) == 1 {
+				newEnvName = args[0]
+			} else {
+				newEnvName, err = promptui.PromptForString("Environment name")
+				if err != nil {
+					logger.Fatal().Err(err).Msg("prompt failed")
+				}
 			}
+			debug("new environment name is: %s", newEnvName)
 		}
-		debug("new environment name is: %s", name)
-		err = config.CreateNewEnvironment(name)
+
+		err = config.CreateNewEnvironment(newEnvName)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("create new environment failed")
 		}
@@ -39,13 +52,5 @@ var environmentsNewCmd = &cobra.Command{
 func init() {
 	environmentsCmd.AddCommand(environmentsNewCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// environmentsNewCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// environmentsNewCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	environmentsNewCmd.Flags().String("name", "", "name of new environment to create")
 }
