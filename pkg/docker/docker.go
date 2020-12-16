@@ -28,6 +28,9 @@ func (i *Image) Pull() (string, error) { //TODO remove splitting log streams her
 		return "", err
 	}
 	reader, err := cli.ImagePull(ctx, i.Name, types.ImagePullOptions{}) //TODO format output
+	if err != nil {
+		return "", err
+	}
 	logR, logW := io.Pipe()
 	stdoutR, stdoutW := io.Pipe()
 
@@ -66,11 +69,31 @@ func (i *Image) Pull() (string, error) { //TODO remove splitting log streams her
 		<-done
 	}
 
-	reader.Close()
+	err = reader.Close()
 	if err != nil {
 		return result, err
 	}
 	return result, nil
+}
+
+func (i *Image) IsPulled() (bool, error) {
+	ctx, cli, err := clientAndContext()
+	if err != nil {
+		return false, err
+	}
+	summaries, err := cli.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return false, err
+	}
+	for _, s := range summaries {
+		for _, rt := range s.RepoTags {
+			logger.Debug().Msgf("repo tag: %s", rt)
+			if strings.HasSuffix(i.Name, rt) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 type Job struct {

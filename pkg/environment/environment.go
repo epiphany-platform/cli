@@ -92,6 +92,14 @@ func (cv *InstalledComponentVersion) String() string {
 func (cv *InstalledComponentVersion) Download() error {
 	if cv.Type == "docker" {
 		dockerImage := &docker.Image{Name: cv.Image}
+		found, err := dockerImage.IsPulled()
+		if err != nil {
+			return err
+		}
+		if found {
+			logger.Debug().Msg("image is already present, no need to download") //TODO consider --force-download switch
+			return nil
+		}
 		logs, err := dockerImage.Pull()
 		cv.PersistLogs(logs)
 		if err != nil {
