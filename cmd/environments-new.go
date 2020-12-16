@@ -33,14 +33,16 @@ var environmentsNewCmd = &cobra.Command{
 		if newEnvName == "" {
 			if len(args) == 1 {
 				newEnvName = args[0]
-			} else {
-				newEnvName, err = promptui.PromptForString("Environment name")
-				if err != nil {
-					logger.Fatal().Err(err).Msg("prompt failed")
-				}
 			}
-			debug("new environment name is: %s", newEnvName)
 		}
+		if newEnvName == "" {
+			newEnvName, err = promptui.PromptForString("Environment name")
+			if err != nil {
+				logger.Fatal().Err(err).Msg("prompt failed")
+			}
+		}
+
+		debug("new environment name is: %s", newEnvName)
 
 		err = config.CreateNewEnvironment(newEnvName)
 		if err != nil {
