@@ -173,6 +173,9 @@ func clientAndContext() (context.Context, *client.Client, error) {
 }
 
 func removeFinishedContainer(cli *client.Client, ctx context.Context, containerID string) {
+	//TODO probably add check if container is running with retry because of:
+	//Error response from daemon: You cannot remove a running container XXX. Stop the container before attempting removal or force remove
+
 	err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
 	if err != nil {
 		warnRemovingContainer(err)
