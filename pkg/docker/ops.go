@@ -2,7 +2,8 @@ package docker
 
 import (
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"os"
+	"time"
 )
 
 var (
@@ -10,9 +11,8 @@ var (
 )
 
 func init() {
-	logger = log.With().
-		Str("package", "docker").
-		Logger()
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	logger = zerolog.New(output).With().Str("package", "docker").Caller().Timestamp().Logger()
 }
 
 func debugJson(json []byte, format string, v ...interface{}) {
