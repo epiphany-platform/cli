@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"strings"
+	"text/template"
 
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -32,7 +35,7 @@ var environmentsRunCmd = &cobra.Command{ //TODO consider what are options to cre
 			if err != nil {
 				logger.Fatal().Err(err).Msg("getting component by name failed")
 			}
-			err = c.Run(args[1])
+			err = c.Run(args[1], environmentsProcessor(config))
 			if err != nil {
 				logger.Fatal().Err(err).Msg("run command failed")
 			}
@@ -48,4 +51,42 @@ var environmentsRunCmd = &cobra.Command{ //TODO consider what are options to cre
 
 func init() {
 	environmentsCmd.AddCommand(environmentsRunCmd)
+}
+
+func environmentsProcessor(config *configuration.Config) func(envs map[string]string) map[string]string {
+	return func(envs map[string]string) map[string]string {
+		result := make(map[string]string)
+		for k, v := range envs {
+			if strings.HasPrefix(v, "#") {
+				logger.Debug().Msgf("key %s has value %s", k, v)
+				parts := strings.Split(v, "#")
+				logger.Debug().Msgf("and value has parts: %#v", parts)
+				if parts[1] == "Config" {
+					t, err := template.New(k).Parse(parts[2])
+					if err != nil {
+						logger.Error().Err(err)
+						break
+					}
+					logger.Debug().Msgf("parsed template: %#v", t)
+					var b bytes.Buffer
+					err = t.Execute(&b, config)
+					if err != nil {
+						logger.Error().Err(err)
+						break
+					}
+					r := b.String()
+					if r == "" {
+						logger.Error().Err(errors.New("there was no value obtained"))
+						break
+					}
+					logger.Debug().Msgf("result value: %#v", b.String())
+					result[k] = b.String()
+				}
+			} else {
+				result[k] = v
+			}
+		}
+
+		return result
+	}
 }

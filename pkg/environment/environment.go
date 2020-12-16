@@ -25,7 +25,7 @@ type InstalledComponentCommand struct {
 }
 
 //TODO add tests
-func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mountPath string, mounts []string) error {
+func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mountPath string, mounts []string, envsProcessor func(map[string]string) map[string]string) error {
 	for _, m := range mounts {
 		util.EnsureDirectory(path.Join(mountPath, m))
 	}
@@ -36,7 +36,7 @@ func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory strin
 		WorkDirectory:        workDirectory,
 		Mounts:               mounts,
 		MountPath:            mountPath,
-		EnvironmentVariables: cc.Envs,
+		EnvironmentVariables: envsProcessor(cc.Envs),
 	}
 	debug("will try to run docker job %+v", dockerJob)
 	return dockerJob.Run()
@@ -60,7 +60,7 @@ type InstalledComponentVersion struct {
 }
 
 //TODO add tests
-func (cv *InstalledComponentVersion) Run(command string) error {
+func (cv *InstalledComponentVersion) Run(command string, envsProcessor func(map[string]string) map[string]string) error {
 	if cv.Type == "docker" {
 		mountPath := path.Join(
 			util.UsedEnvironmentDirectory,
@@ -71,7 +71,7 @@ func (cv *InstalledComponentVersion) Run(command string) error {
 		)
 		for _, cc := range cv.Commands {
 			if cc.Name == command {
-				return cc.RunDocker(cv.Image, cv.WorkDirectory, mountPath, cv.Mounts)
+				return cc.RunDocker(cv.Image, cv.WorkDirectory, mountPath, cv.Mounts, envsProcessor)
 			}
 		}
 	}
