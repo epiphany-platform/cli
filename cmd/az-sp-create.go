@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	tenantID       string
-	subscriptionID string
-	name           string
+	tenantID                string
+	subscriptionID          string
+	newServicePrincipalName string
 )
 
 // createCmd represents the create command
@@ -30,7 +30,7 @@ var createCmd = &cobra.Command{
 
 		tenantID = viper.GetString("tenantID")
 		subscriptionID = viper.GetString("subscriptionID")
-		name = viper.GetString("name")
+		newServicePrincipalName = viper.GetString("name")
 
 		if tenantID == "" {
 			//TODO get default tenant
@@ -50,7 +50,7 @@ var createCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Err(err).Msg("failed to generate password")
 		}
-		app, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, name)
+		app, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, newServicePrincipalName)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("creation of service principal on Azure failed")
 		}
@@ -74,7 +74,7 @@ func init() {
 
 	createCmd.Flags().String("tenantID", "", "TenantID of AAD where service principal should be created")
 	createCmd.Flags().String("subscriptionID", "", "SubscriptionID of subscription where service principal should have access")
-	createCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
+	createCmd.Flags().String("newServicePrincipalName", "epiphany-cli", "Display Name of service principal")
 }
 
 func isEnvPresentAndSelected() (config *configuration.Config, err error) {
