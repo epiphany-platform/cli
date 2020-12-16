@@ -67,7 +67,7 @@ var componentsInstallCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Err(err).Msg("install component in environment failed")
 		}
-		fmt.Printf("Installed component %s %s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
+		fmt.Printf("Installed component %s:%s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
 	},
 }
 
