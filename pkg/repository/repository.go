@@ -33,6 +33,7 @@ type ComponentVersion struct {
 	Image         string             `yaml:"image"`
 	WorkDirectory string             `yaml:"workdir"`
 	Mounts        []string           `yaml:"mounts"`
+	Shared        string             `yaml:"shared"`
 	Commands      []ComponentCommand `yaml:"commands"`
 }
 

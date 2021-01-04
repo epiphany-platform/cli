@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/epiphany-platform/cli/pkg/auth"
 	"io/ioutil"
 	"os"
 	"path"
@@ -25,18 +26,25 @@ type InstalledComponentCommand struct {
 }
 
 //TODO add tests
-func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mountPath string, mounts []string, envsProcessor func(map[string]string) map[string]string) error {
-	for _, m := range mounts {
-		util.EnsureDirectory(path.Join(mountPath, m))
+func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mounts map[string]string, processor func(string) string) error {
+	for _, v := range mounts {
+		util.EnsureDirectory(v)
+	}
+	envs := make(map[string]string)
+	for k, v := range cc.Envs {
+		envs[k] = processor(v)
+	}
+	args := make([]string, len(cc.Args))
+	for _, a := range cc.Args {
+		args = append(args, processor(a))
 	}
 	dockerJob := &docker.Job{
 		Image:                image,
 		Command:              cc.Command,
-		Args:                 cc.Args,
+		Args:                 args,
 		WorkDirectory:        workDirectory,
 		Mounts:               mounts,
-		MountPath:            mountPath,
-		EnvironmentVariables: envsProcessor(cc.Envs),
+		EnvironmentVariables: envs,
 	}
 	debug("will try to run docker job %+v", dockerJob)
 	return dockerJob.Run()
@@ -56,22 +64,34 @@ type InstalledComponentVersion struct {
 	Image          string                      `yaml:"image"`
 	WorkDirectory  string                      `yaml:"workdir"`
 	Mounts         []string                    `yaml:"mounts"`
+	Shared         string                      `yaml:"shared"`
 	Commands       []InstalledComponentCommand `yaml:"commands"`
 }
 
 //TODO add tests
-func (cv *InstalledComponentVersion) Run(command string, envsProcessor func(map[string]string) map[string]string) error {
+func (cv *InstalledComponentVersion) Run(command string, processor func(string) string) error {
 	if cv.Type == "docker" {
-		mountPath := path.Join(
+		mounts := make(map[string]string)
+		moduleMountPath := path.Join(
 			util.UsedEnvironmentDirectory,
 			cv.EnvironmentRef.String(),
 			cv.Name,
 			cv.Version,
 			util.DefaultComponentMountsSubdirectory,
 		)
+		for _, m := range cv.Mounts {
+			mounts[m] = path.Join(moduleMountPath, m)
+		}
+		if cv.Shared != "" {
+			mounts[cv.Shared] = path.Join(
+				util.UsedEnvironmentDirectory,
+				cv.EnvironmentRef.String(),
+				"/shared", //TODO to consts
+			)
+		}
 		for _, cc := range cv.Commands {
 			if cc.Name == command {
-				return cc.RunDocker(cv.Image, cv.WorkDirectory, mountPath, cv.Mounts, envsProcessor)
+				return cc.RunDocker(cv.Image, cv.WorkDirectory, mounts, processor)
 			}
 		}
 	}
@@ -125,11 +145,16 @@ func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to
 	}
 }
 
+type SshConfig struct {
+	RsaKeyPair auth.RsaKeyPair `yaml:"rsa-keypair"`
+}
+
 //Environment struct holds all information about managed environment with list of InstalledComponentVersion
 type Environment struct {
 	Name      string                      `yaml:"name"`
 	Uuid      uuid.UUID                   `yaml:"uuid"`
 	Installed []InstalledComponentVersion `yaml:"installed"`
+	SshConfig SshConfig                   `yaml:"ssh-config,omitempty"`
 }
 
 //Save updated Environment to file
@@ -189,6 +214,10 @@ func (e *Environment) GetComponentByName(name string) (*InstalledComponentVersio
 		}
 	}
 	return nil, errors.New("no such component installed")
+}
+
+func (e *Environment) AddRsaKeyPair(rsaKeyPair auth.RsaKeyPair) {
+	e.SshConfig.RsaKeyPair = rsaKeyPair
 }
 
 //Create new environment with given name

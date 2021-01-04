@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
@@ -101,8 +100,7 @@ type Job struct {
 	Command              string
 	Args                 []string
 	WorkDirectory        string
-	Mounts               []string
-	MountPath            string
+	Mounts               map[string]string
 	EnvironmentVariables map[string]string
 }
 
@@ -121,15 +119,16 @@ func run(job Job) error {
 	}
 	commandAndArgs := append([]string{job.Command}, job.Args...)
 	var mounts []mount.Mount
-	for _, m := range job.Mounts {
+	for k, v := range job.Mounts {
 		mounts = append(
 			mounts,
 			mount.Mount{
 				Type:   mount.TypeBind,
-				Source: path.Join(job.MountPath, m),
-				Target: m,
+				Source: v,
+				Target: k,
 			})
 	}
+	logger.Debug().Msgf("Job run mounts: %#v", mounts)
 
 	resp, err := cli.ContainerCreate(
 		ctx,

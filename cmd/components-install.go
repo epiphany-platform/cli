@@ -52,6 +52,7 @@ var componentsInstallCmd = &cobra.Command{
 			Image:          c.Versions[0].Image,
 			WorkDirectory:  c.Versions[0].WorkDirectory,
 			Mounts:         c.Versions[0].Mounts,
+			Shared:         c.Versions[0].Shared,
 		}
 		for _, rc := range c.Versions[0].Commands {
 			nic := environment.InstalledComponentCommand{
