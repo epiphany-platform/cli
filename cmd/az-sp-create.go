@@ -15,8 +15,8 @@ var (
 	newServicePrincipalName string
 )
 
-// createCmd represents the create command
-var createCmd = &cobra.Command{
+// azSpCreateCmd represents the create command
+var azSpCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create Service Principal",
 	Long:  `Create Service Principal that can be used for authentication with Azure.`,
@@ -70,11 +70,11 @@ var createCmd = &cobra.Command{
 }
 
 func init() {
-	spCmd.AddCommand(createCmd)
+	spCmd.AddCommand(azSpCreateCmd)
 
-	createCmd.Flags().String("tenantID", "", "TenantID of AAD where service principal should be created")
-	createCmd.Flags().String("subscriptionID", "", "SubscriptionID of subscription where service principal should have access")
-	createCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
+	azSpCreateCmd.Flags().String("tenantID", "", "TenantID of AAD where service principal should be created")
+	azSpCreateCmd.Flags().String("subscriptionID", "", "SubscriptionID of subscription where service principal should have access")
+	azSpCreateCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
 func isEnvPresentAndSelected() (config *configuration.Config, err error) {
