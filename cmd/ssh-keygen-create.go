@@ -43,5 +43,5 @@ var sshKeygenCreateCmd = &cobra.Command{
 }
 
 func init() {
-	keygenCmd.AddCommand(sshKeygenCreateCmd)
+	sshKeygenCmd.AddCommand(sshKeygenCreateCmd)
 }

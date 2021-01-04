@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// keygenCmd represents the keygen command
-var keygenCmd = &cobra.Command{
+// sshKeygenCmd represents the keygen command
+var sshKeygenCmd = &cobra.Command{
 	Use:   "keygen",
 	Short: "TODO",
 	Long:  `TODO`,
@@ -17,5 +17,5 @@ var keygenCmd = &cobra.Command{
 }
 
 func init() {
-	sshCmd.AddCommand(keygenCmd)
+	sshCmd.AddCommand(sshKeygenCmd)
 }
