@@ -65,7 +65,7 @@ func TemplateProcessor(c *configuration.Config, e *environment.Environment) func
 }
 
 func process(name, pattern string, data interface{}) (string, error) {
-	t, err := template.New(name).Parse(pattern)
+	t, err := template.New(name).Option("missingkey=error").Parse(pattern)
 	if err != nil {
 		logger.Error().Err(err)
 		return "", err
