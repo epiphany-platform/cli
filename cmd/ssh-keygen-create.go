@@ -14,8 +14,8 @@ import (
 // sshKeygenCreateCmd represents the create command
 var sshKeygenCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "TODO",
-	Long:  `TODO`,
+	Short: "Create new ssh keypair in current environment.",
+	Long:  `This command creates new ssh keypair in current environment and stores information about it in environment.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
 		config, err := configuration.GetConfig()

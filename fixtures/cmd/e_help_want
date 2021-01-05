@@ -4,10 +4,11 @@ Usage:
   e [command]
 
 Available Commands:
-  az           Commands used to work with Azure cloud.
+  az           Azure Cloud related operations
   components   Allows to inspect and install available components
   environments Allows various interactions with environments
   help         Help about any command
+  ssh          Ssh and keys operations
 
 Flags:
       --configDir string   config directory (default is .e)

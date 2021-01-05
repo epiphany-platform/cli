@@ -9,8 +9,8 @@ import (
 // sshKeygenCmd represents the keygen command
 var sshKeygenCmd = &cobra.Command{
 	Use:   "keygen",
-	Short: "TODO",
-	Long:  `TODO`,
+	Short: "Commands related to ssh keygen operations.",
+	Long:  `Commands related to ssh keygen operations.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("keygen called")
 	},
