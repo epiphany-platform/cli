@@ -3,7 +3,7 @@ package processor
 import (
 	"bytes"
 	"github.com/epiphany-platform/cli/pkg/configuration"
-	"github.com/epiphany-platform/cli/pkg/environment"
+	environments "github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/rs/zerolog"
 	"os"
 	"strconv"
@@ -21,7 +21,7 @@ func init() {
 	logger = zerolog.New(output).With().Str("package", "processor").Caller().Timestamp().Logger()
 }
 
-func TemplateProcessor(c *configuration.Config, e *environment.Environment) func(s string) string {
+func TemplateProcessor(config *configuration.Config, environment *environments.Environment) func(s string) string {
 	return func(s string) string {
 		if strings.Contains(s, "#") {
 			parts := strings.Split(s, "#")
@@ -36,7 +36,7 @@ func TemplateProcessor(c *configuration.Config, e *environment.Environment) func
 					ii := i
 					next := i + 1
 					i++
-					r, err := process(strconv.Itoa(ii), parts[next], c)
+					r, err := process(strconv.Itoa(ii), parts[next], config)
 					if err != nil {
 						logger.Error().Err(err)
 						break
@@ -47,7 +47,7 @@ func TemplateProcessor(c *configuration.Config, e *environment.Environment) func
 					ii := i
 					next := i + 1
 					i++
-					r, err := process(strconv.Itoa(ii), parts[next], e)
+					r, err := process(strconv.Itoa(ii), parts[next], environment)
 					if err != nil {
 						logger.Error().Err(err)
 						break

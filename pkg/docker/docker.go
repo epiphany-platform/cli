@@ -20,13 +20,13 @@ type Image struct {
 	Name string
 }
 
-func (i *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
+func (image *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
 	debug("will try to pull")
 	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return "", err
 	}
-	reader, err := cli.ImagePull(ctx, i.Name, types.ImagePullOptions{}) //TODO format output
+	reader, err := cli.ImagePull(ctx, image.Name, types.ImagePullOptions{}) //TODO format output
 	if err != nil {
 		return "", err
 	}
@@ -75,7 +75,7 @@ func (i *Image) Pull() (string, error) { //TODO remove splitting log streams her
 	return result, nil
 }
 
-func (i *Image) IsPulled() (bool, error) {
+func (image *Image) IsPulled() (bool, error) {
 	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return false, err
@@ -87,7 +87,7 @@ func (i *Image) IsPulled() (bool, error) {
 	for _, s := range summaries {
 		for _, rt := range s.RepoTags {
 			logger.Debug().Msgf("repo tag: %s", rt)
-			if strings.HasSuffix(i.Name, rt) {
+			if strings.HasSuffix(image.Name, rt) {
 				return true, nil
 			}
 		}
@@ -104,8 +104,8 @@ type Job struct {
 	EnvironmentVariables map[string]string
 }
 
-func (j Job) Run() error {
-	return run(j)
+func (job Job) Run() error {
+	return run(job)
 }
 
 func run(job Job) error {
