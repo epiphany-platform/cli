@@ -3,9 +3,9 @@ package cmd
 import (
 	"errors"
 	"fmt"
-
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
+	"github.com/epiphany-platform/cli/pkg/processor"
 
 	"github.com/spf13/cobra"
 )
@@ -24,15 +24,15 @@ var environmentsRunCmd = &cobra.Command{ //TODO consider what are options to cre
 			if err != nil {
 				logger.Fatal().Err(err).Msg("get config failed")
 			}
-			e, err := environment.Get(config.CurrentEnvironment)
+			env, err := environment.Get(config.CurrentEnvironment)
 			if err != nil {
 				logger.Fatal().Err(err).Msg("get environments details failed")
 			}
-			c, err := e.GetComponentByName(args[0])
+			c, err := env.GetComponentByName(args[0])
 			if err != nil {
 				logger.Fatal().Err(err).Msg("getting component by name failed")
 			}
-			err = c.Run(args[1])
+			err = c.Run(args[1], processor.TemplateProcessor(config, env))
 			if err != nil {
 				logger.Fatal().Err(err).Msg("run command failed")
 			}

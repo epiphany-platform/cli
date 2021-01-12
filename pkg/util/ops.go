@@ -2,7 +2,8 @@ package util
 
 import (
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
+	"os"
+	"time"
 )
 
 var (
@@ -10,10 +11,8 @@ var (
 )
 
 func init() {
-	logger = log.
-		With().
-		Str("package", "util").
-		Logger()
+	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
+	logger = zerolog.New(output).With().Str("package", "util").Caller().Timestamp().Logger()
 }
 
 func debug(format string, v ...interface{}) {

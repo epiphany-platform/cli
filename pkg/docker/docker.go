@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
@@ -21,13 +20,16 @@ type Image struct {
 	Name string
 }
 
-func (i *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
+func (image *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
 	debug("will try to pull")
 	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return "", err
 	}
-	reader, err := cli.ImagePull(ctx, i.Name, types.ImagePullOptions{}) //TODO format output
+	reader, err := cli.ImagePull(ctx, image.Name, types.ImagePullOptions{}) //TODO format output
+	if err != nil {
+		return "", err
+	}
 	logR, logW := io.Pipe()
 	stdoutR, stdoutW := io.Pipe()
 
@@ -66,11 +68,31 @@ func (i *Image) Pull() (string, error) { //TODO remove splitting log streams her
 		<-done
 	}
 
-	reader.Close()
+	err = reader.Close()
 	if err != nil {
 		return result, err
 	}
 	return result, nil
+}
+
+func (image *Image) IsPulled() (bool, error) {
+	ctx, cli, err := clientAndContext()
+	if err != nil {
+		return false, err
+	}
+	summaries, err := cli.ImageList(ctx, types.ImageListOptions{})
+	if err != nil {
+		return false, err
+	}
+	for _, s := range summaries {
+		for _, rt := range s.RepoTags {
+			logger.Debug().Msgf("repo tag: %s", rt)
+			if strings.HasSuffix(image.Name, rt) {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }
 
 type Job struct {
@@ -78,13 +100,12 @@ type Job struct {
 	Command              string
 	Args                 []string
 	WorkDirectory        string
-	Mounts               []string
-	MountPath            string
+	Mounts               map[string]string
 	EnvironmentVariables map[string]string
 }
 
-func (j Job) Run() error {
-	return run(j)
+func (job Job) Run() error {
+	return run(job)
 }
 
 func run(job Job) error {
@@ -98,15 +119,16 @@ func run(job Job) error {
 	}
 	commandAndArgs := append([]string{job.Command}, job.Args...)
 	var mounts []mount.Mount
-	for _, m := range job.Mounts {
+	for k, v := range job.Mounts {
 		mounts = append(
 			mounts,
 			mount.Mount{
 				Type:   mount.TypeBind,
-				Source: path.Join(job.MountPath, m),
-				Target: m,
+				Source: v,
+				Target: k,
 			})
 	}
+	logger.Debug().Msgf("Job run mounts: %#v", mounts)
 
 	resp, err := cli.ContainerCreate(
 		ctx,
@@ -150,6 +172,9 @@ func clientAndContext() (context.Context, *client.Client, error) {
 }
 
 func removeFinishedContainer(cli *client.Client, ctx context.Context, containerID string) {
+	//TODO probably add check if container is running with retry because of:
+	//Error response from daemon: You cannot remove a running container XXX. Stop the container before attempting removal or force remove
+
 	err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
 	if err != nil {
 		warnRemovingContainer(err)

@@ -52,6 +52,7 @@ var componentsInstallCmd = &cobra.Command{
 			Image:          c.Versions[0].Image,
 			WorkDirectory:  c.Versions[0].WorkDirectory,
 			Mounts:         c.Versions[0].Mounts,
+			Shared:         c.Versions[0].Shared,
 		}
 		for _, rc := range c.Versions[0].Commands {
 			nic := environment.InstalledComponentCommand{
@@ -67,7 +68,7 @@ var componentsInstallCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Err(err).Msg("install component in environment failed")
 		}
-		fmt.Printf("Installed component %s %s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
+		fmt.Printf("Installed component %s:%s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
 	},
 }
 

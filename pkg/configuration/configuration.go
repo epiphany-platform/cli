@@ -39,6 +39,11 @@ func (c *Config) CreateNewEnvironment(name string) error {
 	if err != nil {
 		errCreateEnvironment(err)
 	}
+	util.EnsureDirectory(path.Join(
+		util.UsedEnvironmentDirectory,
+		env.Uuid.String(),
+		"/shared", //TODO to consts
+	))
 	c.CurrentEnvironment = env.Uuid
 	debug("will try to save updated config %+v", c)
 	return c.Save()

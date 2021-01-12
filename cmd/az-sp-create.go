@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -12,13 +10,13 @@ import (
 )
 
 var (
-	tenantID       string
-	subscriptionID string
-	name           string
+	tenantID                string
+	subscriptionID          string
+	newServicePrincipalName string
 )
 
-// createCmd represents the create command
-var createCmd = &cobra.Command{
+// azSpCreateCmd represents the create command
+var azSpCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create Service Principal",
 	Long:  `Create Service Principal that can be used for authentication with Azure.`,
@@ -32,7 +30,7 @@ var createCmd = &cobra.Command{
 
 		tenantID = viper.GetString("tenantID")
 		subscriptionID = viper.GetString("subscriptionID")
-		name = viper.GetString("name")
+		newServicePrincipalName = viper.GetString("name")
 
 		if tenantID == "" {
 			//TODO get default tenant
@@ -52,7 +50,7 @@ var createCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Err(err).Msg("failed to generate password")
 		}
-		app, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, name)
+		app, _, err := az.CreateServicePrincipal(pass, subscriptionID, tenantID, newServicePrincipalName)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("creation of service principal on Azure failed")
 		}
@@ -72,11 +70,11 @@ var createCmd = &cobra.Command{
 }
 
 func init() {
-	spCmd.AddCommand(createCmd)
+	spCmd.AddCommand(azSpCreateCmd)
 
-	createCmd.Flags().String("tenantID", "", fmt.Sprintf("TenantID of AAD where Service Principal should be created"))
-	createCmd.Flags().String("subscriptionID", "", fmt.Sprintf("SubsciptionID of Subscription where Service Principal should have access"))
-	createCmd.Flags().String("name", "epiphany-cli", fmt.Sprintf("Display Name of Service Principal"))
+	azSpCreateCmd.Flags().String("tenantID", "", "TenantID of AAD where service principal should be created")
+	azSpCreateCmd.Flags().String("subscriptionID", "", "SubscriptionID of subscription where service principal should have access")
+	azSpCreateCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
 func isEnvPresentAndSelected() (config *configuration.Config, err error) {

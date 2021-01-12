@@ -375,6 +375,7 @@ installed: []
 						Image:          "x",
 						WorkDirectory:  "x",
 						Mounts:         []string{"x"},
+						Shared:         "x",
 						Commands:       []InstalledComponentCommand{},
 					},
 				},
@@ -390,6 +391,7 @@ installed:
   workdir: x
   mounts:
   - x
+  shared: x
   commands: []
 `),
 			wantErr: nil,
