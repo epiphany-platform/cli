@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	envID   string
-	destDir string
+	envID  string
+	dstDir string
 )
 
 var environmentsExportCmd = &cobra.Command{
@@ -36,7 +36,7 @@ or into the current working directory by default`,
 		}
 
 		envID = viper.GetString("id")
-		destDir = viper.GetString("destination")
+		dstDir = viper.GetString("destination")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		isCurrentEnvUsed := false
@@ -47,19 +47,19 @@ or into the current working directory by default`,
 			isCurrentEnvUsed = true
 			config, err := configuration.GetConfig()
 			if err != nil {
-				// TODO: difference between logger.Fatal() and debug
+				// TODO: difference between logger.Debug() and debug()
 				logger.Fatal().Err(err).Msg("Unable to get environment config")
 			}
 			envID = config.CurrentEnvironment.String()
 		}
 
 		// Check if destination directory is default
-		if destDir == "" {
+		if dstDir == "" {
 			path, err := os.Getwd()
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Unable to get working directory")
 			}
-			destDir = path
+			dstDir = path
 		}
 
 		// Check if passed environment id is valid
@@ -85,12 +85,10 @@ or into the current working directory by default`,
 
 		// Final archive name is envID + .zip extension
 		// TODO: implement filtering logs out, at least runs/*.log
-		err := archiver.Archive([]string{envPath}, path.Join(destDir, envID)+".zip")
+		err := archiver.Archive([]string{envPath}, path.Join(dstDir, envID)+".zip")
 		if err != nil {
 			logger.Fatal().Err(err).Msg(fmt.Sprintf("Unable to archive environment directory: %s", envPath))
 		}
-
-		// TODO: any prompt action needs to be implemented here?
 	},
 }
 
