@@ -22,9 +22,9 @@ var (
 var environmentsExportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Exports environment as an archive",
-	Long: `"export" command allows exporting any environment
-	as an archive into the specified directory or
-	into the current working directory by default`,
+	Long: `"export" command allows exporting any environment 
+as an archive into the specified directory 
+or into the current working directory by default`,
 	// TODO: extend with https://pkg.go.dev/github.com/spf13/cobra#Command
 
 	PreRun: func(cmd *cobra.Command, args []string) {
