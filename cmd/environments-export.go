@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	// TODO: why with "github.com" - paths are different in docker image and locally?
+	// TODO: why with "github.com"?
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/util"
