@@ -1,15 +1,10 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
-	"path"
 
-	// TODO: why with "github.com"?
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"github.com/mholt/archiver/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,15 +15,17 @@ var (
 )
 
 var environmentsExportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Exports environment as an archive",
+	Use:        "export",
+	SuggestFor: []string{"expor", "exprt"},
+	Short:      "Exports an environment as a zip archive",
 	Long: `"export" command allows exporting any environment 
-as an archive into the specified directory 
+as a zip archive into the specified directory 
 or into the current working directory by default`,
-	// TODO: extend with https://pkg.go.dev/github.com/spf13/cobra#Command
+	Example: `Export current environment into current working directory: e environments export
+Export environment into home directory: e environments export --id ba03a2ba-8fa0-4c15-ac07-894af3dbb364 --destination ~`,
 
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments export called")
+		logger.Debug().Msg("environments export called")
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
@@ -38,6 +35,7 @@ or into the current working directory by default`,
 		envID = viper.GetString("id")
 		dstDir = viper.GetString("destination")
 	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		isCurrentEnvUsed := false
 
@@ -47,7 +45,6 @@ or into the current working directory by default`,
 			isCurrentEnvUsed = true
 			config, err := configuration.GetConfig()
 			if err != nil {
-				// TODO: difference between logger.Debug() and debug()
 				logger.Fatal().Err(err).Msg("Unable to get environment config")
 			}
 			envID = config.CurrentEnvironment.String()
@@ -64,30 +61,18 @@ or into the current working directory by default`,
 
 		// Check if passed environment id is valid
 		if !isCurrentEnvUsed {
-			environments, err := environment.GetAll()
+			isEnvValid, err := environment.IsValid(envID)
 			if err != nil {
-				logger.Fatal().Err(err).Msg("Unable to list all environments")
-			}
-			isEnvValid := false
-			for _, e := range environments {
-				if e.Uuid.String() == envID {
-					isEnvValid = true
-					debug("Found environment to export: %s", e.Uuid.String())
-					break
-				}
-			}
-			if !isEnvValid {
-				logger.Fatal().Err(err).Msg(fmt.Sprintf("Environment %s is not found", envID))
+				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envID)
+			} else if !isEnvValid {
+				logger.Fatal().Msgf("Environment %s is not found", envID)
 			}
 		}
 
-		envPath := path.Join(util.UsedEnvironmentDirectory, envID)
-
-		// Final archive name is envID + .zip extension
-		// TODO: implement filtering logs out, at least runs/*.log
-		err := archiver.Archive([]string{envPath}, path.Join(dstDir, envID)+".zip")
+		// Export an environment
+		err := environment.Export(envID, dstDir)
 		if err != nil {
-			logger.Fatal().Err(err).Msg(fmt.Sprintf("Unable to archive environment directory: %s", envPath))
+			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envID)
 		}
 	},
 }
@@ -95,6 +80,7 @@ or into the current working directory by default`,
 func init() {
 	environmentsCmd.AddCommand(environmentsExportCmd)
 
-	environmentsExportCmd.Flags().StringP("id", "i", "", "id of the environment to export")
-	environmentsExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive")
+	environmentsExportCmd.Flags().StringP("id", "i", "", "id of the environment to export, default is current environment")
+	environmentsExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive, default is current directory")
+	environmentsExportCmd.MarkFlagDirname("destination")
 }
