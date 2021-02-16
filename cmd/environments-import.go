@@ -25,7 +25,7 @@ and immediately switches to the imported environment`,
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Msg("Command flags are specified incorrectly")
 		}
 
 		srcFile = viper.GetString("from")
