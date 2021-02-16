@@ -43,7 +43,7 @@ and immediately switches to the imported environment`,
 		}
 
 		// Import environment
-		envConfig, err := environment.Import(srcFile)
+		envID, err := environment.Import(srcFile)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Unable to import environment from specified file")
 		}
@@ -53,19 +53,11 @@ and immediately switches to the imported environment`,
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Get config failed")
 		}
-		err = config.SetUsedEnvironment(envConfig.Uuid)
+		err = config.SetUsedEnvironment(*envID)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Setting used environment failed")
 		}
-		logger.Info().Msgf("Switched to the imported environment with id %s", envConfig.Uuid.String())
-
-		// Download all Docker images for installed components
-		for _, cmp := range envConfig.Installed {
-			err = cmp.Download()
-			if err != nil {
-				logger.Fatal().Err(err)
-			}
-		}
+		logger.Info().Msgf("Switched to the imported environment with id %s", envID.String())
 	},
 }
 

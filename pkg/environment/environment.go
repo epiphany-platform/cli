@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/pkg/auth"
 	"io/ioutil"
 	"os"
 	"path"
 	"time"
 
+	"github.com/epiphany-platform/cli/pkg/auth"
 	"github.com/epiphany-platform/cli/pkg/docker"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/google/uuid"
+	"github.com/mholt/archiver/v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -286,4 +287,83 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 		debug("got environment config %+v", e)
 		return e, nil
 	}
+}
+
+//TODO add tests
+func IsValid(envID string) (bool, error) {
+	environments, err := GetAll()
+	if err != nil {
+		return false, err
+	}
+	isEnvValid := false
+	for _, e := range environments {
+		if e.Uuid.String() == envID {
+			isEnvValid = true
+			logger.Debug().Msgf("Found environment to export: %s", e.Uuid.String())
+			break
+		}
+	}
+	return isEnvValid, nil
+}
+
+//TODO add tests
+func Export(envID, dstDir string) error {
+	envPath := path.Join(util.UsedEnvironmentDirectory, envID)
+
+	// Final archive name is envID + .zip extension
+	err := archiver.Archive([]string{envPath}, path.Join(dstDir, envID)+".zip")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//TODO add tests
+func Import(srcFile string) (*uuid.UUID, error) {
+	// Check if environment config exists in zip archive
+	// before export and verify its content
+	var envConfig *Environment
+	err := archiver.Walk(srcFile, func(f archiver.File) error {
+		if f.Name() == util.DefaultConfigFileName {
+			configContent, err := ioutil.ReadAll(f)
+			if err != nil {
+				return errors.New("Unable to read environment config")
+			}
+			envConfig = &Environment{}
+			err = yaml.Unmarshal(configContent, envConfig)
+			if err != nil {
+				return errors.New("Cannot unmarshal config")
+			}
+			if envConfig.Uuid == uuid.Nil {
+				return errors.New("Environment id is missing in the config")
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	envConfigDir := path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
+
+	// Check if environment with such id is already in place
+	if _, err := os.Stat(path.Join(envConfigDir, envConfig.Uuid.String())); err == nil {
+		return nil, fmt.Errorf("Environment with id %s already exists", envConfig.Uuid.String())
+	}
+
+	// Unarchive specified file
+	err = archiver.Unarchive(srcFile, envConfigDir)
+	if err != nil {
+		return nil, err
+	}
+
+	// Download all Docker images for installed components
+	for _, cmp := range envConfig.Installed {
+		err = cmp.Download()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &envConfig.Uuid, nil
 }
