@@ -307,7 +307,7 @@ func IsValid(envID string) (bool, error) {
 }
 
 //TODO add tests
-func Export(envID, dstDir string) error {
+func (e *Environment) Export(dstDir string) error {
 	envPath := path.Join(util.UsedEnvironmentDirectory, envID)
 
 	// Final archive name is envID + .zip extension
