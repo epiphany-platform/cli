@@ -32,6 +32,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
 	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect

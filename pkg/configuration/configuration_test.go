@@ -133,13 +133,13 @@ current-environment: %s
 			util.UsedEnvironmentDirectory = path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
 			envDirCurrent := path.Join(util.UsedEnvironmentDirectory, envIDCurrent)
 			envDirSwitch := path.Join(util.UsedEnvironmentDirectory, envIDSwitch)
-			os.MkdirAll(envDirCurrent, 0775)
-			os.Mkdir(envDirSwitch, 0775)
-			ioutil.WriteFile(path.Join(envDirCurrent, util.DefaultConfigFileName), []byte(fmt.Sprintf(envConfigTemplate, "env1", envIDCurrent)), 0664)
-			ioutil.WriteFile(path.Join(envDirSwitch, util.DefaultConfigFileName), []byte(fmt.Sprintf(envConfigTemplate, "env2", envIDSwitch)), 0664)
+			os.MkdirAll(envDirCurrent, 0755)
+			os.Mkdir(envDirSwitch, 0755)
+			ioutil.WriteFile(path.Join(envDirCurrent, util.DefaultEnvironmentConfigFileName), []byte(fmt.Sprintf(envConfigTemplate, "env1", envIDCurrent)), 0644)
+			ioutil.WriteFile(path.Join(envDirSwitch, util.DefaultEnvironmentConfigFileName), []byte(fmt.Sprintf(envConfigTemplate, "env2", envIDSwitch)), 0644)
 
 			util.UsedConfigFile = tt.configPath
-			defer ioutil.WriteFile(tt.configPath, []byte(""), 0664)
+			defer ioutil.WriteFile(tt.configPath, []byte(""), 0644)
 			c := &Config{
 				Version:            tt.fields.Version,
 				Kind:               tt.fields.Kind,

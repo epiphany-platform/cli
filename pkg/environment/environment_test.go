@@ -14,40 +14,71 @@ import (
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 )
 
-func setup(t *testing.T, suffix string) (string, string, string) {
+const (
+	envIDValid         = "8f327570-5401-402f-ac57-8f6cd56315e7"
+	configFileTemplate = `version: v1
+kind: Config
+current-environment: %s
+`
+	envConfigFileTemplate = `name: %s
+uuid: %s
+`
+)
+
+func setup(t *testing.T, suffix string, createEnv bool) (string, string, string) {
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	parentDir := os.TempDir()
+
+	// Create directory to store all configuration
 	mainDirectory, err := ioutil.TempDir(parentDir, fmt.Sprintf("*-e-environment-%s", suffix))
 	if err != nil {
 		t.Fatal(err)
 	}
-	envsDirectory, err := ioutil.TempDir(mainDirectory, "environments-*")
+
+	// Create environments supdirectory
+	envsDirectory := path.Join(mainDirectory, util.DefaultEnvironmentsSubdirectory)
+	os.Mkdir(envsDirectory, 0755)
+
+	// Create cli config file
+	configFile := path.Join(mainDirectory, util.DefaultConfigFileName)
+	err = ioutil.WriteFile(configFile, []byte(fmt.Sprintf(configFileTemplate, envIDValid)), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tempFile, err := ioutil.TempFile(mainDirectory, "config-*.yaml")
-	if err != nil {
-		t.Fatal(err)
+	if createEnv {
+		// Create config directory for a valid environment
+		validEnvDir := path.Join(envsDirectory, envIDValid)
+		os.Mkdir(validEnvDir, 0755)
+
+		// Create config file for a valid environment
+		envConfigFile := path.Join(validEnvDir, util.DefaultEnvironmentConfigFileName)
+		err = ioutil.WriteFile(envConfigFile, []byte(fmt.Sprintf(envConfigFileTemplate, "valid", envIDValid)), 0644)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	return tempFile.Name(), mainDirectory, envsDirectory
+
+	return configFile, mainDirectory, envsDirectory
 }
 
 func TestGet(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "get")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "get", false)
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	type args struct {
 		uuid uuid.UUID
 	}
 	tests := []struct {
-		name    string
-		args    args
-		mocked  []byte
-		want    *Environment
-		wantErr error
+		name      string
+		args      args
+		mocked    []byte
+		want      *Environment
+		wantErr   error
+		isPattern bool
 	}{
 		{
 			name: "correct",
@@ -62,26 +93,30 @@ installed: []`),
 				Uuid:      uuid.MustParse("fccf6810-32c4-4500-9414-2de45d2c4097"),
 				Installed: []InstalledComponentVersion{},
 			},
-			wantErr: nil,
+			wantErr:   nil,
+			isPattern: false,
 		},
 		{
 			name: "missing file",
 			args: args{
 				uuid: uuid.MustParse("816789aa-7839-4f2b-ac74-b66344e4fbe8"),
 			},
-			wantErr: errors.New("stat .*-e-environment-get/environments-.*/816789aa-7839-4f2b-ac74-b66344e4fbe8/config.yaml: no such file or directory"),
+			wantErr:   errors.New("no such file or directory"),
+			isPattern: true,
 		},
 		{
 			name: "incorrect file",
 			args: args{
 				uuid: uuid.MustParse("66d4cd70-4375-4737-b6ce-7e13f3cc93f9"),
 			},
-			mocked:  []byte(`incorrect file`),
-			wantErr: errors.New("yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `incorre...` into environment.Environment"),
+			mocked:    []byte(`incorrect file`),
+			wantErr:   errors.New("yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `incorre...` into environment.Environment"),
+			isPattern: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
 			if len(tt.mocked) > 0 {
 				envDir := path.Join(util.UsedEnvironmentDirectory, tt.args.uuid.String())
 				err := os.MkdirAll(envDir, 0755)
@@ -95,12 +130,14 @@ installed: []`),
 				}
 			}
 			got, err := Get(tt.args.uuid)
-			if isWrongResult(t, err, tt.wantErr) {
-				return
+			if tt.wantErr == nil {
+				a.NoError(err)
+			} else if tt.isPattern {
+				a.Contains(err.Error(), tt.wantErr.Error())
+			} else {
+				a.EqualError(err, tt.wantErr.Error())
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got = %#v, want %#v", got, tt.want)
-			}
+			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 		})
 	}
 }
@@ -169,7 +206,7 @@ uuid: 4af1705c-c48f-4ca2-be08-53c673da835c
 installed: []`),
 				},
 			},
-			wantErr:     errors.New("uuid: Parse\\(incorrect-directory-name\\): invalid UUID length: 24"),
+			wantErr:     errors.New("uuid: Parse(incorrect-directory-name): invalid UUID length: 24"),
 			shouldPanic: true,
 		},
 		{
@@ -228,8 +265,9 @@ installed: []`),
 		},
 	}
 	for _, tt := range tests {
-		util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "get-all")
+		util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "get-all", false)
 		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
 			if tt.mocked != nil && len(tt.mocked) > 0 {
 				for _, m := range tt.mocked {
 					envDir := path.Join(util.UsedEnvironmentDirectory, m.subdirectory)
@@ -245,20 +283,16 @@ installed: []`),
 				}
 			}
 
-			f := func() {
-				got, err := GetAll()
-				if isWrongResult(t, err, tt.wantErr) {
-					return
-				}
-				if !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("got = %#v, want %#v", got, tt.want)
-				}
-			}
-
 			if tt.shouldPanic {
-				assertPanic(t, f, tt.wantErr)
+				a.PanicsWithValue(tt.wantErr.Error(), func() { GetAll() })
 			} else {
-				f()
+				got, err := GetAll()
+				if tt.wantErr == nil {
+					a.NoError(err)
+				} else {
+					a.EqualError(err, tt.wantErr.Error())
+				}
+				a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 			}
 		})
 		os.RemoveAll(util.UsedConfigurationDirectory)
@@ -266,7 +300,7 @@ installed: []`),
 }
 
 func Test_create(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "create")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "create", false)
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	type args struct {
@@ -305,24 +339,22 @@ func Test_create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
 			got, err := create(tt.args.name, uuid.MustParse(tt.args.uuid))
-			if isWrongResult(t, err, tt.wantErr) {
-				return
+			if tt.wantErr == nil {
+				a.NoError(err)
+			} else {
+				a.EqualError(err, tt.wantErr.Error())
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got = %+v, want %+v", got, tt.want)
-				return
-			}
+			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 			expectedConfigFile := path.Join(util.UsedEnvironmentDirectory, got.Uuid.String(), util.DefaultEnvironmentConfigFileName)
-			if _, err := os.Stat(expectedConfigFile); os.IsNotExist(err) {
-				t.Errorf("expected to find file %s but didn't find", expectedConfigFile)
-			}
+			a.FileExistsf(expectedConfigFile, "expected to find file %s but didn't find", expectedConfigFile)
 		})
 	}
 }
 
 func TestEnvironment_Save(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "env-save")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "env-save", false)
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
@@ -399,6 +431,7 @@ installed:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
 			dir := path.Join(util.UsedEnvironmentDirectory, tt.environment.Uuid.String())
 			err := os.MkdirAll(dir, 0755)
 			if err != nil {
@@ -410,26 +443,23 @@ installed:
 				Installed: tt.environment.Installed,
 			}
 			err = e.Save()
-			if isWrongResult(t, err, tt.wantErr) {
-				return
+			if tt.wantErr == nil {
+				a.NoError(err)
+			} else {
+				a.EqualError(err, tt.wantErr.Error())
 			}
 			if len(tt.wantContent) > 0 {
 				expectedConfigFile := path.Join(dir, util.DefaultEnvironmentConfigFileName)
-				if _, err := os.Stat(expectedConfigFile); os.IsNotExist(err) {
-					t.Errorf("expected to find file %s but didn't find", expectedConfigFile)
-					return
-				}
+				a.FileExistsf(expectedConfigFile, "expected to find file %s but didn't find", expectedConfigFile)
 				savedBytes, _ := ioutil.ReadFile(expectedConfigFile)
-				if !bytes.Equal(tt.wantContent, savedBytes) {
-					t.Errorf("saved file is \n%s\n\n but expected is \n\n%s\n", string(savedBytes), string(tt.wantContent))
-				}
+				a.Truef(bytes.Equal(tt.wantContent, savedBytes), "saved file is \n%s\n\n but expected is \n\n%s\n", string(savedBytes), string(tt.wantContent))
 			}
 		})
 	}
 }
 
 func TestEnvironment_GetComponentByName(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "env-get-by-name")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "env-get-by-name", false)
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
@@ -527,17 +557,53 @@ func TestEnvironment_GetComponentByName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
 			e := &Environment{
 				Name:      tt.environment.Name,
 				Uuid:      tt.environment.Uuid,
 				Installed: tt.environment.Installed,
 			}
 			got, err := e.GetComponentByName(tt.componentName)
-			if isWrongResult(t, err, tt.wantErr) {
-				return
+			if tt.wantErr == nil {
+				a.NoError(err)
+			} else {
+				a.EqualError(err, tt.wantErr.Error())
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got = %#v, want %#v", got, tt.want)
+			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
+		})
+	}
+}
+
+func TestIsValid(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "validation", true)
+	fakeEnvID, err := uuid.NewRandom()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name string
+		uuid uuid.UUID
+		want bool
+	}{
+		{
+			name: "Existing environment",
+			uuid: uuid.MustParse(envIDValid),
+			want: true,
+		},
+		{
+			name: "Fake environment",
+			uuid: fakeEnvID,
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isValid, err := IsValid(tt.uuid)
+			a := assert.New(t)
+			if a.NoError(err) {
+				a.Equal(tt.want, isValid)
 			}
 		})
 	}
