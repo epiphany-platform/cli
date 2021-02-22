@@ -36,7 +36,7 @@ and immediately switches to the imported environment`,
 		// Ask user for source file path if no file to export from is specified
 		if srcFile == "" {
 			srcFile, _ = promptui.PromptForString("File to export environment from")
-			// Check if environment with such id is already in place
+			// Check if provided source file exists
 			if _, err := os.Stat(srcFile); err != nil {
 				logger.Fatal().Err(err).Msg("Incorrect file path specified")
 			}
