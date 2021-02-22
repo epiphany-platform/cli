@@ -311,7 +311,7 @@ func Export(envID, dstDir string) error {
 	envPath := path.Join(util.UsedEnvironmentDirectory, envID)
 
 	// Final archive name is envID + .zip extension
-	err := archiver.Archive([]string{envPath}, path.Join(dstDir, envID)+".zip")
+	err := archiver.Archive([]string{envPath}, path.Join(dstDir, envID+".zip"))
 	if err != nil {
 		return err
 	}
