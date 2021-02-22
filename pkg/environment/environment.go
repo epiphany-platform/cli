@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/epiphany-platform/cli/pkg/auth"
@@ -14,6 +15,7 @@ import (
 	"github.com/epiphany-platform/cli/pkg/util"
 	"github.com/google/uuid"
 	"github.com/mholt/archiver/v3"
+	"github.com/otiai10/copy"
 	"gopkg.in/yaml.v2"
 )
 
@@ -289,6 +291,28 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 	}
 }
 
+// Copy environment directory to a temporary location without text log files
+// TODO add tests
+func (e *Environment) CopyDirectoryForExport() (string, error) {
+
+	opt := copy.Options{
+		Skip: func(src string) (bool, error) {
+			return strings.HasSuffix(src, ".log"), nil
+		},
+	}
+	destDir := path.Join(util.UsedTempDirectory, e.Uuid.String())
+
+	// Make sure there are no files from previous runs
+	err := os.RemoveAll(destDir)
+	if err != nil {
+		return "", err
+	}
+
+	err = copy.Copy(path.Join(util.UsedEnvironmentDirectory, e.Uuid.String()), destDir, opt)
+	return destDir, err
+}
+
+// Check if environment with specified id exists
 //TODO add tests
 func IsValid(uuid uuid.UUID) (bool, error) {
 	environments, err := GetAll()
@@ -306,18 +330,32 @@ func IsValid(uuid uuid.UUID) (bool, error) {
 	return isEnvValid, nil
 }
 
+// Export (archive) an environment
 //TODO add tests
 func (e *Environment) Export(dstDir string) error {
-	envPath := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String())
 
-	// Final archive name is envID + .zip extension
-	err := archiver.Archive([]string{envPath}, path.Join(dstDir, e.Uuid.String()+".zip"))
+	// Make a temporary copy of the environment directory with cleaned logs up
+	envTempPath, err := e.CopyDirectoryForExport()
 	if err != nil {
 		return err
 	}
+
+	// Final archive name is envID + .zip extension
+	err = archiver.Archive([]string{envTempPath}, path.Join(dstDir, e.Uuid.String()+".zip"))
+	if err != nil {
+		return err
+	}
+
+	// Remove temporary directory
+	err = os.RemoveAll(envTempPath)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
+// Import (extract) an environment
 //TODO add tests
 func Import(srcFile string) (*uuid.UUID, error) {
 	// Check if environment config exists in zip archive

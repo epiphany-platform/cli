@@ -5,12 +5,13 @@ import (
 )
 
 const (
-	DefaultConfigurationDirectory      string = ".e"
-	DefaultConfigFileName              string = "config.yaml"
-	DefaultEnvironmentsSubdirectory    string = "environments"
-	DefaultEnvironmentConfigFileName   string = "config.yaml"
-	DefaultComponentRunsSubdirectory   string = "runs"
-	DefaultComponentMountsSubdirectory string = "mounts"
+	DefaultConfigurationDirectory       string = ".e"
+	DefaultConfigFileName               string = "config.yaml"
+	DefaultEnvironmentsSubdirectory     string = "environments"
+	DefaultEnvironmentsTempSubdirectory string = "tmp"
+	DefaultEnvironmentConfigFileName    string = "config.yaml"
+	DefaultComponentRunsSubdirectory    string = "runs"
+	DefaultComponentMountsSubdirectory  string = "mounts"
 
 	GithubUrl                   = "https://raw.githubusercontent.com"
 	DefaultRepository           = "mkyc/epiphany-wrapper-poc-repo"
@@ -23,6 +24,7 @@ var (
 	UsedConfigurationDirectory string
 	UsedEnvironmentDirectory   string
 	UsedRepositoryFile         string
+	UsedTempDirectory          string
 )
 
 func EnsureDirectory(directory string) {
