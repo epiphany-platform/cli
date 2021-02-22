@@ -107,12 +107,13 @@ func TestCmd(t *testing.T) {
 			mockEnv:  true,
 			envId:    "cd7b59f8-6610-468a-8d56-3d1ea2566428",
 		},
-		{
+		// TODO: uncomment when environments removal is implemented
+		/*{
 			name:     "e environments new",
 			args:     []string{"environments", "new", "e1"},
 			mockRepo: false,
 			mockEnv:  false,
-		},
+		},*/
 		{
 			name:     "e environments use",
 			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b"},

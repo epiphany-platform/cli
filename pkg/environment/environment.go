@@ -323,7 +323,7 @@ func IsValid(uuid uuid.UUID) (bool, error) {
 	for _, e := range environments {
 		if e.Uuid == uuid {
 			isEnvValid = true
-			logger.Debug().Msgf("Found environment to export: %s", e.Uuid.String())
+			logger.Debug().Msgf("Checked that environment with id %s exists", e.Uuid.String())
 			break
 		}
 	}
@@ -347,10 +347,7 @@ func (e *Environment) Export(dstDir string) error {
 	}
 
 	// Remove temporary directory
-	err = os.RemoveAll(envTempPath)
-	if err != nil {
-		return err
-	}
+	defer os.RemoveAll(envTempPath)
 
 	return nil
 }

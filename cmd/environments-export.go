@@ -79,6 +79,8 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		if err != nil {
 			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envID.String())
 		}
+
+		logger.Info().Msgf("Environment with id %s was exported", envID.String())
 	},
 }
 

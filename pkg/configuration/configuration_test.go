@@ -74,6 +74,11 @@ func TestConfig_GetConfigFilePath(t *testing.T) {
 
 func TestConfig_SetUsedEnvironment(t *testing.T) {
 	tempFile, tempDirectory := setup(t, "used")
+	envIDCurrent := "3e5b7269-1b3d-4003-9454-9f472857633a"
+	envIDSwitch := "567c0831-7e83-4b56-a2a7-ec7a8327238f"
+	envConfigTemplate := `name: %s
+uuid: %s
+`
 	defer os.RemoveAll(tempDirectory)
 
 	type fields struct {
@@ -97,32 +102,42 @@ func TestConfig_SetUsedEnvironment(t *testing.T) {
 				Kind:               KindConfig,
 				CurrentEnvironment: uuid.Nil,
 			},
-			uuid:       uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
+			uuid:       uuid.MustParse(envIDSwitch),
 			configPath: tempFile,
 			wantErr:    nil,
-			want: []byte(`version: v1
+			want: []byte(fmt.Sprintf(`version: v1
 kind: Config
-current-environment: 3e5b7269-1b3d-4003-9454-9f472857633a
-`),
+current-environment: %s
+`, envIDSwitch)),
 		},
 		{
 			name: "some to another",
 			fields: fields{
 				Version:            "v1",
 				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
+				CurrentEnvironment: uuid.MustParse(envIDCurrent),
 			},
-			uuid:       uuid.MustParse("567c0831-7e83-4b56-a2a7-ec7a8327238f"),
+			uuid:       uuid.MustParse(envIDSwitch),
 			configPath: tempFile,
 			wantErr:    nil,
-			want: []byte(`version: v1
+			want: []byte(fmt.Sprintf(`version: v1
 kind: Config
-current-environment: 567c0831-7e83-4b56-a2a7-ec7a8327238f
-`),
+current-environment: %s
+`, envIDSwitch)),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Create necessary files and directories as environments are validated before switching
+			util.UsedConfigurationDirectory = tempDirectory
+			util.UsedEnvironmentDirectory = path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
+			envDirCurrent := path.Join(util.UsedEnvironmentDirectory, envIDCurrent)
+			envDirSwitch := path.Join(util.UsedEnvironmentDirectory, envIDSwitch)
+			os.MkdirAll(envDirCurrent, 0775)
+			os.Mkdir(envDirSwitch, 0775)
+			ioutil.WriteFile(path.Join(envDirCurrent, util.DefaultConfigFileName), []byte(fmt.Sprintf(envConfigTemplate, "env1", envIDCurrent)), 0664)
+			ioutil.WriteFile(path.Join(envDirSwitch, util.DefaultConfigFileName), []byte(fmt.Sprintf(envConfigTemplate, "env2", envIDSwitch)), 0664)
+
 			util.UsedConfigFile = tt.configPath
 			defer ioutil.WriteFile(tt.configPath, []byte(""), 0664)
 			c := &Config{
@@ -389,6 +404,7 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			util.UsedConfigurationDirectory = ""
 			util.UsedEnvironmentDirectory = ""
 			util.UsedRepositoryFile = ""
+			util.UsedTempDirectory = ""
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configFile, tt.mocked, 0644)
 			}
