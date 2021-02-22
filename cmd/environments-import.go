@@ -33,13 +33,14 @@ and immediately switches to the imported environment`,
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		// Ask user for source file path if no file to export from is specified
+		// Ask user for source file path if no file to import from is specified
 		if srcFile == "" {
-			srcFile, _ = promptui.PromptForString("File to export environment from")
-			// Check if provided source file exists
-			if _, err := os.Stat(srcFile); err != nil {
-				logger.Fatal().Err(err).Msg("Incorrect file path specified")
-			}
+			srcFile, _ = promptui.PromptForString("File to import environment from")
+		}
+
+		// Check if source file exists
+		if _, err := os.Stat(srcFile); err != nil {
+			logger.Fatal().Err(err).Msg("Incorrect file path specified")
 		}
 
 		// Import environment

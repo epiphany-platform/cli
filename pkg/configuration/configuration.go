@@ -49,8 +49,16 @@ func (c *Config) CreateNewEnvironment(name string) error {
 	return c.Save()
 }
 
-//SetUsedEnvironment to another value (NOTE: there is no additional error check)
+//SetUsedEnvironment to another value
 func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
+	// Check if passed environment id is valid
+	isEnvValid, err := environment.IsValid(u)
+	if err != nil {
+		return err
+	} else if !isEnvValid {
+		return fmt.Errorf("Environment %s is not found", u.String())
+	}
+
 	debug("changing used environment to %s", u.String())
 	c.CurrentEnvironment = u
 	debug("will try to save updated config %+v", c)

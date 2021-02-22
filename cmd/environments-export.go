@@ -5,13 +5,14 @@ import (
 
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	envID  string
-	dstDir string
+	envIDStr string
+	dstDir   string
 )
 
 var environmentsExportCmd = &cobra.Command{
@@ -32,23 +33,11 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 			logger.Fatal().Err(err).Msg("Command flags are specified incorrectly")
 		}
 
-		envID = viper.GetString("id")
+		envIDStr = viper.GetString("id")
 		dstDir = viper.GetString("destination")
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		isCurrentEnvUsed := false
-
-		// Default environment and destination directory are current ones
-		// Check if environment is default
-		if envID == "" {
-			isCurrentEnvUsed = true
-			config, err := configuration.GetConfig()
-			if err != nil {
-				logger.Fatal().Err(err).Msg("Unable to get environment config")
-			}
-			envID = config.CurrentEnvironment.String()
-		}
 
 		// Check if destination directory is default
 		if dstDir == "" {
@@ -59,20 +48,36 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 			dstDir = path
 		}
 
-		// Check if passed environment id is valid
-		if !isCurrentEnvUsed {
+		var envID uuid.UUID
+
+		// Default environment and destination directory are current ones
+		// Check if environment is default
+		if envIDStr == "" {
+			config, err := configuration.GetConfig()
+			if err != nil {
+				logger.Fatal().Err(err).Msg("Unable to get environment config")
+			}
+			envID = config.CurrentEnvironment
+		} else {
+			envID = uuid.MustParse(envIDStr)
+			// Check if passed environment id is valid
 			isEnvValid, err := environment.IsValid(envID)
 			if err != nil {
-				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envID)
+				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envID.String())
 			} else if !isEnvValid {
-				logger.Fatal().Msgf("Environment %s is not found", envID)
+				logger.Fatal().Msgf("Environment %s is not found", envID.String())
 			}
 		}
 
 		// Export an environment
-		err := environment.Export(envID, dstDir)
+		env, err := environment.Get(envID)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envID)
+			logger.Fatal().Err(err).Msgf("Unable to get an environment by id %s", envID.String())
+		}
+
+		err = env.Export(dstDir)
+		if err != nil {
+			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envID.String())
 		}
 	},
 }

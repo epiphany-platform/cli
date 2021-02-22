@@ -290,14 +290,14 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 }
 
 //TODO add tests
-func IsValid(envID string) (bool, error) {
+func IsValid(uuid uuid.UUID) (bool, error) {
 	environments, err := GetAll()
 	if err != nil {
 		return false, err
 	}
 	isEnvValid := false
 	for _, e := range environments {
-		if e.Uuid.String() == envID {
+		if e.Uuid == uuid {
 			isEnvValid = true
 			logger.Debug().Msgf("Found environment to export: %s", e.Uuid.String())
 			break
@@ -308,10 +308,10 @@ func IsValid(envID string) (bool, error) {
 
 //TODO add tests
 func (e *Environment) Export(dstDir string) error {
-	envPath := path.Join(util.UsedEnvironmentDirectory, envID)
+	envPath := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String())
 
 	// Final archive name is envID + .zip extension
-	err := archiver.Archive([]string{envPath}, path.Join(dstDir, envID+".zip"))
+	err := archiver.Archive([]string{envPath}, path.Join(dstDir, e.Uuid.String()+".zip"))
 	if err != nil {
 		return err
 	}
@@ -344,15 +344,13 @@ func Import(srcFile string) (*uuid.UUID, error) {
 		return nil, err
 	}
 
-	envConfigDir := path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
-
 	// Check if environment with such id is already in place
-	if _, err := os.Stat(path.Join(envConfigDir, envConfig.Uuid.String())); err == nil {
+	if _, err := os.Stat(path.Join(util.UsedEnvironmentDirectory, envConfig.Uuid.String())); err == nil {
 		return nil, fmt.Errorf("Environment with id %s already exists", envConfig.Uuid.String())
 	}
 
 	// Unarchive specified file
-	err = archiver.Unarchive(srcFile, envConfigDir)
+	err = archiver.Unarchive(srcFile, util.UsedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
 	}
