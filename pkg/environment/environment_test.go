@@ -610,39 +610,39 @@ func TestExport(t *testing.T) {
 	}
 
 	tests := []struct {
-		name      	string
-		destDir   	string
-		fileExists  bool
-		wantErr   	error
-		isPattern 	bool
+		name       string
+		destDir    string
+		fileExists bool
+		wantErr    error
+		isPattern  bool
 	}{
 		{
-			name:      	"Successful export",
-			destDir:   	util.UsedConfigurationDirectory,
+			name:       "Successful export",
+			destDir:    util.UsedConfigurationDirectory,
 			fileExists: false,
-			wantErr:   	nil,
-			isPattern: 	false,
+			wantErr:    nil,
+			isPattern:  false,
 		},
 		{
-			name:      	"Target file already exists",
-			destDir:   	util.UsedConfigurationDirectory,
+			name:       "Target file already exists",
+			destDir:    util.UsedConfigurationDirectory,
 			fileExists: true,
-			wantErr:   	errors.New("file already exists"),
-			isPattern: 	true,
+			wantErr:    errors.New("file already exists"),
+			isPattern:  true,
 		},
 		{
-			name:      "Writable path that does not exist",
-			destDir:   	path.Join(util.UsedConfigurationDirectory, "fake"),
+			name:       "Writable path that does not exist",
+			destDir:    path.Join(util.UsedConfigurationDirectory, "fake"),
 			fileExists: false,
-			wantErr:   	nil,
-			isPattern: 	false,
+			wantErr:    nil,
+			isPattern:  false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 			if tt.fileExists {
-				_, err := os.Create(path.Join(tt.destDir, exportEnv.Uuid.String() + ".zip"))
+				_, err := os.Create(path.Join(tt.destDir, exportEnv.Uuid.String()+".zip"))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -650,7 +650,7 @@ func TestExport(t *testing.T) {
 			err = exportEnv.Export(tt.destDir)
 			if tt.wantErr == nil {
 				a.NoError(err)
-				a.FileExists(path.Join(tt.destDir, exportEnv.Uuid.String() + ".zip"))
+				a.FileExists(path.Join(tt.destDir, exportEnv.Uuid.String()+".zip"))
 			} else if tt.isPattern {
 				a.Contains(err.Error(), tt.wantErr.Error())
 			} else {
@@ -660,7 +660,7 @@ func TestExport(t *testing.T) {
 	}
 }
 
-func TestImport(t *testing.T){
+func TestImport(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "import")
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
@@ -691,19 +691,19 @@ func TestImport(t *testing.T){
 	if err != nil {
 		t.Fatal(err)
 	}
-	importFileValidFirst := path.Join(util.UsedConfigurationDirectory, importEnvValidFirst.Uuid.String() + ".zip")
+	importFileValidFirst := path.Join(util.UsedConfigurationDirectory, importEnvValidFirst.Uuid.String()+".zip")
 
 	// Create a valid archive with a changed name
 	err = importEnvValidSecond.Export(util.UsedConfigurationDirectory)
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	importFileValidSecond := path.Join(util.UsedConfigurationDirectory, "changed.zip")
-	os.Rename(path.Join(util.UsedConfigurationDirectory, importEnvValidSecond.Uuid.String() + ".zip"), importFileValidSecond)
+	os.Rename(path.Join(util.UsedConfigurationDirectory, importEnvValidSecond.Uuid.String()+".zip"), importFileValidSecond)
 
 	// Create an invalid archive with missing env config file
-	importFileInvalidFirst := path.Join(util.UsedConfigurationDirectory, importEnvInvalidFirst.Uuid.String() + ".zip")
+	importFileInvalidFirst := path.Join(util.UsedConfigurationDirectory, importEnvInvalidFirst.Uuid.String()+".zip")
 	err = archiver.Archive([]string{path.Join(util.UsedEnvironmentDirectory, importEnvInvalidFirst.Uuid.String())}, importFileInvalidFirst)
 	if err != nil {
 		t.Fatal(err)
@@ -714,37 +714,36 @@ func TestImport(t *testing.T){
 	if err != nil {
 		t.Fatal(err)
 	}
-	importFileInvalidSecond := path.Join(util.UsedConfigurationDirectory, importEnvInvalidSecond.Uuid.String() + ".zip")
+	importFileInvalidSecond := path.Join(util.UsedConfigurationDirectory, importEnvInvalidSecond.Uuid.String()+".zip")
 
 	// Remove environments to be able to export except one left by purpose
 	os.RemoveAll(path.Join(util.UsedEnvironmentDirectory, importEnvValidFirst.Uuid.String()))
 	os.RemoveAll(path.Join(util.UsedEnvironmentDirectory, importEnvValidSecond.Uuid.String()))
 	os.RemoveAll(path.Join(util.UsedEnvironmentDirectory, importEnvInvalidFirst.Uuid.String()))
 
-
 	tests := []struct {
 		name    string
-		from	string
+		from    string
 		wantErr error
 	}{
 		{
-			name: "Valid source file",
-			from: importFileValidFirst,
+			name:    "Valid source file",
+			from:    importFileValidFirst,
 			wantErr: nil,
 		},
 		{
-			name: "Valid source file with a changed name",
-			from: importFileValidSecond,
+			name:    "Valid source file with a changed name",
+			from:    importFileValidSecond,
 			wantErr: nil,
 		},
 		{
-			name: "Source file that does not contain environment's config file",
-			from: importFileInvalidFirst,
+			name:    "Source file that does not contain environment's config file",
+			from:    importFileInvalidFirst,
 			wantErr: errors.New("Missing environment config file"),
 		},
 		{
-			name: "Existing environment",
-			from: importFileInvalidSecond,
+			name:    "Existing environment",
+			from:    importFileInvalidSecond,
 			wantErr: fmt.Errorf("Environment with id %s already exists", importEnvInvalidSecond.Uuid.String()),
 		},
 	}
@@ -759,7 +758,7 @@ func TestImport(t *testing.T){
 			} else {
 				a.EqualError(err, tt.wantErr.Error())
 			}
-			
+
 		})
 	}
 }
