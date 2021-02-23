@@ -292,7 +292,6 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 }
 
 // Copy environment directory to a temporary location without text log files
-// TODO add tests
 func (e *Environment) CopyDirectoryForExport() (string, error) {
 
 	opt := copy.Options{
@@ -313,7 +312,6 @@ func (e *Environment) CopyDirectoryForExport() (string, error) {
 }
 
 // Check if environment with specified id exists
-//TODO add tests
 func IsValid(uuid uuid.UUID) (bool, error) {
 	environments, err := GetAll()
 	if err != nil {
@@ -331,7 +329,6 @@ func IsValid(uuid uuid.UUID) (bool, error) {
 }
 
 // Export (archive) an environment
-//TODO add tests
 func (e *Environment) Export(dstDir string) error {
 
 	// Make a temporary copy of the environment directory with cleaned logs up
@@ -353,13 +350,14 @@ func (e *Environment) Export(dstDir string) error {
 }
 
 // Import (extract) an environment
-//TODO add tests
 func Import(srcFile string) (*uuid.UUID, error) {
 	// Check if environment config exists in zip archive
 	// before export and verify its content
 	var envConfig *Environment
+	isFound := false
 	err := archiver.Walk(srcFile, func(f archiver.File) error {
-		if f.Name() == util.DefaultConfigFileName {
+		if f.Name() == util.DefaultEnvironmentConfigFileName {
+			isFound = true
 			configContent, err := ioutil.ReadAll(f)
 			if err != nil {
 				return errors.New("Unable to read environment config")
@@ -377,6 +375,8 @@ func Import(srcFile string) (*uuid.UUID, error) {
 	})
 	if err != nil {
 		return nil, err
+	} else if !isFound {
+		return nil, errors.New("Missing environment config file")
 	}
 
 	// Check if environment with such id is already in place
