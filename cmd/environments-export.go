@@ -33,7 +33,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 			logger.Fatal().Err(err).Msg("Command flags are specified incorrectly")
 		}
 
-		envIDStr = viper.GetString("id")
+		envIdStr = viper.GetString("id")
 		dstDir = viper.GetString("destination")
 	},
 
