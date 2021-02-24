@@ -56,7 +56,7 @@ func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
 	if err != nil {
 		return err
 	} else if !isEnvValid {
-		return fmt.Errorf("Environment %s is not found", u.String())
+		return fmt.Errorf("Environment %s not found", u.String())
 	}
 
 	debug("changing used environment to %s", u.String())
