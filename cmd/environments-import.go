@@ -50,17 +50,18 @@ and immediately switches to the imported environment`,
 		}
 
 		// Import environment
-		envID, err := environment.Import(srcFile)
+		envId, err := environment.Import(srcFile)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Unable to import environment from specified file")
 		}
+		logger.Info().Msgf("Environment with id %s was imported", envId.String())
 
 		// Switch to the imported environment
-		err = config.SetUsedEnvironment(envID)
+		err = config.SetUsedEnvironment(envId)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Setting used environment failed")
 		}
-		logger.Info().Msgf("Switched to the imported environment with id %s", envID.String())
+		logger.Info().Msgf("Switched to the imported environment with id %s", envId.String())
 	},
 }
 
