@@ -13,13 +13,17 @@ import (
 	"github.com/epiphany-platform/cli/pkg/util"
 )
 
-func setup(t *testing.T, suffix string) (string, string, string, string) {
+func setup(t *testing.T, suffix string) (string, string, string, string, string) {
 	parentDir := os.TempDir()
 	configDirectory, err := ioutil.TempDir(parentDir, fmt.Sprintf("*-e-repository-%s", suffix))
 	if err != nil {
 		t.Fatal(err)
 	}
 	envsDirectory, err := ioutil.TempDir(configDirectory, "environments-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tempDirectory, err := ioutil.TempDir(configDirectory, "tmp-*")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -33,7 +37,7 @@ func setup(t *testing.T, suffix string) (string, string, string, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return configFile.Name(), configDirectory, envsDirectory, repoFile.Name()
+	return configFile.Name(), configDirectory, envsDirectory, repoFile.Name(), tempDirectory
 }
 
 func TestMain(m *testing.M) {
@@ -53,7 +57,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestCmd(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedRepositoryFile = setup(t, "cmd")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedRepositoryFile, util.UsedTempDirectory = setup(t, "cmd")
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
@@ -107,19 +111,25 @@ func TestCmd(t *testing.T) {
 			mockEnv:  true,
 			envId:    "cd7b59f8-6610-468a-8d56-3d1ea2566428",
 		},
-		// TODO: uncomment when environments removal is implemented
-		/*{
+		{
 			name:     "e environments new",
-			args:     []string{"environments", "new", "e1"},
+			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "new", "e1"},
 			mockRepo: false,
 			mockEnv:  false,
-		},*/
+		},
 		{
 			name:     "e environments use",
 			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b"},
 			mockRepo: false,
 			mockEnv:  true,
 			envId:    "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b",
+		},
+		{
+			name:     "e environments export",
+			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "2e309e00-aea0-41bc-8344-9813970ec2a6", "--destination", util.UsedConfigurationDirectory},
+			mockRepo: false,
+			mockEnv:  true,
+			envId:    "2e309e00-aea0-41bc-8344-9813970ec2a6",
 		},
 	}
 	for _, tt := range tests {
