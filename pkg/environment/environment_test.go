@@ -36,10 +36,17 @@ func setup(t *testing.T, suffix string) (string, string, string, string) {
 
 	// Create environments subdirectory
 	envsDirectory := path.Join(mainDirectory, util.DefaultEnvironmentsSubdirectory)
-	os.Mkdir(envsDirectory, 0755)
+	err = os.Mkdir(envsDirectory, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Create temp directory
 	tempDirectory := path.Join(mainDirectory, util.DefaultEnvironmentsTempSubdirectory)
+	err = os.Mkdir(util.UsedTempDirectory, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Create cli config file
 	configFile := path.Join(mainDirectory, util.DefaultConfigFileName)
@@ -664,10 +671,6 @@ func TestIsExisting(t *testing.T) {
 
 func TestExport(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedTempDirectory = setup(t, "export")
-	err := os.Mkdir(util.UsedTempDirectory, 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	// Create the environment to export
