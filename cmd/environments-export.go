@@ -61,7 +61,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		} else {
 			envID = uuid.MustParse(envIDStr)
 			// Check if passed environment id is valid
-			isEnvValid, err := environment.IsValid(envID)
+			isEnvValid, err := environment.IsExisting(envID)
 			if err != nil {
 				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envID.String())
 			} else if !isEnvValid {
