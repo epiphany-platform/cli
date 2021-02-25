@@ -54,7 +54,7 @@ and immediately switches to the imported environment`,
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Get config failed")
 		}
-		err = config.SetUsedEnvironment(*envID)
+		err = config.SetUsedEnvironment(envID)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Setting used environment failed")
 		}
