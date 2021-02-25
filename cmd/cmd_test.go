@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func setup(t *testing.T, suffix string) (string, string, string, string, string) {
@@ -19,25 +20,29 @@ func setup(t *testing.T, suffix string) (string, string, string, string, string)
 	if err != nil {
 		t.Fatal(err)
 	}
-	envsDirectory, err := ioutil.TempDir(configDirectory, "environments-*")
+	envsDirectory := path.Join(configDirectory, util.DefaultEnvironmentsSubdirectory)
+	err = os.Mkdir(envsDirectory, 0755)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tempDirectory, err := ioutil.TempDir(configDirectory, "tmp-*")
+	tempDirectory := path.Join(configDirectory, util.DefaultEnvironmentsTempSubdirectory)
+	err = os.Mkdir(tempDirectory, 0755)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	configFile, err := ioutil.TempFile(configDirectory, "config-*.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
+	configFile := path.Join(configDirectory, util.DefaultConfigFileName)
+	//_, err = os.Create(configFile)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
 
-	repoFile, err := ioutil.TempFile(configDirectory, "v1-*.yaml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return configFile.Name(), configDirectory, envsDirectory, repoFile.Name(), tempDirectory
+	repoFile := path.Join(configDirectory, util.DefaultV1RepositoryFileName)
+	//_, err = os.Create(configFile)
+	//if err != nil {
+	//	t.Fatal(err)
+	//}
+	return configFile, configDirectory, envsDirectory, repoFile, tempDirectory
 }
 
 func TestMain(m *testing.M) {
@@ -61,79 +66,153 @@ func TestCmd(t *testing.T) {
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
-		name     string
-		args     []string
-		mockRepo bool
-		mockEnv  bool
-		envId    string
+		name        string
+		args        []string
+		mockRepo    bool
+		mockEnv     bool
+		envId       string
+		shouldFail  bool
+		checkOutput bool
 	}{
 		{
-			name:     "e help",
-			args:     []string{"help"},
-			mockRepo: false,
-			mockEnv:  false,
+			name:        "e help",
+			args:        []string{"help"},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e components",
-			args:     []string{"components"},
-			mockRepo: false,
-			mockEnv:  false,
+			name:        "e components",
+			args:        []string{"components"},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e components list",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "components", "list"},
-			mockRepo: true,
-			mockEnv:  false,
+			name:        "e components list",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "components", "list"},
+			mockRepo:    true,
+			mockEnv:     false,
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e components info",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "components", "info", "c1"},
-			mockRepo: true,
-			mockEnv:  false,
+			name:        "e components info",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "components", "info", "c1"},
+			mockRepo:    true,
+			mockEnv:     false,
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e components install",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "components", "install", "c1"},
-			mockRepo: true,
-			mockEnv:  true,
-			envId:    "39c95814-1d01-4303-af15-ff079d609874",
+			name:        "e components install",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "components", "install", "c1"},
+			mockRepo:    true,
+			mockEnv:     true,
+			envId:       "39c95814-1d01-4303-af15-ff079d609874",
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e environments",
-			args:     []string{"environments"},
-			mockRepo: false,
-			mockEnv:  false,
+			name:        "e environments",
+			args:        []string{"environments"},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e environments info",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "info"},
-			mockRepo: false,
-			mockEnv:  true,
-			envId:    "cd7b59f8-6610-468a-8d56-3d1ea2566428",
+			name:        "e environments info",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "info"},
+			mockRepo:    false,
+			mockEnv:     true,
+			envId:       "cd7b59f8-6610-468a-8d56-3d1ea2566428",
+			shouldFail:  false,
+			checkOutput: true,
 		},
 		{
-			name:     "e environments new",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "new", "e1"},
-			mockRepo: false,
-			mockEnv:  false,
+			name:        "e environments new",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "new", "e1"},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  false,
+			checkOutput: false,
 		},
 		{
-			name:     "e environments use",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b"},
-			mockRepo: false,
-			mockEnv:  true,
-			envId:    "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b",
+			name:        "e environments use",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b"},
+			mockRepo:    false,
+			mockEnv:     true,
+			envId:       "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b",
+			shouldFail:  false,
+			checkOutput: false,
 		},
 		{
-			name:     "e environments export",
-			args:     []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "2e309e00-aea0-41bc-8344-9813970ec2a6", "--destination", util.UsedConfigurationDirectory},
-			mockRepo: false,
-			mockEnv:  true,
-			envId:    "2e309e00-aea0-41bc-8344-9813970ec2a6",
+			name:        "e environments export",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "2e309e00-aea0-41bc-8344-9813970ec2a6", "--destination", util.UsedConfigurationDirectory},
+			mockRepo:    false,
+			mockEnv:     true,
+			envId:       "2e309e00-aea0-41bc-8344-9813970ec2a6",
+			shouldFail:  false,
+			checkOutput: false,
+		},
+		{
+			name:        "e environments export wrong env id",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "fcfd81e4-27a8-4ee6-8bb3-f71b8218ba6d"},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  true,
+			checkOutput: false,
+		},
+		{
+			name:        "e environments export wrong destination",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "ba03a2ba-8fa0-4c15-ac07-894af3dbb365", "--destination", "/fake/path"},
+			mockRepo:    false,
+			mockEnv:     true,
+			envId:       "ba03a2ba-8fa0-4c15-ac07-894af3dbb365",
+			shouldFail:  true,
+			checkOutput: false,
+		},
+		{
+			name:        "e environments import",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "ba03a2ba-8fa0-4c15-ac07-894af3dbb365.zip")},
+			mockRepo:    false,
+			mockEnv:     false,
+			envId:       "ba03a2ba-8fa0-4c15-ac07-894af3dbb365",
+			shouldFail:  true,
+			checkOutput: false,
+		},
+		{
+			name:        "e environments import existing",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "ba03a2ba-8fa0-4c15-ac07-894af3dbb365.zip")},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  true,
+			checkOutput: false,
+		},
+		{
+			name:        "e environments import not existing",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "2e309e00-aea0-41bc-8344-9813970ec2a6.zip")},
+			mockRepo:    false,
+			mockEnv:     false,
+			envId:       "2e309e00-aea0-41bc-8344-9813970ec2a6",
+			shouldFail:  false,
+			checkOutput: false,
+		},
+		{
+			name:        "e environments import wrong source file",
+			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", "/fake/path"},
+			mockRepo:    false,
+			mockEnv:     false,
+			shouldFail:  true,
+			checkOutput: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
 			dir, err := os.Getwd()
 			if err != nil {
 				t.Fatal(err)
@@ -144,7 +223,7 @@ func TestCmd(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				err = ioutil.WriteFile(path.Join(util.UsedConfigurationDirectory, util.DefaultV1RepositoryFileName), []byte(mock), 0644)
+				err = ioutil.WriteFile(util.UsedRepositoryFile, []byte(mock), 0644)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -155,16 +234,15 @@ func TestCmd(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				err = ioutil.WriteFile(path.Join(util.UsedConfigurationDirectory, util.DefaultConfigFileName), []byte(configMock), 0644)
+				err = ioutil.WriteFile(util.UsedConfigFile, []byte(configMock), 0644)
 				if err != nil {
 					t.Fatal(err)
 				}
-				envConfigMock, err := loadFixture("cmd", tt.name+"_env_config")
-				if err != nil {
-					t.Fatal(err)
-				}
-				envPath := path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsSubdirectory, tt.envId)
-				err = os.MkdirAll(envPath, 0775)
+				envConfigMock := fmt.Sprintf(`name: e1
+uuid: %s
+`, tt.envId)
+				envPath := path.Join(util.UsedEnvironmentDirectory, tt.envId)
+				err = os.MkdirAll(envPath, 0755)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -174,30 +252,29 @@ func TestCmd(t *testing.T) {
 				}
 			}
 
+			if tt.name == "e environments import not existing" {
+				err = os.RemoveAll(path.Join(util.UsedEnvironmentDirectory, tt.envId))
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
 			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
 			got, err := cmd.CombinedOutput()
-			if err != nil {
-				t.Fatal(err)
+			if tt.shouldFail {
+				a.Error(err)
+			} else {
+				a.NoError(err)
 			}
-
-			want, err := loadFixture("cmd", tt.name+"_want")
-			if err != nil {
-				t.Fatal(err)
+			if tt.checkOutput {
+				want, err := loadFixture("cmd", tt.name+"_want")
+				if err != nil {
+					t.Fatal(err)
+				}
+				a.Truef(reflect.DeepEqual(string(got), want), "got \n======\n\n%v\n\n=====\n, want \n======\n\n%v\n\n=====\n", got, want)
 			}
-			if !isTheSame(t, string(got), want) {
-				return
-			}
-
 		})
 	}
-}
-
-func isTheSame(t *testing.T, got string, want string) bool {
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got \n======\n\n%v\n\n=====\n, want \n======\n\n%v\n\n=====\n", got, want)
-		return false
-	}
-	return true
 }
 
 func loadFixture(packageName, name string) (string, error) {
