@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	envIDStr string
+	envIdStr string
 	dstDir   string
 )
 
@@ -48,39 +48,43 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 			dstDir = path
 		}
 
-		var envID uuid.UUID
+		var envId uuid.UUID
 
 		// Default environment and destination directory are current ones
 		// Check if environment is default
-		if envIDStr == "" {
+		if envIdStr == "" {
 			config, err := configuration.GetConfig()
 			if err != nil {
 				logger.Fatal().Err(err).Msg("Unable to get environment config")
 			}
-			envID = config.CurrentEnvironment
+			if config.CurrentEnvironment == uuid.Nil {
+				logger.Fatal().Msg("Environment has to be selected if id is not specified")
+			} else {
+				envId = config.CurrentEnvironment
+			}
 		} else {
-			envID = uuid.MustParse(envIDStr)
+			envId = uuid.MustParse(envIdStr)
 			// Check if passed environment id is valid
-			isEnvValid, err := environment.IsExisting(envID)
+			isEnvValid, err := environment.IsExisting(envId)
 			if err != nil {
-				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envID.String())
+				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envId.String())
 			} else if !isEnvValid {
-				logger.Fatal().Msgf("Environment %s is not found", envID.String())
+				logger.Fatal().Msgf("Environment %s is not found", envId.String())
 			}
 		}
 
 		// Export an environment
-		env, err := environment.Get(envID)
+		env, err := environment.Get(envId)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to get an environment by id %s", envID.String())
+			logger.Fatal().Err(err).Msgf("Unable to get an environment by id %s", envId.String())
 		}
 
 		err = env.Export(dstDir)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envID.String())
+			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envId.String())
 		}
 
-		logger.Info().Msgf("Environment with id %s was exported", envID.String())
+		logger.Info().Msgf("Environment with id %s was exported", envId.String())
 	},
 }
 

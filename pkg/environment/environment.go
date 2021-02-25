@@ -292,7 +292,7 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 }
 
 // Copy environment directory to a temporary location without text log files
-func (e *Environment) CopyDirectoryForExport() (string, error) {
+func (e *Environment) copyDirectoryForExport() (string, error) {
 
 	opt := copy.Options{
 		Skip: func(src string) (bool, error) {
@@ -312,7 +312,7 @@ func (e *Environment) CopyDirectoryForExport() (string, error) {
 }
 
 // Check if environment with specified id exists
-func IsValid(uuid uuid.UUID) (bool, error) {
+func IsExisting(uuid uuid.UUID) (bool, error) {
 	environments, err := GetAll()
 	if err != nil {
 		return false, err
@@ -332,7 +332,7 @@ func IsValid(uuid uuid.UUID) (bool, error) {
 func (e *Environment) Export(dstDir string) error {
 
 	// Make a temporary copy of the environment directory with cleaned logs up
-	envTempPath, err := e.CopyDirectoryForExport()
+	envTempPath, err := e.copyDirectoryForExport()
 	if err != nil {
 		return err
 	}
@@ -350,7 +350,7 @@ func (e *Environment) Export(dstDir string) error {
 }
 
 // Import (extract) an environment
-func Import(srcFile string) (*uuid.UUID, error) {
+func Import(srcFile string) (uuid.UUID, error) {
 	// Check if environment config exists in zip archive
 	// before export and verify its content
 	var envConfig *Environment
@@ -374,29 +374,31 @@ func Import(srcFile string) (*uuid.UUID, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	} else if !isFound {
-		return nil, errors.New("Missing environment config file")
+		return uuid.Nil, errors.New("Missing environment config file")
 	}
 
-	// Check if environment with such id is already in place
-	if _, err := os.Stat(path.Join(util.UsedEnvironmentDirectory, envConfig.Uuid.String())); err == nil {
-		return nil, fmt.Errorf("Environment with id %s already exists", envConfig.Uuid.String())
+	isExisting, err := IsExisting(envConfig.Uuid)
+	if err != nil {
+		return uuid.Nil, err
+	} else if isExisting {
+		return uuid.Nil, fmt.Errorf("Environment with id %s already exists", envConfig.Uuid.String())
 	}
 
 	// Unarchive specified file
 	err = archiver.Unarchive(srcFile, util.UsedEnvironmentDirectory)
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	}
 
 	// Download all Docker images for installed components
 	for _, cmp := range envConfig.Installed {
 		err = cmp.Download()
 		if err != nil {
-			return nil, err
+			return uuid.Nil, err
 		}
 	}
 
-	return &envConfig.Uuid, nil
+	return envConfig.Uuid, nil
 }

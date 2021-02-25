@@ -43,6 +43,12 @@ and immediately switches to the imported environment`,
 			logger.Fatal().Err(err).Msg("Incorrect file path specified")
 		}
 
+		// Get current config
+		config, err := configuration.GetConfig()
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Get config failed")
+		}
+
 		// Import environment
 		envID, err := environment.Import(srcFile)
 		if err != nil {
@@ -50,10 +56,6 @@ and immediately switches to the imported environment`,
 		}
 
 		// Switch to the imported environment
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("Get config failed")
-		}
 		err = config.SetUsedEnvironment(envID)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("Setting used environment failed")
