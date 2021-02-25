@@ -44,9 +44,11 @@ var environmentsNewCmd = &cobra.Command{
 
 		debug("new environment name is: %s", newEnvName)
 
-		err = config.CreateNewEnvironment(newEnvName)
+		envId, err := config.CreateNewEnvironment(newEnvName)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("create new environment failed")
+		} else {
+			logger.Info().Msgf("Created an environment with id %s", envId.String())
 		}
 	},
 }
