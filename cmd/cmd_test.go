@@ -32,16 +32,9 @@ func setup(t *testing.T, suffix string) (string, string, string, string, string)
 	}
 
 	configFile := path.Join(configDirectory, util.DefaultConfigFileName)
-	//_, err = os.Create(configFile)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
 
 	repoFile := path.Join(configDirectory, util.DefaultV1RepositoryFileName)
-	//_, err = os.Create(configFile)
-	//if err != nil {
-	//	t.Fatal(err)
-	//}
+
 	return configFile, configDirectory, envsDirectory, repoFile, tempDirectory
 }
 
@@ -271,7 +264,7 @@ uuid: %s
 				if err != nil {
 					t.Fatal(err)
 				}
-				a.Truef(reflect.DeepEqual(string(got), want), "got \n======\n\n%v\n\n=====\n, want \n======\n\n%v\n\n=====\n", got, want)
+				a.Truef(reflect.DeepEqual(string(got), want), "got \n======\n\n%v\n\n=====\n, want \n======\n\n%v\n\n=====\n", string(got), want)
 			}
 		})
 	}

@@ -43,7 +43,7 @@ func setup(t *testing.T, suffix string) (string, string, string, string) {
 
 	// Create temp directory
 	tempDirectory := path.Join(mainDirectory, util.DefaultEnvironmentsTempSubdirectory)
-	err = os.Mkdir(util.UsedTempDirectory, 0755)
+	err = os.Mkdir(tempDirectory, 0755)
 	if err != nil {
 		t.Fatal(err)
 	}
