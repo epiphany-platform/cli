@@ -7,6 +7,8 @@ Aliases:
   environments, env
 
 Available Commands:
+  export      Exports an environment as a zip archive
+  import      Imports a zip compressed environment
   info        Displays information about currently selected environment
   list        TODO
   new         Creates new environment

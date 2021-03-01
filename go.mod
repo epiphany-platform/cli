@@ -19,8 +19,10 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/manifoldco/promptui v0.7.0
 	github.com/mattn/go-colorable v0.1.8 // indirect
+	github.com/mholt/archiver/v3 v3.5.0
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/otiai10/copy v1.5.0
 	github.com/pelletier/go-toml v1.8.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/zerolog v1.19.0
@@ -30,6 +32,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620
 	golang.org/x/net v0.0.0-20200813134508-3edf25e44fcc // indirect
 	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
