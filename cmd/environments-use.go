@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// environmentsUseCmd represents the use command
-var environmentsUseCmd = &cobra.Command{
+// envUseCmd represents the use command
+var envUseCmd = &cobra.Command{
 	Use:   "use",
 	Short: "Allows to select environment to be used",
 	Long:  `TODO`,
@@ -43,15 +43,5 @@ var environmentsUseCmd = &cobra.Command{
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsUseCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// environmentsUseCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// environmentsUseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	envCmd.AddCommand(envUseCmd)
 }

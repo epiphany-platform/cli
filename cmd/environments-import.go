@@ -12,7 +12,8 @@ import (
 
 var srcFile string
 
-var environmentsImportCmd = &cobra.Command{
+// envImportCmd represents envs import command
+var envImportCmd = &cobra.Command{
 	Use:        "import",
 	SuggestFor: []string{"impor", "imprt"},
 	Short:      "Imports a zip compressed environment",
@@ -66,8 +67,8 @@ and immediately switches to the imported environment`,
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsImportCmd)
+	envCmd.AddCommand(envImportCmd)
 
-	environmentsImportCmd.Flags().StringP("from", "f", "", "File to import from")
-	environmentsImportCmd.MarkFlagFilename("from")
+	envImportCmd.Flags().StringP("from", "f", "", "File to import from")
+	_ = envImportCmd.MarkFlagFilename("from")
 }

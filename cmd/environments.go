@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// environmentsCmd represents the environments command
-var environmentsCmd = &cobra.Command{
+// envCmd represents the environments command
+var envCmd = &cobra.Command{
 	Use:     "environments",
 	Short:   "Allows various interactions with environments",
 	Long:    `TODO`,
@@ -16,5 +16,5 @@ var environmentsCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(environmentsCmd)
+	rootCmd.AddCommand(envCmd)
 }

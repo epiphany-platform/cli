@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// environmentsRunCmd represents the run command
-var environmentsRunCmd = &cobra.Command{ //TODO consider what are options to create integration tests here. For me it seams that it would be testing of docker
+// envRunCmd represents the run command
+var envRunCmd = &cobra.Command{ //TODO consider what are options to create integration tests here. For me it seams that it would be testing of docker
 	Use:   "run",
 	Short: "Runs installed component command in environment",
 	Long:  `TODO`,
@@ -47,5 +47,5 @@ var environmentsRunCmd = &cobra.Command{ //TODO consider what are options to cre
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsRunCmd)
+	envCmd.AddCommand(envRunCmd)
 }

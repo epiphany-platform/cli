@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// environmentsInfoCmd represents the info command
-var environmentsInfoCmd = &cobra.Command{
+// envInfoCmd represents the info command
+var envInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Displays information about currently selected environment",
 	Long:  `TODO`,
@@ -34,5 +34,5 @@ var environmentsInfoCmd = &cobra.Command{
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsInfoCmd)
+	envCmd.AddCommand(envInfoCmd)
 }

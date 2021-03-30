@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
+// envListCmd represents the list command
+var envListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "TODO",
 	Long:  `TODO`,
@@ -37,5 +37,5 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	environmentsCmd.AddCommand(listCmd)
+	envCmd.AddCommand(envListCmd)
 }

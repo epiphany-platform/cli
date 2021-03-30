@@ -15,7 +15,8 @@ var (
 	dstDir   string
 )
 
-var environmentsExportCmd = &cobra.Command{
+// envExportCmd represents envs export command
+var envExportCmd = &cobra.Command{
 	Use:        "export",
 	SuggestFor: []string{"expor", "exprt"},
 	Short:      "Exports an environment as a zip archive",
@@ -89,9 +90,9 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsExportCmd)
+	envCmd.AddCommand(envExportCmd)
 
-	environmentsExportCmd.Flags().StringP("id", "i", "", "id of the environment to export, default is current environment")
-	environmentsExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive, default is current directory")
-	environmentsExportCmd.MarkFlagDirname("destination")
+	envExportCmd.Flags().StringP("id", "i", "", "id of the environment to export, default is current environment")
+	envExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive, default is current directory")
+	_ = envExportCmd.MarkFlagDirname("destination")
 }

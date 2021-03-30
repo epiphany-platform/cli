@@ -9,8 +9,8 @@ import (
 
 var newEnvName string
 
-// environmentsNewCmd represents the new command
-var environmentsNewCmd = &cobra.Command{
+// envNewCmd represents the new command
+var envNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Creates new environment",
 	Long:  `TODO`,
@@ -54,7 +54,7 @@ var environmentsNewCmd = &cobra.Command{
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsNewCmd)
+	envCmd.AddCommand(envNewCmd)
 
-	environmentsNewCmd.Flags().String("name", "", "name of new environment to create")
+	envNewCmd.Flags().String("name", "", "name of new environment to create")
 }
