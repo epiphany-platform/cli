@@ -11,12 +11,12 @@ var repoListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists installed repositories",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("list called")
+		logger.Debug().Msg("list called")
 		s, err := repository.List()
 		if err != nil {
-			panic(err)
+			logger.Panic().Err(err).Msg("list failed")
 		}
-		fmt.Println(s)
+		fmt.Print(s)
 	},
 }
 
