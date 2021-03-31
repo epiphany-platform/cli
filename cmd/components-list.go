@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/epiphany-platform/cli/pkg/repository"
 	"github.com/spf13/cobra"
@@ -13,7 +14,7 @@ var componentsListCmd = &cobra.Command{
 	Short: "Lists all existing components in repository",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("component list called")
+		logger.Debug().Msg("component list called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Print(repository.GetRepository().ComponentsString())

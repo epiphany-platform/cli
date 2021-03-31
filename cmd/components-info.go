@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/repository"
 	"github.com/spf13/cobra"
 )
@@ -14,7 +15,7 @@ var componentsInfoCmd = &cobra.Command{
 	Short: "Displays information about component",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("components info called")
+		logger.Debug().Msg("components info called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {

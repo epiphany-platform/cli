@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,7 @@ var componentsCmd = &cobra.Command{
 Information about available components are taken from https://github.com/epiphany-platform/modules/blob/develop/v1.yaml`,
 	Aliases: []string{"cmp"},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("components called")
+		logger.Debug().Msg("components called")
 	},
 }
 

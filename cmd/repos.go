@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -10,8 +10,8 @@ import (
 var reposCmd = &cobra.Command{
 	Use:   "repos",
 	Short: "Commands related to repos management",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("repos called")
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.Debug().Msg("repos called")
 	},
 }
 

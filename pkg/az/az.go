@@ -3,10 +3,9 @@ package az
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/rs/zerolog"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
@@ -24,13 +23,8 @@ const (
 	roleName  = "Contributor"
 )
 
-var (
-	logger zerolog.Logger
-)
-
 func init() {
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	logger = zerolog.New(output).With().Str("package", "az").Caller().Timestamp().Logger()
+	logger.Initialize()
 }
 
 // Credentials structure is used to format display information for Service Principal

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/auth"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -16,8 +16,10 @@ var sshKeygenCreateCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create new ssh keypair in current environment.",
 	Long:  `This command creates new ssh keypair in current environment and stores information about it in environment.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.Debug().Msg("create called")
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("create called")
 		config, err := configuration.GetConfig()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get config failed")

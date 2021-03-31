@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -11,6 +12,10 @@ import (
 	"github.com/epiphany-platform/cli/pkg/util"
 	"gopkg.in/yaml.v2"
 )
+
+func init() {
+	logger.Initialize()
+}
 
 //ComponentCommand struct contains information about specific command provided by component to be executed
 type ComponentCommand struct {
@@ -122,17 +127,17 @@ func (v V1) ComponentsString() string {
 //The GetRepository method checks if there is already cached repository file and returns V1 struct. If there is no
 //cache file it will try to download it from default location, persist it to cache file and return V1 as well.
 func GetRepository() *V1 {
-	debug("will try to get repo")
+	logger.Debug().Msg("will try to get repo")
 	repo, err := loadRepository(util.UsedRepositoryFile)
 	if err != nil {
-		debug("error while loading local repo: %#v", err)
-		debug("will try to download repo")
+		logger.Debug().Msgf("error while loading local repo: %#v", err)
+		logger.Debug().Msg("will try to download repo")
 		repo, err = downloadAndPersistRepositoryV1(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, util.DefaultRepository, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
 		if err != nil {
-			errGetRepository(err)
+			logger.Panic().Err(err).Msg("get repository failed")
 		}
 	}
-	debug("will return repo")
+	logger.Debug().Msg("will return repo")
 	return repo
 }
 

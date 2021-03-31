@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/repository"
 	"github.com/spf13/cobra"
 )
@@ -10,8 +12,10 @@ import (
 var repoListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists installed repositories",
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("list called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		s, err := repository.List()
 		if err != nil {
 			logger.Panic().Err(err).Msg("list failed")

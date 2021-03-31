@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ var envUseCmd = &cobra.Command{
 	Short: "Allows to select environment to be used",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments use called")
+		logger.Debug().Msg("environments use called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()

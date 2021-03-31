@@ -1,6 +1,7 @@
 package util
 
 import (
+	"github.com/epiphany-platform/cli/internal/logger"
 	"os"
 )
 
@@ -27,21 +28,25 @@ var (
 	UsedTempDirectory          string
 )
 
+func init() {
+	logger.Initialize()
+}
+
 func EnsureDirectory(directory string) {
-	debug("will try to ensure directory %s", directory)
+	logger.Debug().Msgf("will try to ensure directory %s", directory)
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
-		errDirectoryCreation(err, directory)
+		logger.Panic().Err(err).Msgf("directory %s creation failed", directory)
 	}
-	debug("directory %s created", directory)
+	logger.Debug().Msgf("directory %s created", directory)
 }
 
 func GetHomeDirectory() string {
-	debug("will try to get home directory")
+	logger.Debug().Msg("will try to get home directory")
 	home, err := os.UserHomeDir()
 	if err != nil {
-		errFindingHome(err)
+		logger.Panic().Err(err).Msg("cannot determine home directory")
 	}
-	debug("got user home directory: %s", home)
+	logger.Debug().Msgf("got user home directory: %s", home)
 	return home
 }

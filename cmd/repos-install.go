@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"errors"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/repository"
 	"regexp"
 
@@ -22,8 +24,10 @@ var installCmd = &cobra.Command{
 		}
 		return nil
 	},
-	Run: func(cmd *cobra.Command, args []string) {
+	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("install called")
+	},
+	Run: func(cmd *cobra.Command, args []string) {
 		err := repository.Install(args[0])
 		if err != nil {
 			logger.Panic().Err(err).Msg("install failed")

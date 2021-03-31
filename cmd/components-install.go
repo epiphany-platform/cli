@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/repository"
@@ -17,7 +18,7 @@ var componentsInstallCmd = &cobra.Command{
 	Short: "Installs component into currently used environment",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("components install called")
+		logger.Debug().Msg("components install called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
@@ -74,14 +75,4 @@ var componentsInstallCmd = &cobra.Command{
 
 func init() {
 	componentsCmd.AddCommand(componentsInstallCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// componentsInstallCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// componentsInstallCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 
@@ -14,10 +16,10 @@ var envListCmd = &cobra.Command{
 	Short: "TODO",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments list pre run called")
+		logger.Debug().Msg("environments list pre run called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		debug("list called")
+		logger.Debug().Msg("list called")
 		config, err := configuration.GetConfig()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get config failed")

@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 	old "github.com/epiphany-platform/cli/pkg/repository"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"gopkg.in/yaml.v2"
@@ -26,6 +27,10 @@ type repositories struct {
 	// add next versions of repositories here
 }
 
+func init() {
+	logger.Initialize()
+}
+
 func List() (string, error) {
 	if len(loaded.v1s) < 1 {
 		err := load()
@@ -43,7 +48,7 @@ func List() (string, error) {
 }
 
 func Install(repoName string) error {
-	fmt.Printf("will install %s\n", repoName)
+	logger.Debug().Msgf("will install %s", repoName)
 	r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, repoName, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
 	if err != nil {
 		return err

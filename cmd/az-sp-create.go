@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -78,7 +79,7 @@ func init() {
 }
 
 func isEnvPresentAndSelected() (config *configuration.Config, err error) {
-	debug("will check if isEnvPresentAndSelected()")
+	logger.Debug().Msg("will check if isEnvPresentAndSelected()")
 	config, err = configuration.GetConfig()
 	if err != nil {
 		return
@@ -89,11 +90,11 @@ func isEnvPresentAndSelected() (config *configuration.Config, err error) {
 	}
 	for _, e := range environments {
 		if e.Uuid.String() == config.CurrentEnvironment.String() {
-			debug("found currently selected environment %s", e.Uuid.String())
+			logger.Debug().Msgf("found currently selected environment %s", e.Uuid.String())
 			return
 		}
 	}
-	debug("currently selected environment not found")
+	logger.Debug().Msg("currently selected environment not found")
 	err = errors.New("currently selected environment not found")
 	return
 }

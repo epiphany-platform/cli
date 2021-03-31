@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ var envInfoCmd = &cobra.Command{
 	Short: "Displays information about currently selected environment",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments info called")
+		logger.Debug().Msg("environments info called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := configuration.GetConfig()

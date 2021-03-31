@@ -2,23 +2,16 @@ package processor
 
 import (
 	"bytes"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	environments "github.com/epiphany-platform/cli/pkg/environment"
-	"github.com/rs/zerolog"
-	"os"
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
-)
-
-var (
-	logger zerolog.Logger
 )
 
 func init() {
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	logger = zerolog.New(output).With().Str("package", "processor").Caller().Timestamp().Logger()
+	logger.Initialize()
 }
 
 func TemplateProcessor(config *configuration.Config, environment *environments.Environment) func(s string) string {

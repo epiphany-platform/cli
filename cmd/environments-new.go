@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 	"github.com/spf13/cobra"
@@ -15,7 +16,7 @@ var envNewCmd = &cobra.Command{
 	Short: "Creates new environment",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments new called")
+		logger.Debug().Msg("environments new called")
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
@@ -42,7 +43,7 @@ var envNewCmd = &cobra.Command{
 			}
 		}
 
-		debug("new environment name is: %s", newEnvName)
+		logger.Debug().Msgf("new environment name is: %s", newEnvName)
 
 		envId, err := config.CreateNewEnvironment(newEnvName)
 		if err != nil {

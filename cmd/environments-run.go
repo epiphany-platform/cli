@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"fmt"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/processor"
@@ -16,7 +18,7 @@ var envRunCmd = &cobra.Command{ //TODO consider what are options to create integ
 	Short: "Runs installed component command in environment",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments run called")
+		logger.Debug().Msg("environments run called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 2 {

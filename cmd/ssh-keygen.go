@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -11,8 +11,8 @@ var sshKeygenCmd = &cobra.Command{
 	Use:   "keygen",
 	Short: "Commands related to ssh keygen operations.",
 	Long:  `Commands related to ssh keygen operations.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("keygen called")
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.Debug().Msg("keygen called")
 	},
 }
 

@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/google/uuid"

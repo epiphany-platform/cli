@@ -1,12 +1,12 @@
 package configuration
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/util"
@@ -19,6 +19,10 @@ type Kind string
 const (
 	KindConfig Kind = "Config"
 )
+
+func init() {
+	logger.Initialize()
+}
 
 type AzureConfig struct {
 	Credentials az.Credentials `yaml:"credentials"`
@@ -36,7 +40,7 @@ func (c *Config) CreateNewEnvironment(name string) (uuid.UUID, error) {
 	logger.Debug().Msgf("will try to create environment %s", name)
 	env, err := environment.Create(name)
 	if err != nil {
-		errCreateEnvironment(err)
+		logger.Panic().Err(err).Msg("creation of new environment failed")
 	}
 	util.EnsureDirectory(path.Join(
 		util.UsedEnvironmentDirectory,
@@ -67,7 +71,7 @@ func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
 //GetConfigFilePath from usedConfigFile variable or fails if not set
 func (c *Config) GetConfigFilePath() string {
 	if util.UsedConfigFile == "" {
-		errIncorrectInitialization(errors.New("variable usedConfigFile not initialized"))
+		logger.Panic().Msg("variable usedConfigFile not initialized")
 	}
 	return util.UsedConfigFile
 }
@@ -175,7 +179,7 @@ func makeOrGetConfig() (*Config, error) {
 		}
 		err = config.Save()
 		if err != nil {
-			errSave(err)
+			logger.Panic().Err(err).Msg("failed to save")
 		}
 		return config, nil
 	}

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"io"
 	"os"
 	"strings"
@@ -16,12 +17,16 @@ import (
 	"github.com/docker/docker/client"
 )
 
+func init() {
+	logger.Initialize()
+}
+
 type Image struct {
 	Name string
 }
 
 func (image *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
-	debug("will try to pull")
+	logger.Debug().Msg("will try to pull")
 	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return "", err
@@ -40,8 +45,7 @@ func (image *Image) Pull() (string, error) { //TODO remove splitting log streams
 	go func() {
 		s := bufio.NewScanner(stdoutR)
 		for s.Scan() {
-			txt := s.Text()
-			debugJson([]byte(txt), "pulling")
+			logger.Debug().RawJSON("json", s.Bytes()).Msg("pulling")
 		}
 		done <- true
 	}()
@@ -165,7 +169,7 @@ func run(job Job) error {
 
 func clientAndContext() (context.Context, *client.Client, error) {
 	ctx := context.Background()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient() // TODO deprecated
 	if err != nil {
 		return nil, nil, err
 	}
@@ -178,6 +182,6 @@ func removeFinishedContainer(cli *client.Client, ctx context.Context, containerI
 
 	err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
 	if err != nil {
-		warnRemovingContainer(err)
+		logger.Warn().Err(err).Msg("cannot remove container after it finished it's job")
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/auth"
 	"github.com/epiphany-platform/cli/pkg/docker"
 	"github.com/epiphany-platform/cli/pkg/util"
@@ -18,6 +19,10 @@ import (
 	"github.com/otiai10/copy"
 	"gopkg.in/yaml.v2"
 )
+
+func init() {
+	logger.Initialize()
+}
 
 //InstalledComponentCommand holds information about specific command of installed component
 type InstalledComponentCommand struct {
@@ -49,7 +54,7 @@ func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory strin
 		Mounts:               mounts,
 		EnvironmentVariables: envs,
 	}
-	debug("will try to run docker job %+v", dockerJob)
+	logger.Debug().Msgf("will try to run docker job %+v", dockerJob)
 	return dockerJob.Run()
 }
 
@@ -144,7 +149,7 @@ func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to
 	)
 	err := ioutil.WriteFile(logsPath, []byte(logs), 0644)
 	if err != nil {
-		errFailedToWriteFile(err)
+		logger.Panic().Err(err).Msg("failed to write file")
 	}
 }
 
@@ -165,13 +170,13 @@ func (e *Environment) Save() error {
 	if e.Uuid == uuid.Nil {
 		return errors.New(fmt.Sprintf("unexpected UUID on Save: %s", e.Uuid))
 	}
-	debug("will try to marshal environment %+v", e)
+	logger.Debug().Msgf("will try to marshal environment %+v", e)
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
 	}
 	ep := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName)
-	debug("will try to write marshaled data to file %s", ep)
+	logger.Debug().Msgf("will try to write marshaled data to file %s", ep)
 	err = ioutil.WriteFile(ep, data, 0644)
 	if err != nil {
 		return err
@@ -230,7 +235,7 @@ func Create(name string) (*Environment, error) {
 
 //create new environment with given name and uuid
 func create(name string, uuid uuid.UUID) (*Environment, error) {
-	debug("will try to create environment with uuid %s and name %s", uuid.String(), name)
+	logger.Debug().Msgf("will try to create environment with uuid %s and name %s", uuid.String(), name)
 	environment := &Environment{
 		Name: name,
 		Uuid: uuid,
@@ -239,27 +244,27 @@ func create(name string, uuid uuid.UUID) (*Environment, error) {
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
-		errSaveEnvironment(err, environment.Uuid.String())
+		logger.Panic().Err(err).Msgf("wasn't able to save environment %s", environment.Uuid.String())
 	}
 	return environment, nil
 }
 
 //GetAll existing Environment
 func GetAll() ([]*Environment, error) {
-	debug("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
+	logger.Debug().Msgf("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
 	items, err := ioutil.ReadDir(util.UsedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
 	}
 	var environments []*Environment
 	for _, i := range items {
-		debug("entered directory %s", i.Name())
+		logger.Debug().Msgf("entered directory %s", i.Name())
 		if i.IsDir() {
 			e, err := Get(uuid.MustParse(i.Name()))
 			if err == nil {
 				environments = append(environments, e)
 			} else {
-				warnNotEnvironmentDirectory(err)
+				logger.Warn().Err(err).Msg("does not seam like environment directory")
 			}
 		}
 	}
@@ -269,24 +274,24 @@ func GetAll() ([]*Environment, error) {
 //Get Environment bu uuid
 func Get(uuid uuid.UUID) (*Environment, error) {
 	expectedFile := path.Join(util.UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
-	debug("will try to get environment config from file %s", expectedFile)
+	logger.Debug().Msgf("will try to get environment config from file %s", expectedFile)
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-		warnEnvironmentConfigFileNotFound(err, expectedFile)
+		logger.Warn().Err(err).Msgf("expected file %s not found", expectedFile)
 		return nil, err
 	} else {
 		e := &Environment{}
-		debug("trying to open %s file", expectedFile)
+		logger.Debug().Msgf("trying to open %s file", expectedFile)
 		file, err := os.Open(expectedFile)
 		if err != nil {
 			return nil, err
 		}
 		defer file.Close()
 		d := yaml.NewDecoder(file)
-		debug("will try to decode file %s to yaml", expectedFile)
+		logger.Debug().Msgf("will try to decode file %s to yaml", expectedFile)
 		if err := d.Decode(&e); err != nil {
 			return nil, err
 		}
-		debug("got environment config %+v", e)
+		logger.Debug().Msgf("got environment config %+v", e)
 		return e, nil
 	}
 }
