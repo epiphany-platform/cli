@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/epiphany-platform/cli/internal/logger"
@@ -14,13 +13,16 @@ var componentsInfoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Displays information about component",
 	Long:  `TODO`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 1 {
+			return fmt.Errorf("found %d args", len(args))
+		}
+		return nil
+	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("components info called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			logger.Fatal().Err(errors.New(fmt.Sprintf("found %d args", len(args)))).Msg("too few arguments")
-		}
 		tc, err := repository.GetRepository().GetComponentByName(args[0])
 		if err != nil {
 			logger.Fatal().Err(err).Msg("getting component by name failed")

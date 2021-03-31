@@ -32,12 +32,11 @@ func init() {
 }
 
 func List() (string, error) {
-	if len(loaded.v1s) < 1 {
-		err := load()
-		if err != nil {
-			return "", err
-		}
+	err := load()
+	if err != nil {
+		logger.Panic().Err(err).Msg("unable to load repos")
 	}
+
 	var sb strings.Builder
 	for _, v1 := range loaded.v1s {
 		// TODO add name here
@@ -48,6 +47,11 @@ func List() (string, error) {
 }
 
 func Install(repoName string) error {
+	err := load()
+	if err != nil {
+		logger.Panic().Err(err).Msg("unable to load repos")
+	}
+
 	logger.Debug().Msgf("will install %s", repoName)
 	r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, repoName, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
 	if err != nil {
@@ -56,7 +60,29 @@ func Install(repoName string) error {
 	return persistV1RepositoryFile(repoName, r)
 }
 
+func Search(name string) (string, error) {
+	err := load()
+	if err != nil {
+		logger.Panic().Err(err).Msg("unable to load repos")
+	}
+
+	var sb strings.Builder
+	for _, v1 := range loaded.v1s {
+		// TODO add name here
+		sb.WriteString("add name here\n")
+		c, err := v1.GetComponentByName(name)
+		if err != nil {
+			return "", err
+		}
+		for _, v := range c.Versions {
+			sb.WriteString(fmt.Sprintf("\t%s:%s\n", c.Name, v.Version))
+		}
+	}
+	return sb.String(), nil
+}
+
 func load() error {
+	loaded = repositories{}
 	reposPath := path.Join(util.UsedConfigurationDirectory, repoDirectoryName)
 	return filepath.Walk(reposPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
