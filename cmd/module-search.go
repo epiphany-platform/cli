@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// searchCmd represents the search command
-var searchCmd = &cobra.Command{
+// moduleSearchCmd represents the search command
+var moduleSearchCmd = &cobra.Command{
 	Use:   "search",
-	Short: "Searches for component by name in all repos",
+	Short: "searches for named module",
 	Long:  `TODO`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
@@ -21,17 +21,17 @@ var searchCmd = &cobra.Command{
 		return nil
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		logger.Debug().Msg("search called")
+		logger.Debug().Msg("module search called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		s, err := repository.Search(args[0])
 		if err != nil {
-			logger.Panic().Err(err).Msg("search failed")
+			logger.Error().Err(err).Msg("search failed")
 		}
 		fmt.Print(s)
 	},
 }
 
 func init() {
-	componentsCmd.AddCommand(searchCmd)
+	moduleCmd.AddCommand(moduleSearchCmd)
 }

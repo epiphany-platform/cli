@@ -39,9 +39,12 @@ func List() (string, error) {
 
 	var sb strings.Builder
 	for _, v1 := range loaded.v1s {
-		// TODO add name here
-		sb.WriteString("add name here\n")
-		sb.WriteString(v1.ComponentsString())
+		sb.WriteString(fmt.Sprintf("Repository: %s\n", v1.Name))
+		for _, c := range v1.Components {
+			for _, v := range c.Versions {
+				sb.WriteString(fmt.Sprintf("\tModule: %s:%s\n", c.Name, v.Version))
+			}
+		}
 	}
 	return sb.String(), nil
 }
@@ -76,14 +79,12 @@ func Search(name string) (string, error) {
 
 	var sb strings.Builder
 	for _, v1 := range loaded.v1s {
-		// TODO add name here
-		sb.WriteString("add name here\n")
-		c, err := v1.GetComponentByName(name)
-		if err != nil {
-			return "", err
-		}
-		for _, v := range c.Versions {
-			sb.WriteString(fmt.Sprintf("\t%s:%s\n", c.Name, v.Version))
+		// TODO implement SearchComponent() and don't use GetComponentByName()
+		c, _ := v1.GetComponentByName(name)
+		if c != nil {
+			for _, v := range c.Versions {
+				sb.WriteString(fmt.Sprintf("%s/%s:%s\n", v1.Name, c.Name, v.Version))
+			}
 		}
 	}
 	return sb.String(), nil
