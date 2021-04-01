@@ -46,18 +46,26 @@ func List() (string, error) {
 	return sb.String(), nil
 }
 
-func Install(repoName string) error {
+func Install(repoName string, force bool, branch string) error {
 	err := load()
 	if err != nil {
 		logger.Panic().Err(err).Msg("unable to load repos")
 	}
 
 	logger.Debug().Msgf("will install %s", repoName)
-	r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, repoName, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
+	b := util.DefaultRepositoryBranch
+	if branch != "" {
+		b = branch
+	}
+	r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, repoName, b, util.DefaultV1RepositoryFileName))
 	if err != nil {
 		return err
 	}
-	return persistV1RepositoryFile(repoName, r)
+	inferredRepoName := inferName(repoName)
+	if r.Name == "" {
+		r.Name = inferredRepoName
+	}
+	return persistV1RepositoryFile(inferredRepoName, r, force)
 }
 
 func Search(name string) (string, error) {
@@ -117,8 +125,10 @@ func decodeV1Repository(filePath string) (*old.V1, error) {
 
 //The downloadV1Repository method retrieves file from provided url, unmarshalls it to V1 and returns obtained V1 struct.
 func downloadV1Repository(url string) (*old.V1, error) {
+	logger.Trace().Msgf("will try to download repo from: %s", url)
 	res, err := http.Get(url)
 	if err != nil {
+		logger.Error().Err(err).Msg("wasn't able to perform http GET on repo URL")
 		return nil, err
 	}
 	if res.Body != nil {
@@ -126,11 +136,13 @@ func downloadV1Repository(url string) (*old.V1, error) {
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		logger.Error().Err(err).Msg("wasn't able to read response body")
 		return nil, err
 	}
 	r := &old.V1{}
 	err = yaml.Unmarshal(body, r)
 	if err != nil {
+		logger.Error().Err(err).Msg("wasn't able to unmarshal body into correct yaml")
 		return nil, err
 	}
 	return r, nil
@@ -141,15 +153,19 @@ func inferName(repo string) string {
 	return reg.ReplaceAllString(repo, "-")
 }
 
-func persistV1RepositoryFile(repo string, v1 *old.V1) error {
+func persistV1RepositoryFile(inferredRepoName string, v1 *old.V1, force bool) error {
 	b, err := yaml.Marshal(v1)
 	if err != nil {
+		logger.Error().Err(err).Msg("wasn't able to marshal repo object into yaml")
 		return err
 	}
-	newFilePath := path.Join(util.UsedConfigurationDirectory, repoDirectoryName, inferName(repo)+".yaml")
+	newFilePath := path.Join(util.UsedConfigurationDirectory, repoDirectoryName, inferredRepoName+".yaml")
 	if _, err = os.Stat(newFilePath); err == nil {
-		return errors.New("repo file already exists")
+		logger.Debug().Msg("file " + newFilePath + " already exists")
+		if !force {
+			return errors.New("repo file already exists (use '--force' if you know what you do)")
+		}
 	}
-
+	logger.Debug().Msg("will write yaml to file")
 	return ioutil.WriteFile(newFilePath, b, 0644)
 }

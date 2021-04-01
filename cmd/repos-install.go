@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"github.com/spf13/viper"
 
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/repository"
@@ -10,8 +11,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// installCmd represents the install command
-var installCmd = &cobra.Command{
+var (
+	force  bool
+	branch string
+)
+
+// reposInstallCmd represents the install command
+var reposInstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "installs new repository",
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -26,15 +32,23 @@ var installCmd = &cobra.Command{
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("install called")
+
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			logger.Fatal().Err(err)
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		err := repository.Install(args[0])
+		err := repository.Install(args[0], force, branch)
 		if err != nil {
-			logger.Panic().Err(err).Msg("install failed")
+			logger.Error().Err(err).Msg("install failed")
 		}
 	},
 }
 
 func init() {
-	reposCmd.AddCommand(installCmd)
+	reposCmd.AddCommand(reposInstallCmd)
+
+	reposInstallCmd.Flags().BoolVar(&force, "force", false, "force repo install even if file already exists.")
+	reposInstallCmd.Flags().StringVar(&branch, "branch", "", "provide branch other than default HEAD")
 }
