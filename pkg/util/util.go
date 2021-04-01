@@ -16,7 +16,7 @@ const (
 
 	GithubUrl                   = "https://raw.githubusercontent.com"
 	DefaultRepository           = "epiphany-platform/modules"
-	DefaultRepositoryBranch     = "develop"
+	DefaultRepositoryBranch     = "HEAD"
 	DefaultV1RepositoryFileName = "v1.yaml"
 )
 
