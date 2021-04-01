@@ -100,6 +100,7 @@ func (c *Component) JustLatestVersion() (*Component, error) {
 type V1 struct {
 	Version    string      `yaml:"version"`
 	Kind       string      `yaml:"kind"`
+	Name       string      `yaml:"name"`
 	Components []Component `yaml:"components"`
 }
 
