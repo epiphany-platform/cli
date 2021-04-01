@@ -42,3 +42,7 @@ func Info() *zerolog.Event {
 func Debug() *zerolog.Event {
 	return l.Debug()
 }
+
+func Trace() *zerolog.Event {
+	return l.Trace()
+}

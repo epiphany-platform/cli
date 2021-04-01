@@ -36,12 +36,14 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "configDir", "", fmt.Sprintf("config directory (default is %s)", util.DefaultConfigurationDirectory))
-	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "", fmt.Sprintf("log level (default is warn, values: [debug, info, error, fatal])"))
+	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "", fmt.Sprintf("log level (default is warn, values: [trace, debug, info, error, fatal])"))
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	switch logLevel {
+	case "trace":
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	case "info":
