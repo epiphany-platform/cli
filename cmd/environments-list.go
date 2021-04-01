@@ -30,9 +30,9 @@ var envListCmd = &cobra.Command{
 		}
 		for _, e := range environments {
 			if e.Uuid.String() == config.CurrentEnvironment.String() {
-				fmt.Printf("* %s\n", e.Name)
+				fmt.Printf("* (%s) | %s\n", e.Uuid.String(), e.Name)
 			} else {
-				fmt.Printf("  %s\n", e.Name)
+				fmt.Printf("  (%s) | %s\n", e.Uuid.String(), e.Name)
 			}
 		}
 	},
