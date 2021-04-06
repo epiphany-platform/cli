@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/repository"
 
@@ -17,20 +16,16 @@ var componentsInstallCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Installs component into currently used environment",
 	Long:  `TODO`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) != 1 {
+			return errors.New("incorrect number of arguments")
+		}
+		return nil
+	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("components install called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 1 {
-			logger.
-				Fatal().
-				Err(errors.New(fmt.Sprintf("found %d args", len(args)))).
-				Msg("incorrect number of arguments")
-		}
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
 		e, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("environments get failed")

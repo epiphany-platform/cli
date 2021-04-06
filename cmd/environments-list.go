@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 
 	"github.com/spf13/cobra"
@@ -20,10 +19,6 @@ var envListCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("list called")
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
 		environments, err := environment.GetAll()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("environments get all failed")

@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/auth"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/util"
 	"path"
@@ -20,10 +19,6 @@ var sshKeygenCreateCmd = &cobra.Command{
 		logger.Debug().Msg("create called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
 		env, err := environment.Get(config.CurrentEnvironment)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get environments details failed")

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/az"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,7 +42,7 @@ var azSpCreateCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := isEnvPresentAndSelected()
+		err := isEnvPresentAndSelected()
 		if err != nil {
 			logger.Fatal().Msg("no environment selected")
 		}
@@ -78,12 +77,8 @@ func init() {
 	azSpCreateCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
-func isEnvPresentAndSelected() (config *configuration.Config, err error) {
+func isEnvPresentAndSelected() (err error) {
 	logger.Debug().Msg("will check if isEnvPresentAndSelected()")
-	config, err = configuration.GetConfig()
-	if err != nil {
-		return
-	}
 	environments, err := environment.GetAll()
 	if err != nil {
 		return

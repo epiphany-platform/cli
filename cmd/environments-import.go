@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 	"github.com/spf13/cobra"
@@ -43,12 +42,6 @@ and immediately switches to the imported environment`,
 		// Check if source file exists
 		if _, err := os.Stat(srcFile); err != nil {
 			logger.Fatal().Err(err).Msg("Incorrect file path specified")
-		}
-
-		// Get current config
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("Get config failed")
 		}
 
 		// Import environment

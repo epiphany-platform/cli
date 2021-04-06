@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 	"github.com/google/uuid"
@@ -33,31 +32,28 @@ var envUseCmd = &cobra.Command{
 			if !exists {
 				return errors.New("environment with UUID: " + u.String() + " not found")
 			}
-			uu = u
 		}
 		return nil
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("environments use called")
+		uu = uuid.MustParse(args[0])
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
 		if config.CurrentEnvironment == uuid.Nil {
 			logger.Fatal().Msg("no environment selected")
 		}
 
 		if len(args) == 0 {
-			uu, err = promptui.PromptForEnvironmentSelect("Environments")
+			u, err := promptui.PromptForEnvironmentSelect("Environments")
 			if err != nil {
 				logger.Fatal().Err(err).Msg("prompt failed")
 			}
+			uu = u
 		}
 
 		logger.Info().Msgf("Chosen environment UUID is %s", uu.String())
-		err = config.SetUsedEnvironment(uu)
+		err := config.SetUsedEnvironment(uu)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("setting used environment failed")
 		}

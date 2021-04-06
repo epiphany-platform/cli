@@ -97,6 +97,7 @@ func (c *Config) AddAzureCredentials(credentials az.Credentials) {
 
 //GetConfig sets usedConfigFile and usedConfigurationDirectory to default values and returns (existing or just initialized) Config
 func GetConfig() (*Config, error) {
+	// TODO use SetConfig inside here
 	logger.Debug().Msg("will try to get config file")
 	if util.UsedConfigurationDirectory == "" {
 		util.UsedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)

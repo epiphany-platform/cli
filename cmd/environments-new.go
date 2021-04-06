@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,27 +19,23 @@ var envNewCmd = &cobra.Command{
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Msg("BindPFlags failed")
 		}
 
 		newEnvName = viper.GetString("name")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
-
 		if newEnvName == "" {
 			if len(args) == 1 {
 				newEnvName = args[0]
 			}
 		}
 		if newEnvName == "" {
-			newEnvName, err = promptui.PromptForString("Environment name")
+			ne, err := promptui.PromptForString("Environment name")
 			if err != nil {
 				logger.Fatal().Err(err).Msg("prompt failed")
 			}
+			newEnvName = ne
 		}
 
 		logger.Debug().Msgf("new environment name is: %s", newEnvName)

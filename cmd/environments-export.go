@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -55,10 +54,6 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		// Default environment and destination directory are current ones
 		// Check if environment is default
 		if envIdStr == "" {
-			config, err := configuration.GetConfig()
-			if err != nil {
-				logger.Fatal().Err(err).Msg("Unable to get environment config")
-			}
 			if config.CurrentEnvironment == uuid.Nil {
 				logger.Fatal().Msg("Environment has to be selected if id is not specified")
 			} else {
@@ -67,10 +62,10 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		} else {
 			envId = uuid.MustParse(envIdStr)
 			// Check if passed environment id is valid
-			isEnvValid, err := environment.IsExisting(envId)
+			exists, err := environment.IsExisting(envId)
 			if err != nil {
-				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envId.String())
-			} else if !isEnvValid {
+				logger.Fatal().Err(err).Msgf("Environment %s existence check failed", envId.String())
+			} else if !exists {
 				logger.Fatal().Msgf("Environment %s is not found", envId.String())
 			}
 		}

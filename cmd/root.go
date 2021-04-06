@@ -14,12 +14,33 @@ import (
 var (
 	cfgDir   string
 	logLevel string
+	config   *configuration.Config
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:  "e",
 	Long: `E wrapper allows to interact with epiphany`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		logger.Debug().Msg("root PersistentPreRun")
+
+		logger.Debug().Msg("initializing root config")
+		if cfgDir != "" {
+			logger.Trace().Msg("configDir parameter not empty")
+			c, err := configuration.SetConfigDirectory(cfgDir)
+			if err != nil {
+				logger.Fatal().Err(err).Msg("set config failed")
+			}
+			config = c
+		} else {
+			logger.Trace().Msg("configDir parameter empty")
+			c, err := configuration.GetConfig()
+			if err != nil {
+				logger.Fatal().Err(err).Msg("get config failed")
+			}
+			config = c
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -56,27 +77,6 @@ func initConfig() {
 		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
 
-	logger.Debug().Msg("initializing root config")
-	if cfgDir != "" {
-		config, err := configuration.SetConfigDirectory(cfgDir)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("set config failed")
-		}
-		// Use config file from the flag.
-		viper.SetConfigFile(config.GetConfigFilePath())
-	} else {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
-		// setup default
-		viper.SetConfigFile(config.GetConfigFilePath())
-	}
 	logger.Debug().Msg("read config variables")
 	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		logger.Info().Msgf("used config file: %s", viper.ConfigFileUsed())
-	}
 }

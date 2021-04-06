@@ -18,7 +18,7 @@ var repoListCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		s, err := repository.List()
 		if err != nil {
-			logger.Panic().Err(err).Msg("list failed")
+			logger.Fatal().Err(err).Msg("list failed")
 		}
 		fmt.Print(s)
 	},
