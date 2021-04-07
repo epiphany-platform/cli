@@ -1,15 +1,26 @@
 package janitor
 
 import (
+	"os"
 	"path"
+
+	"github.com/epiphany-platform/cli/pkg/configuration"
 
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/util"
 )
 
-func InitializeFilesStructure(directory string) {
-	logger.Debug().Msg("InitializeFilesStructure()")
+func InitializeStructure(directory string) error {
+	logger.Debug().Msg("InitializeStructure()")
+	logger.Trace().Msg("will setUsedConfigPaths(directory)")
 	setUsedConfigPaths(directory)
+	logger.Trace().Msg("will ensureConfig()")
+	err := ensureConfig()
+	if err != nil {
+		logger.Error().Err(err).Msg("ensureConfig() failed in InitializeStructure(directory string)")
+		return err
+	}
+	return nil
 }
 
 //setUsedConfigPaths to provided values
@@ -59,4 +70,21 @@ func setUsedConfigPaths(configDir string) {
 	} else {
 		logger.Debug().Msgf("util.UsedReposDirectory is already %s", util.UsedTempDirectory)
 	}
+}
+
+//ensureConfig initializes new config if one does not exists
+func ensureConfig() error {
+	if _, err := os.Stat(util.UsedConfigFile); os.IsNotExist(err) {
+		logger.Debug().Msg("there is no config file, will try to initialize one")
+		config := &configuration.Config{
+			Version: "v1",
+			Kind:    configuration.KindConfig,
+		}
+		err = config.Save()
+		if err != nil {
+			logger.Error().Err(err).Msg("failed to save")
+			return err
+		}
+	}
+	return nil
 }

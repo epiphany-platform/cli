@@ -36,12 +36,14 @@ var rootCmd = &cobra.Command{
 			usedConfigDir = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
 		}
 
-		janitor.InitializeFilesStructure(usedConfigDir)
-		c, err := configuration.GetConfig()
+		err := janitor.InitializeStructure(usedConfigDir)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("initialization failed")
+		}
+		config, err = configuration.GetConfig()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get config failed")
 		}
-		config = c
 	},
 }
 
