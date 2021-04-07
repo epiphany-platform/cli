@@ -61,45 +61,6 @@ uuid: %s
 	}
 }
 
-func TestConfig_GetConfigFilePath(t *testing.T) {
-	var tempFile string
-	tempFile, util.UsedConfigurationDirectory, _ = setup(t, "get")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
-
-	tests := []struct {
-		name        string
-		mocked      string
-		want        string
-		shouldPanic bool
-	}{
-		{
-			name:        "correct",
-			mocked:      tempFile,
-			want:        tempFile,
-			shouldPanic: false,
-		},
-		{
-			name:        "incorrect",
-			mocked:      "",
-			want:        tempFile,
-			shouldPanic: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-			util.UsedConfigFile = tt.mocked
-			c := &Config{}
-			if tt.shouldPanic {
-				a.Panics(func() { c.GetConfigFilePath() })
-			} else {
-				got := c.GetConfigFilePath()
-				a.Equal(got, tt.want, "got %s, want %s", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestConfig_SetUsedEnvironment(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "used")
 	envIDCurrent := "3e5b7269-1b3d-4003-9454-9f472857633a"

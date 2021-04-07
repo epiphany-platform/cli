@@ -68,14 +68,6 @@ func (c *Config) SetUsedEnvironment(u uuid.UUID) error {
 	return c.Save()
 }
 
-//GetConfigFilePath from usedConfigFile variable or fails if not set
-func (c *Config) GetConfigFilePath() string {
-	if util.UsedConfigFile == "" {
-		logger.Panic().Msg("variable usedConfigFile not initialized")
-	}
-	return util.UsedConfigFile
-}
-
 //Save Config to usedConfigFile
 func (c *Config) Save() error {
 	logger.Debug().Msgf("will try to marshal config %+v", c)
