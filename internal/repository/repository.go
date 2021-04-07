@@ -16,10 +16,6 @@ import (
 	"strings"
 )
 
-const (
-	repoDirectoryName = "repos"
-)
-
 var loaded repositories
 
 type repositories struct {
@@ -92,7 +88,7 @@ func Search(name string) (string, error) {
 
 func load() error {
 	loaded = repositories{}
-	reposPath := path.Join(util.UsedConfigurationDirectory, repoDirectoryName)
+	reposPath := path.Join(util.UsedConfigurationDirectory, util.DefaultRepoDirectoryName)
 	return filepath.Walk(reposPath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -160,7 +156,7 @@ func persistV1RepositoryFile(inferredRepoName string, v1 *old.V1, force bool) er
 		logger.Error().Err(err).Msg("wasn't able to marshal repo object into yaml")
 		return err
 	}
-	newFilePath := path.Join(util.UsedConfigurationDirectory, repoDirectoryName, inferredRepoName+".yaml")
+	newFilePath := path.Join(util.UsedConfigurationDirectory, util.DefaultRepoDirectoryName, inferredRepoName+".yaml")
 	if _, err = os.Stat(newFilePath); err == nil {
 		logger.Debug().Msg("file " + newFilePath + " already exists")
 		if !force {

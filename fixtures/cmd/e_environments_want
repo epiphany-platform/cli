@@ -20,6 +20,6 @@ Flags:
 
 Global Flags:
       --configDir string   config directory (default is .e)
-      --logLevel string    log level (default is warn, values: [debug, info, error, fatal])
+      --logLevel string    log level (default is warn, values: [trace, debug, info, error, fatal])
 
 Use "e environments [command] --help" for more information about a command.

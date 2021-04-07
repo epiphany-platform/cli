@@ -13,6 +13,7 @@ const (
 	DefaultEnvironmentConfigFileName    string = "config.yaml"
 	DefaultComponentRunsSubdirectory    string = "runs"
 	DefaultComponentMountsSubdirectory  string = "mounts"
+	DefaultRepoDirectoryName            string = "repos"
 
 	GithubUrl                   = "https://raw.githubusercontent.com"
 	DefaultRepository           = "epiphany-platform/modules"
@@ -26,6 +27,7 @@ var (
 	UsedEnvironmentDirectory   string
 	UsedRepositoryFile         string
 	UsedTempDirectory          string
+	UsedReposDirectory         string
 )
 
 func init() {

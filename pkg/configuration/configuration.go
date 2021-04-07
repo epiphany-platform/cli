@@ -97,33 +97,8 @@ func (c *Config) AddAzureCredentials(credentials az.Credentials) {
 
 //GetConfig sets usedConfigFile and usedConfigurationDirectory to default values and returns (existing or just initialized) Config
 func GetConfig() (*Config, error) {
-	// TODO use SetConfig inside here
 	logger.Debug().Msg("will try to get config file")
-	if util.UsedConfigurationDirectory == "" {
-		util.UsedConfigurationDirectory = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
-	}
-	util.EnsureDirectory(util.UsedConfigurationDirectory)
-
-	if util.UsedConfigFile == "" {
-		util.UsedConfigFile = path.Join(util.UsedConfigurationDirectory, util.DefaultConfigFileName)
-	}
-
-	if util.UsedEnvironmentDirectory == "" {
-		util.UsedEnvironmentDirectory = path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsSubdirectory)
-	}
-	util.EnsureDirectory(util.UsedEnvironmentDirectory)
-
-	if util.UsedRepositoryFile == "" {
-		util.UsedRepositoryFile = path.Join(util.UsedConfigurationDirectory, util.DefaultV1RepositoryFileName)
-	}
-
-	if util.UsedTempDirectory == "" {
-		util.UsedTempDirectory = path.Join(util.UsedConfigurationDirectory, util.DefaultEnvironmentsTempSubdirectory)
-	}
-	util.EnsureDirectory(util.UsedTempDirectory)
-
-	logger.Debug().Msg("will try to make or get configuration")
-	return makeOrGetConfig()
+	return SetConfigDirectory(path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory))
 }
 
 //SetConfigDirectory sets variable usedConfigurationDirectory and returns (existing or just initialized) Config
@@ -134,37 +109,50 @@ func SetConfigDirectory(configDir string) (*Config, error) {
 //setUsedConfigPaths to provided values
 func setUsedConfigPaths(configDir string, configFile string) (*Config, error) {
 	logger.Debug().Msgf("will try to set config directory to %s", configDir)
-	if util.UsedConfigurationDirectory != "" {
-		return nil, fmt.Errorf("util.UsedConfigurationDirectory is %s but should be empty on set", util.UsedConfigurationDirectory)
+	if util.UsedConfigurationDirectory == "" {
+		util.UsedConfigurationDirectory = configDir
+		util.EnsureDirectory(util.UsedConfigurationDirectory)
+	} else {
+		logger.Debug().Msgf("util.UsedConfigurationDirectory is already %s", util.UsedConfigurationDirectory)
 	}
-	util.UsedConfigurationDirectory = configDir
-	util.EnsureDirectory(util.UsedConfigurationDirectory)
 
 	logger.Debug().Msg("will try to set used config file")
-	if util.UsedConfigFile != "" {
-		return nil, fmt.Errorf("util.UsedConfigFile is %s but should be empty on set", util.UsedConfigFile)
+	if util.UsedConfigFile == "" {
+		util.UsedConfigFile = configFile
+	} else {
+		logger.Debug().Msgf("util.UsedConfigFile is already %s", util.UsedConfigFile)
 	}
-	util.UsedConfigFile = configFile
 
 	logger.Debug().Msg("will try to set used environments directory")
-	if util.UsedEnvironmentDirectory != "" {
-		return nil, fmt.Errorf("util.UsedEnvironmentDirectory is %s but should be empty on set", util.UsedEnvironmentDirectory)
+	if util.UsedEnvironmentDirectory == "" {
+		util.UsedEnvironmentDirectory = path.Join(configDir, util.DefaultEnvironmentsSubdirectory)
+		util.EnsureDirectory(util.UsedEnvironmentDirectory)
+	} else {
+		logger.Debug().Msgf("util.UsedEnvironmentDirectory is already %s", util.UsedEnvironmentDirectory)
 	}
-	util.UsedEnvironmentDirectory = path.Join(configDir, util.DefaultEnvironmentsSubdirectory)
-	util.EnsureDirectory(util.UsedEnvironmentDirectory)
 
 	logger.Debug().Msg("will try to set used temporary directory")
-	if util.UsedTempDirectory != "" {
-		return nil, fmt.Errorf("util.UsedTempDirectory is %s but should be empty on set", util.UsedTempDirectory)
+	if util.UsedTempDirectory == "" {
+		util.UsedTempDirectory = path.Join(configDir, util.DefaultEnvironmentsTempSubdirectory)
+		util.EnsureDirectory(util.UsedTempDirectory)
+	} else {
+		logger.Debug().Msgf("util.UsedTempDirectory is already %s", util.UsedTempDirectory)
 	}
-	util.UsedTempDirectory = path.Join(configDir, util.DefaultEnvironmentsTempSubdirectory)
-	util.EnsureDirectory(util.UsedTempDirectory)
 
 	logger.Debug().Msg("will try to set repo config file path")
-	if util.UsedRepositoryFile != "" {
-		return nil, fmt.Errorf("util.UsedRepositoryFile is %s but should be empty on set", util.UsedRepositoryFile)
+	if util.UsedRepositoryFile == "" {
+		util.UsedRepositoryFile = path.Join(configDir, util.DefaultV1RepositoryFileName)
+	} else {
+		logger.Debug().Msgf("util.UsedRepositoryFile is already %s", util.UsedRepositoryFile)
 	}
-	util.UsedRepositoryFile = path.Join(configDir, util.DefaultV1RepositoryFileName)
+
+	logger.Debug().Msg("will try to set repos directory")
+	if util.UsedReposDirectory == "" {
+		util.UsedReposDirectory = path.Join(configDir, util.DefaultRepoDirectoryName)
+		util.EnsureDirectory(util.UsedReposDirectory)
+	} else {
+		logger.Debug().Msgf("util.UsedReposDirectory is already %s", util.UsedTempDirectory)
+	}
 
 	logger.Debug().Msg("will try to make or get configuration")
 	return makeOrGetConfig()
@@ -186,15 +174,16 @@ func makeOrGetConfig() (*Config, error) {
 	}
 	logger.Debug().Msgf("will try to load existing config file from %s", util.UsedConfigFile)
 	config := &Config{}
-	logger.Debug().Msgf("trying to open %s file", util.UsedConfigFile)
 	file, err := os.Open(util.UsedConfigFile)
 	if err != nil {
+		logger.Error().Err(err).Msgf("failed to open file %s", util.UsedConfigFile)
 		return nil, err
 	}
 	defer file.Close()
 	d := yaml.NewDecoder(file)
-	logger.Debug().Msgf("will try to decode file %s to yaml", util.UsedConfigFile)
+	logger.Trace().Msgf("will try to decode file %s to yaml", util.UsedConfigFile)
 	if err := d.Decode(&config); err != nil {
+		logger.Error().Err(err).Msgf("failed to decode file %s to yaml", util.UsedConfigFile)
 		return nil, err
 	}
 	return config, nil

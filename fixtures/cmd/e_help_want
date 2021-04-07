@@ -8,11 +8,13 @@ Available Commands:
   components   Allows to inspect and install available components
   environments Allows various interactions with environments
   help         Help about any command
+  module       Manages modules
+  repos        Commands related to repos management
   ssh          Ssh and keys operations
 
 Flags:
       --configDir string   config directory (default is .e)
   -h, --help               help for e
-      --logLevel string    log level (default is warn, values: [debug, info, error, fatal])
+      --logLevel string    log level (default is warn, values: [trace, debug, info, error, fatal])
 
 Use "e [command] --help" for more information about a command.
