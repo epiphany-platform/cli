@@ -6,9 +6,10 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"golang.org/x/crypto/ssh"
 	"io/ioutil"
 	"path"
+
+	"golang.org/x/crypto/ssh"
 )
 
 const rsaKeyName = "vms_rsa"

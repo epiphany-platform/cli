@@ -12,7 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/epiphany-platform/cli/internal/util"
+
 	"github.com/google/uuid"
 	"github.com/mholt/archiver/v3"
 	"github.com/rs/zerolog"

@@ -10,8 +10,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/az"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"

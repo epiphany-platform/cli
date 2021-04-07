@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/auth"
 	"github.com/epiphany-platform/cli/pkg/environment"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"path"
 
 	"github.com/spf13/cobra"
 )

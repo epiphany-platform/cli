@@ -5,6 +5,7 @@ import (
 
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/repository"
+
 	"github.com/spf13/cobra"
 )
 

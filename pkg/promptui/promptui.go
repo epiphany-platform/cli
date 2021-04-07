@@ -7,8 +7,8 @@ import (
 
 	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
-	"github.com/google/uuid"
 
+	"github.com/google/uuid"
 	"github.com/manifoldco/promptui"
 )
 

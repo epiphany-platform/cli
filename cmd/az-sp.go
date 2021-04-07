@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/epiphany-platform/cli/internal/logger"
+
 	"github.com/spf13/cobra"
 )
 

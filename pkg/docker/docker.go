@@ -4,17 +4,17 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/epiphany-platform/cli/internal/logger"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 )
 
 func init() {

@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"errors"
+
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/environment"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

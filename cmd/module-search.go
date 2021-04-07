@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/repository"
 

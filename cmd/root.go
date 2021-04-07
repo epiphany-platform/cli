@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/configuration"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

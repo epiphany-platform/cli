@@ -11,9 +11,10 @@ import (
 	"time"
 
 	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/auth"
 	"github.com/epiphany-platform/cli/pkg/docker"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/google/uuid"
 	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"

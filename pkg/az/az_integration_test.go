@@ -8,11 +8,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
-
-	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
 )
 
 // setup parameters needed to run integration tests

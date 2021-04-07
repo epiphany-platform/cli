@@ -10,7 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/epiphany-platform/cli/internal/util"
+
 	"github.com/stretchr/testify/assert"
 )
 

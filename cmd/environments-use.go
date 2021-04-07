@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"errors"
+
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/promptui"
+
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )

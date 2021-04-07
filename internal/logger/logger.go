@@ -1,9 +1,10 @@
 package logger
 
 import (
-	"github.com/rs/zerolog"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 var (

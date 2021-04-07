@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/internal/logger"
 	"io/ioutil"
 	"net/http"
 	"os"
 
-	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
+
 	"gopkg.in/yaml.v2"
 )
 

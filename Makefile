@@ -42,6 +42,7 @@ janitor-task:
 	$(VENDOR)
 	$(VET) ./cmd/... ./pkg/... ./internal/...
 	$(FMT) ./cmd/... ./pkg/... ./internal/...
+	goimports -l -w ./cmd/ ./pkg/ ./internal/
 
 build-task:
 	$(BUILD) -x -o $(BUILD_DIR)$(APP_NAME) $(APP_REPO)

@@ -2,12 +2,13 @@ package processor
 
 import (
 	"bytes"
-	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/configuration"
-	environments "github.com/epiphany-platform/cli/pkg/environment"
 	"strconv"
 	"strings"
 	"text/template"
+
+	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/pkg/configuration"
+	environments "github.com/epiphany-platform/cli/pkg/environment"
 )
 
 func init() {

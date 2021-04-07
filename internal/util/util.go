@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/epiphany-platform/cli/internal/logger"
 	"os"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 )
 
 const (

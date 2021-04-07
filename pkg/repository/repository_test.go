@@ -10,7 +10,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/epiphany-platform/cli/pkg/util"
+	"github.com/epiphany-platform/cli/internal/util"
+
 	"github.com/rs/zerolog"
 )
 

@@ -7,9 +7,10 @@ import (
 	"path"
 
 	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/az"
 	"github.com/epiphany-platform/cli/pkg/environment"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 )

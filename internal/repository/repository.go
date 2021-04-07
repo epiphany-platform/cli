@@ -3,10 +3,6 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"github.com/epiphany-platform/cli/internal/logger"
-	old "github.com/epiphany-platform/cli/pkg/repository"
-	"github.com/epiphany-platform/cli/pkg/util"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -14,6 +10,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
+	old "github.com/epiphany-platform/cli/pkg/repository"
+
+	"gopkg.in/yaml.v2"
 )
 
 var loaded repositories
