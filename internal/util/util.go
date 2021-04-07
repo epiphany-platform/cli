@@ -39,7 +39,7 @@ func EnsureDirectory(directory string) {
 	logger.Debug().Msgf("will try to ensure directory %s", directory)
 	err := os.MkdirAll(directory, 0755)
 	if err != nil {
-		logger.Panic().Err(err).Msgf("directory %s creation failed", directory)
+		logger.Fatal().Err(err).Msgf("directory %s creation failed", directory)
 	}
 	logger.Debug().Msgf("directory %s created", directory)
 }

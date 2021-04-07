@@ -178,13 +178,13 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 			defer ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
 			c, err := GetConfig()
 			a.NoErrorf(err, "error getting configuration %v", err)
-			uuid, err := c.CreateNewEnvironment(tt.args.name)
+			u, err := c.CreateNewEnvironment(tt.args.name)
 			if tt.wantErr == nil {
 				a.NoError(err)
 			} else {
 				a.EqualError(err, tt.wantErr.Error())
 			}
-			envDir := path.Join(util.UsedEnvironmentDirectory, uuid.String())
+			envDir := path.Join(util.UsedEnvironmentDirectory, u.String())
 			a.DirExists(envDir)
 			a.FileExists(path.Join(envDir, util.DefaultEnvironmentConfigFileName))
 		})
@@ -298,108 +298,6 @@ func TestConfig_AddAzureCredentials(t *testing.T) {
 			}
 			c.AddAzureCredentials(tt.args.credentials)
 			a.Truef(reflect.DeepEqual(c, tt.want), "got = %#v, want = %#v", c, tt.want)
-		})
-	}
-}
-
-func Test_setUsedConfigPaths(t *testing.T) {
-	var tempFile, tempDir string
-	tempFile, tempDir, _ = setup(t, "set")
-	defer os.RemoveAll(tempDir)
-
-	tests := []struct {
-		name       string
-		configDir  string
-		configFile string
-		mocked     []byte
-		want       *Config
-		wantErr    error
-	}{
-		{
-			name:       "empty file",
-			configDir:  tempDir,
-			configFile: tempFile,
-			wantErr:    errors.New("EOF"),
-		},
-		{
-			name:       "correct",
-			configDir:  tempDir,
-			configFile: tempFile,
-			mocked: []byte(`version: v1
-kind: Config
-current-environment: 3e5b7269-1b3d-4003-9454-9f472857633a`),
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
-			},
-			wantErr: nil,
-		},
-		{
-			name:       "incorrect",
-			configDir:  tempDir,
-			configFile: tempFile,
-			mocked:     []byte("incorrect file"),
-			wantErr:    errors.New("yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `incorre...` into configuration.Config"),
-		},
-		{
-			name:       "correct with null",
-			configDir:  tempDir,
-			configFile: tempFile,
-			mocked: []byte(`version: v1
-kind: Config
-current-environment: 00000000-0000-0000-0000-000000000000`),
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
-			wantErr: nil,
-		},
-		{
-			name:       "not existing directory",
-			configDir:  path.Join(tempDir, "non-existing-config-directory"),
-			configFile: path.Join(tempDir, "non-existing-config-directory", "non-existing-file.yaml"),
-			wantErr:    nil,
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
-		},
-		{
-			name:       "not existing file",
-			configDir:  tempDir,
-			configFile: path.Join(tempDir, "another-not-existing-file.yaml"),
-			wantErr:    nil,
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-			util.UsedConfigFile = ""
-			util.UsedConfigurationDirectory = ""
-			util.UsedEnvironmentDirectory = ""
-			util.UsedRepositoryFile = ""
-			util.UsedTempDirectory = ""
-			if len(tt.mocked) > 0 {
-				_ = ioutil.WriteFile(tt.configFile, tt.mocked, 0644)
-			}
-			defer ioutil.WriteFile(tt.configFile, []byte(""), 0644)
-			got, err := setUsedConfigPaths(tt.configDir, tt.configFile)
-
-			if tt.wantErr == nil {
-				a.NoError(err)
-			} else {
-				a.EqualError(err, tt.wantErr.Error())
-			}
-			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 		})
 	}
 }

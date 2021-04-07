@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"path"
+
+	"github.com/epiphany-platform/cli/internal/janitor"
 
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/util"
@@ -24,23 +27,21 @@ var rootCmd = &cobra.Command{
 	Long: `E wrapper allows to interact with epiphany`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		logger.Debug().Msg("root PersistentPreRun")
-
-		logger.Debug().Msg("initializing root config")
+		var usedConfigDir string
 		if cfgDir != "" {
 			logger.Trace().Msg("configDir parameter not empty")
-			c, err := configuration.SetConfigDirectory(cfgDir)
-			if err != nil {
-				logger.Fatal().Err(err).Msg("set config failed")
-			}
-			config = c
+			usedConfigDir = cfgDir
 		} else {
 			logger.Trace().Msg("configDir parameter empty")
-			c, err := configuration.GetConfig()
-			if err != nil {
-				logger.Fatal().Err(err).Msg("get config failed")
-			}
-			config = c
+			usedConfigDir = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
 		}
+
+		janitor.InitializeFilesStructure(usedConfigDir)
+		c, err := configuration.GetConfig()
+		if err != nil {
+			logger.Fatal().Err(err).Msg("get config failed")
+		}
+		config = c
 	},
 }
 
