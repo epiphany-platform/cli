@@ -88,26 +88,8 @@ func (c *Config) AddAzureCredentials(credentials az.Credentials) {
 	c.AzureConfig.Credentials = credentials
 }
 
-//GetConfig sets usedConfigFile and usedConfigurationDirectory to default values and returns (existing or just initialized) Config
+//GetConfig returns existing Config or fails if there is no config file or file is incorrect
 func GetConfig() (*Config, error) {
-	logger.Debug().Msg("will try to get config file")
-	return makeOrGetConfig()
-}
-
-//makeOrGetConfig initializes new config file or reads existing one and returns Config
-func makeOrGetConfig() (*Config, error) {
-	if _, err := os.Stat(util.UsedConfigFile); os.IsNotExist(err) {
-		logger.Debug().Msg("there is no config file, will try to initialize one")
-		config := &Config{
-			Version: "v1",
-			Kind:    KindConfig,
-		}
-		err = config.Save()
-		if err != nil {
-			logger.Panic().Err(err).Msg("failed to save")
-		}
-		return config, nil
-	}
 	logger.Debug().Msgf("will try to load existing config file from %s", util.UsedConfigFile)
 	config := &Config{}
 	file, err := os.Open(util.UsedConfigFile)

@@ -302,9 +302,9 @@ func TestConfig_AddAzureCredentials(t *testing.T) {
 	}
 }
 
-func Test_makeOrGetConfig(t *testing.T) {
+func TestGetConfig(t *testing.T) {
 	var tempFile, tempDirectory string
-	tempFile, tempDirectory, _ = setup(t, "make")
+	tempFile, tempDirectory, _ = setup(t, "get")
 	defer os.RemoveAll(tempDirectory)
 
 	tests := []struct {
@@ -354,23 +354,21 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 		{
 			name:       "not existing",
 			configPath: path.Join(tempDirectory, "non-existing-config-directory"),
-			wantErr:    nil,
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
+			wantErr:    errors.New("open " + path.Join(tempDirectory, "non-existing-config-directory") + ": no such file or directory"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			util.UsedConfigurationDirectory = tempDirectory
+			util.UsedConfigFile = tt.configPath
+
 			a := assert.New(t)
 			util.UsedConfigFile = tt.configPath
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configPath, tt.mocked, 0644)
 			}
 			defer ioutil.WriteFile(tt.configPath, []byte(""), 0644)
-			got, err := makeOrGetConfig()
+			got, err := GetConfig()
 			if tt.wantErr == nil {
 				a.NoError(err)
 			} else {
@@ -379,4 +377,5 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 		})
 	}
+
 }
