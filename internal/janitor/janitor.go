@@ -3,6 +3,9 @@ package janitor
 import (
 	"os"
 	"path"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/epiphany-platform/cli/pkg/configuration"
 
@@ -18,6 +21,11 @@ func InitializeStructure(directory string) error {
 	err := ensureConfig()
 	if err != nil {
 		logger.Error().Err(err).Msg("ensureConfig() failed in InitializeStructure(directory string)")
+		return err
+	}
+	err = ensureEnvironment()
+	if err != nil {
+		logger.Error().Err(err).Msg("ensureEnvironment() failed in InitializeStructure(directory string)")
 		return err
 	}
 	return nil
@@ -83,6 +91,21 @@ func ensureConfig() error {
 		err = config.Save()
 		if err != nil {
 			logger.Error().Err(err).Msg("failed to save")
+			return err
+		}
+	}
+	return nil
+}
+
+// ensureEnvironment checks that config file do not have Nil environment and if yes, initializes it.
+func ensureEnvironment() error {
+	config, err := configuration.GetConfig()
+	if err != nil {
+		return err
+	}
+	if config.CurrentEnvironment == uuid.Nil {
+		_, err = config.CreateNewEnvironment(time.Now().Format("060102-1504"))
+		if err != nil {
 			return err
 		}
 	}

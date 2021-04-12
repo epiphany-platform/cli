@@ -6,6 +6,9 @@ import (
 	"path"
 	"testing"
 
+	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/google/uuid"
+
 	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -94,6 +97,55 @@ func Test_ensureConfig(t *testing.T) {
 			err := ensureConfig()
 			a.NoError(err)
 			a.FileExists(tt.want)
+		})
+	}
+}
+
+func Test_ensureEnvironment(t *testing.T) {
+	confDir := setup(t)
+	defer os.RemoveAll(confDir)
+	util.UsedConfigFile = ""
+	util.UsedConfigurationDirectory = ""
+	util.UsedEnvironmentDirectory = ""
+	util.UsedRepositoryFile = ""
+	util.UsedTempDirectory = ""
+	util.UsedReposDirectory = ""
+	setUsedConfigPaths(confDir)
+
+	tests := []struct {
+		name   string
+		mocked []byte
+		want   string
+	}{
+		{
+			name: "correct",
+			mocked: []byte(`version: v1
+kind: Config
+current-environment: 3e5b7269-1b3d-4003-9454-9f472857633a`),
+			want: "3e5b7269-1b3d-4003-9454-9f472857633a",
+		},
+		{
+			name: "correct with null",
+			mocked: []byte(`version: v1
+kind: Config
+current-environment: 00000000-0000-0000-0000-000000000000`),
+			want: "new",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			_ = ioutil.WriteFile(util.UsedConfigFile, tt.mocked, 0644)
+			defer os.Remove(util.UsedConfigFile)
+			err := ensureEnvironment()
+			a.NoError(err)
+			c, err := configuration.GetConfig()
+			a.NoError(err)
+			if tt.want != "new" {
+				a.Equal(uuid.MustParse(tt.want), c.CurrentEnvironment)
+			} else {
+				a.NotEqual(uuid.Nil, c.CurrentEnvironment)
+			}
 		})
 	}
 }
