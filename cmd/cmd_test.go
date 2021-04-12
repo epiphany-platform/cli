@@ -93,15 +93,6 @@ func TestCmd(t *testing.T) {
 			checkOutput: true,
 		},
 		{
-			name:        "e components install",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "components", "install", "c1"},
-			mockRepo:    true,
-			mockEnv:     true,
-			envId:       "39c95814-1d01-4303-af15-ff079d609874",
-			shouldFail:  false,
-			checkOutput: true,
-		},
-		{
 			name:        "e environments",
 			args:        []string{"environments"},
 			mockRepo:    false,

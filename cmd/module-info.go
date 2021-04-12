@@ -31,11 +31,11 @@ var moduleInfoCmd = &cobra.Command{
 		b := strings.Split(a[1], ":")
 		moduleName := b[0]
 		moduleVersion := b[1]
-		s, err := repository.Info(repoName, moduleName, moduleVersion)
+		v, err := repository.GetModule(repoName, moduleName, moduleVersion)
 		if err != nil {
 			logger.Error().Err(err).Msg("info failed")
 		}
-		fmt.Print(s)
+		fmt.Print(v.String())
 	},
 }
 

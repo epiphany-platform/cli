@@ -127,11 +127,11 @@ func Search(name string) (string, error) {
 	return sb.String(), nil
 }
 
-func Info(repoName, moduleName, moduleVersion string) (string, error) {
+func GetModule(repoName, moduleName, moduleVersion string) (*old.ComponentVersion, error) {
 	err := load()
 	if err != nil {
 		logger.Error().Err(err).Msg("unable to load repos")
-		return "", err
+		return nil, err
 	}
 	for _, v1 := range loaded.v1s {
 		if repoName != "" && repoName == v1.Name {
@@ -140,13 +140,15 @@ func Info(repoName, moduleName, moduleVersion string) (string, error) {
 			if c != nil {
 				for _, v := range c.Versions {
 					if moduleVersion != "" && moduleVersion == v.Version {
-						return v.String(), nil
+						v.Name = c.Name
+						v.Type = c.Type
+						return &v, nil
 					}
 				}
 			}
 		}
 	}
-	return "", nil
+	return nil, nil
 }
 
 func load() error {

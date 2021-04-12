@@ -33,6 +33,8 @@ func (cc *ComponentCommand) String() string {
 
 //ComponentVersion struct contains information about version of component available to be installed
 type ComponentVersion struct {
+	Name          string             `yaml:"-"`
+	Type          string             `yaml:"-"`
 	Version       string             `yaml:"version"`
 	IsLatest      bool               `yaml:"latest"`
 	Image         string             `yaml:"image"`
