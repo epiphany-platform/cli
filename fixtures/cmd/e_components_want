@@ -12,7 +12,6 @@ Aliases:
   components, cmp
 
 Available Commands:
-  info        Displays information about component
   install     Installs component into currently used environment
   list        Lists all existing components in repository
 

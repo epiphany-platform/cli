@@ -110,7 +110,8 @@ func Install(repoName string, force bool, branch string) error {
 func Search(name string) (string, error) {
 	err := load()
 	if err != nil {
-		logger.Panic().Err(err).Msg("unable to load repos")
+		logger.Error().Err(err).Msg("unable to load repos")
+		return "", err
 	}
 
 	var sb strings.Builder
@@ -124,6 +125,28 @@ func Search(name string) (string, error) {
 		}
 	}
 	return sb.String(), nil
+}
+
+func Info(repoName, moduleName, moduleVersion string) (string, error) {
+	err := load()
+	if err != nil {
+		logger.Error().Err(err).Msg("unable to load repos")
+		return "", err
+	}
+	for _, v1 := range loaded.v1s {
+		if repoName != "" && repoName == v1.Name {
+			// TODO implement SearchComponent() and don't use GetComponentByName()
+			c, _ := v1.GetComponentByName(moduleName)
+			if c != nil {
+				for _, v := range c.Versions {
+					if moduleVersion != "" && moduleVersion == v.Version {
+						return v.String(), nil
+					}
+				}
+			}
+		}
+	}
+	return "", nil
 }
 
 func load() error {
