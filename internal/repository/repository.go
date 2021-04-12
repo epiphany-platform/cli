@@ -29,24 +29,6 @@ func init() {
 	logger.Initialize()
 }
 
-func List() (string, error) {
-	err := load()
-	if err != nil {
-		logger.Panic().Err(err).Msg("unable to load repos")
-	}
-
-	var sb strings.Builder
-	for _, v1 := range loaded.v1s {
-		sb.WriteString(fmt.Sprintf("Repository: %s\n", v1.Name))
-		for _, c := range v1.Components {
-			for _, v := range c.Versions {
-				sb.WriteString(fmt.Sprintf("\tModule: %s:%s\n", c.Name, v.Version))
-			}
-		}
-	}
-	return sb.String(), nil
-}
-
 func Init() error {
 	err := load()
 	if err != nil {
@@ -74,6 +56,24 @@ func Init() error {
 		return persistV1RepositoryFile(inferredRepoName, r, false)
 	}
 	return nil
+}
+
+func List() (string, error) {
+	err := load()
+	if err != nil {
+		logger.Panic().Err(err).Msg("unable to load repos")
+	}
+
+	var sb strings.Builder
+	for _, v1 := range loaded.v1s {
+		sb.WriteString(fmt.Sprintf("Repository: %s\n", v1.Name))
+		for _, c := range v1.Components {
+			for _, v := range c.Versions {
+				sb.WriteString(fmt.Sprintf("\tModule: %s:%s\n", c.Name, v.Version))
+			}
+		}
+	}
+	return sb.String(), nil
 }
 
 func Install(repoName string, force bool, branch string) error {
