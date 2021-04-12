@@ -43,10 +43,12 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatal().Err(err).Msg("initialization failed")
 		}
+		logger.Trace().Msg("will configuration.GetConfig()")
 		config, err = configuration.GetConfig()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get config failed")
 		}
+		logger.Trace().Msg("will environment.Get(config.CurrentEnvironment)")
 		currentEnvironment, err = environment.Get(config.CurrentEnvironment)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get current environment failed")

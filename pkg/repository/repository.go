@@ -27,7 +27,6 @@ type ComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
-//The String method is used to pretty-print ComponentCommand struct
 func (cc *ComponentCommand) String() string {
 	return fmt.Sprintf("    Command:\n     Name %s\n     Description %s\n", cc.Name, cc.Description)
 }
@@ -43,7 +42,6 @@ type ComponentVersion struct {
 	Commands      []ComponentCommand `yaml:"commands"`
 }
 
-//The String method is used to pretty-print ComponentVersion struct
 func (cv *ComponentVersion) String() string {
 	var b bytes.Buffer
 	b.WriteString(fmt.Sprintf("  Component Version:\n   Version: %s\n   Image: %s\n", cv.Version, cv.Image))
@@ -60,7 +58,6 @@ type Component struct {
 	Versions []ComponentVersion `yaml:"versions"`
 }
 
-//The String method is used to pretty-print Component struct
 func (c *Component) String() string {
 	var b bytes.Buffer
 	b.WriteString(fmt.Sprintf("Component:\n Name: %s\n Type: %s\n", c.Name, c.Type))

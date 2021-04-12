@@ -47,10 +47,49 @@ func List() (string, error) {
 	return sb.String(), nil
 }
 
+func Init() error {
+	err := load()
+	if err != nil {
+		logger.Error().Err(err).Msg("unable to load repos")
+		return err
+	}
+	inferredRepoName := inferName(util.DefaultRepository)
+	var installed bool
+	for _, v1 := range loaded.v1s {
+		if v1.Name == inferredRepoName {
+			installed = true
+			logger.Debug().Msgf("looks like repo with name %s is already installed", inferredRepoName)
+		}
+	}
+
+	if !installed {
+		logger.Trace().Msgf("repository %s not installed, will install now", inferredRepoName)
+		r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, util.DefaultRepository, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
+		if err != nil {
+			return err
+		}
+		if r.Name == "" {
+			r.Name = inferredRepoName
+		}
+		return persistV1RepositoryFile(inferredRepoName, r, false)
+	}
+	return nil
+}
+
 func Install(repoName string, force bool, branch string) error {
 	err := load()
 	if err != nil {
-		logger.Panic().Err(err).Msg("unable to load repos")
+		logger.Error().Err(err).Msg("unable to load repos")
+		return err
+	}
+	inferredRepoName := inferName(repoName)
+	if !force {
+		for _, v1 := range loaded.v1s {
+			if v1.Name == inferredRepoName {
+				logger.Debug().Msgf("looks like repo with name %s is already installed", inferredRepoName)
+				return nil
+			}
+		}
 	}
 
 	logger.Debug().Msgf("will install %s", repoName)
@@ -62,7 +101,6 @@ func Install(repoName string, force bool, branch string) error {
 	if err != nil {
 		return err
 	}
-	inferredRepoName := inferName(repoName)
 	if r.Name == "" {
 		r.Name = inferredRepoName
 	}
@@ -101,7 +139,6 @@ func load() error {
 				return err2
 			}
 			loaded.v1s = append(loaded.v1s, *v1)
-
 		}
 		return nil
 	})

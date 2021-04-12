@@ -5,6 +5,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/epiphany-platform/cli/internal/repository"
+
 	"github.com/google/uuid"
 
 	"github.com/epiphany-platform/cli/pkg/configuration"
@@ -23,9 +25,16 @@ func InitializeStructure(directory string) error {
 		logger.Error().Err(err).Msg("ensureConfig() failed in InitializeStructure(directory string)")
 		return err
 	}
+	logger.Trace().Msg("will ensureEnvironment()")
 	err = ensureEnvironment()
 	if err != nil {
 		logger.Error().Err(err).Msg("ensureEnvironment() failed in InitializeStructure(directory string)")
+		return err
+	}
+	logger.Trace().Msg("will ensureRepository()")
+	err = ensureRepository()
+	if err != nil {
+		logger.Error().Err(err).Msg("ensureRepository() failed in InitializeStructure(directory string)")
 		return err
 	}
 	return nil
@@ -110,4 +119,9 @@ func ensureEnvironment() error {
 		}
 	}
 	return nil
+}
+
+// ensureRepository tries to install default repository (but not forcibly)
+func ensureRepository() error {
+	return repository.Init()
 }
