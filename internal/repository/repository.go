@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/util"
-	old "github.com/epiphany-platform/cli/pkg/repository"
 
 	"gopkg.in/yaml.v2"
 )
@@ -21,12 +21,71 @@ import (
 var loaded repositories
 
 type repositories struct {
-	v1s []old.V1
+	v1s []V1
 	// add next versions of repositories here
 }
 
 func init() {
 	logger.Initialize()
+}
+
+//ComponentCommand struct contains information about specific command provided by component to be executed
+type ComponentCommand struct {
+	Name        string            `yaml:"name"`
+	Description string            `yaml:"description"`
+	Command     string            `yaml:"command"`
+	Envs        map[string]string `yaml:"envs"`
+	Args        []string          `yaml:"args"`
+}
+
+func (cc *ComponentCommand) String() string {
+	return fmt.Sprintf("    Command:\n     Name %s\n     Description %s\n", cc.Name, cc.Description)
+}
+
+//ComponentVersion struct contains information about version of component available to be installed
+type ComponentVersion struct {
+	Name          string             `yaml:"-"`
+	Type          string             `yaml:"-"`
+	Version       string             `yaml:"version"`
+	IsLatest      bool               `yaml:"latest"`
+	Image         string             `yaml:"image"`
+	WorkDirectory string             `yaml:"workdir"`
+	Mounts        []string           `yaml:"mounts"`
+	Shared        string             `yaml:"shared"`
+	Commands      []ComponentCommand `yaml:"commands"`
+}
+
+func (cv *ComponentVersion) String() string {
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf("  Component Version:\n   Version: %s\n   Image: %s\n", cv.Version, cv.Image))
+	for _, cc := range cv.Commands {
+		b.WriteString(cc.String())
+	}
+	return b.String()
+}
+
+//Component struct is main element in repository identifying component and gathering all versions of it
+type Component struct {
+	Name     string             `yaml:"name"`
+	Type     string             `yaml:"type"`
+	Versions []ComponentVersion `yaml:"versions"`
+}
+
+func (c *Component) String() string {
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf("Component:\n Name: %s\n Type: %s\n", c.Name, c.Type))
+	for _, cv := range c.Versions {
+		b.WriteString(cv.String())
+	}
+	return b.String()
+}
+
+//V1 struct is entrypoint repository for version 1 of used repository structure
+type V1 struct {
+	Version    string      `yaml:"version"`
+	Kind       string      `yaml:"kind"`
+	Name       string      `yaml:"name"`
+	Components []Component `yaml:"components"`
 }
 
 func Init() error {
@@ -116,18 +175,18 @@ func Search(name string) (string, error) {
 
 	var sb strings.Builder
 	for _, v1 := range loaded.v1s {
-		// TODO implement SearchComponent() and don't use GetComponentByName()
-		c, _ := v1.GetComponentByName(name)
-		if c != nil {
-			for _, v := range c.Versions {
-				sb.WriteString(fmt.Sprintf("%s/%s:%s\n", v1.Name, c.Name, v.Version))
+		for _, c := range v1.Components {
+			if c.Name == name {
+				for _, v := range c.Versions {
+					sb.WriteString(fmt.Sprintf("%s/%s:%s\n", v1.Name, c.Name, v.Version))
+				}
 			}
 		}
 	}
 	return sb.String(), nil
 }
 
-func GetModule(repoName, moduleName, moduleVersion string) (*old.ComponentVersion, error) {
+func GetModule(repoName, moduleName, moduleVersion string) (*ComponentVersion, error) {
 	err := load()
 	if err != nil {
 		logger.Error().Err(err).Msg("unable to load repos")
@@ -135,14 +194,14 @@ func GetModule(repoName, moduleName, moduleVersion string) (*old.ComponentVersio
 	}
 	for _, v1 := range loaded.v1s {
 		if repoName != "" && repoName == v1.Name {
-			// TODO implement SearchComponent() and don't use GetComponentByName()
-			c, _ := v1.GetComponentByName(moduleName)
-			if c != nil {
-				for _, v := range c.Versions {
-					if moduleVersion != "" && moduleVersion == v.Version {
-						v.Name = c.Name
-						v.Type = c.Type
-						return &v, nil
+			for _, c := range v1.Components {
+				if c.Name == moduleName {
+					for _, v := range c.Versions {
+						if moduleVersion != "" && moduleVersion == v.Version {
+							v.Name = c.Name
+							v.Type = c.Type
+							return &v, nil
+						}
 					}
 				}
 			}
@@ -170,8 +229,8 @@ func load() error {
 }
 
 //The decodeV1Repository method loads V1 from provided file path
-func decodeV1Repository(filePath string) (*old.V1, error) {
-	repo := &old.V1{}
+func decodeV1Repository(filePath string) (*V1, error) {
+	repo := &V1{}
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -185,7 +244,7 @@ func decodeV1Repository(filePath string) (*old.V1, error) {
 }
 
 //The downloadV1Repository method retrieves file from provided url, unmarshalls it to V1 and returns obtained V1 struct.
-func downloadV1Repository(url string) (*old.V1, error) {
+func downloadV1Repository(url string) (*V1, error) {
 	logger.Trace().Msgf("will try to download repo from: %s", url)
 	res, err := http.Get(url)
 	if err != nil {
@@ -200,7 +259,7 @@ func downloadV1Repository(url string) (*old.V1, error) {
 		logger.Error().Err(err).Msg("wasn't able to read response body")
 		return nil, err
 	}
-	r := &old.V1{}
+	r := &V1{}
 	err = yaml.Unmarshal(body, r)
 	if err != nil {
 		logger.Error().Err(err).Msg("wasn't able to unmarshal body into correct yaml")
@@ -214,7 +273,7 @@ func inferName(repo string) string {
 	return reg.ReplaceAllString(repo, "-")
 }
 
-func persistV1RepositoryFile(inferredRepoName string, v1 *old.V1, force bool) error {
+func persistV1RepositoryFile(inferredRepoName string, v1 *V1, force bool) error {
 	b, err := yaml.Marshal(v1)
 	if err != nil {
 		logger.Error().Err(err).Msg("wasn't able to marshal repo object into yaml")
