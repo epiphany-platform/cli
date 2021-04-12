@@ -6,8 +6,6 @@ import (
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/auth"
-	"github.com/epiphany-platform/cli/pkg/environment"
-
 	"github.com/spf13/cobra"
 )
 
@@ -20,20 +18,16 @@ var sshKeygenCreateCmd = &cobra.Command{
 		logger.Debug().Msg("create called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		env, err := environment.Get(config.CurrentEnvironment)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get environments details failed")
-		}
 		kp, err := auth.GenerateRsaKeyPair(path.Join(
 			util.UsedEnvironmentDirectory,
-			env.Uuid.String(),
+			currentEnvironment.Uuid.String(),
 			"/shared", //TODO to consts
 		))
 		if err != nil {
 			logger.Fatal().Err(err).Msg("generate rsa keypair failed")
 		}
-		env.AddRsaKeyPair(kp)
-		err = env.Save()
+		currentEnvironment.AddRsaKeyPair(kp)
+		err = currentEnvironment.Save()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("save env failed")
 		}

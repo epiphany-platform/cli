@@ -26,11 +26,6 @@ var componentsInstallCmd = &cobra.Command{
 		logger.Debug().Msg("components install called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		e, err := environment.Get(config.CurrentEnvironment)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("environments get failed")
-		}
-
 		tc, err := repository.GetRepository().GetComponentByName(args[0])
 		if err != nil {
 			logger.Fatal().Err(err).Msg("getting component by name failed")
@@ -41,7 +36,7 @@ var componentsInstallCmd = &cobra.Command{
 		}
 
 		newComponent := environment.InstalledComponentVersion{
-			EnvironmentRef: e.Uuid,
+			EnvironmentRef: currentEnvironment.Uuid,
 			Name:           c.Name,
 			Type:           c.Type,
 			Version:        c.Versions[0].Version,
@@ -60,11 +55,11 @@ var componentsInstallCmd = &cobra.Command{
 			}
 			newComponent.Commands = append(newComponent.Commands, nic)
 		}
-		err = e.Install(newComponent)
+		err = currentEnvironment.Install(newComponent)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("install component in environment failed")
 		}
-		fmt.Printf("Installed component %s:%s to environment %s\n", newComponent.Name, newComponent.Version, e.Name)
+		fmt.Printf("Installed component %s:%s to environment %s\n", newComponent.Name, newComponent.Version, currentEnvironment.Name)
 	},
 }
 

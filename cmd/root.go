@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/epiphany-platform/cli/pkg/environment"
+
 	"github.com/epiphany-platform/cli/internal/janitor"
 
 	"github.com/epiphany-platform/cli/internal/logger"
@@ -16,9 +18,10 @@ import (
 )
 
 var (
-	cfgDir   string
-	logLevel string
-	config   *configuration.Config
+	cfgDir             string
+	logLevel           string
+	config             *configuration.Config
+	currentEnvironment *environment.Environment
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -43,6 +46,10 @@ var rootCmd = &cobra.Command{
 		config, err = configuration.GetConfig()
 		if err != nil {
 			logger.Fatal().Err(err).Msg("get config failed")
+		}
+		currentEnvironment, err = environment.Get(config.CurrentEnvironment)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("get current environment failed")
 		}
 	},
 }

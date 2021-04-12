@@ -42,10 +42,6 @@ var envUseCmd = &cobra.Command{
 		uu = uuid.MustParse(args[0])
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if config.CurrentEnvironment == uuid.Nil {
-			logger.Fatal().Msg("no environment selected")
-		}
-
 		if len(args) == 0 {
 			u, err := promptui.PromptForEnvironmentSelect("Environments")
 			if err != nil {

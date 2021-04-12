@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/processor"
 
 	"github.com/spf13/cobra"
@@ -25,15 +24,11 @@ var envRunCmd = &cobra.Command{ //TODO consider what are options to create integ
 		logger.Debug().Msg("environments run called")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		env, err := environment.Get(config.CurrentEnvironment)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get environments details failed")
-		}
-		c, err := env.GetComponentByName(args[0])
+		c, err := currentEnvironment.GetComponentByName(args[0])
 		if err != nil {
 			logger.Fatal().Err(err).Msg("getting component by name failed")
 		}
-		err = c.Run(args[1], processor.TemplateProcessor(config, env))
+		err = c.Run(args[1], processor.TemplateProcessor(config, currentEnvironment))
 		if err != nil {
 			logger.Fatal().Err(err).Msg("run command failed")
 		}

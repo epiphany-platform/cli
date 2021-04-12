@@ -53,5 +53,6 @@ var envNewCmd = &cobra.Command{
 func init() {
 	envCmd.AddCommand(envNewCmd)
 
+	// TODO decide if we want this parameter at all
 	envNewCmd.Flags().String("name", "", "name of new environment to create")
 }

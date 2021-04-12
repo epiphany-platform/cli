@@ -32,7 +32,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
-			logger.Fatal().Err(err).Msg("Command flags are specified incorrectly")
+			logger.Fatal().Err(err).Msg("viper.BindPFlags failed")
 		}
 
 		envIdStr = viper.GetString("id")
@@ -89,6 +89,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 func init() {
 	envCmd.AddCommand(envExportCmd)
 
+	//TODO decide if we need this parameter at all
 	envExportCmd.Flags().StringP("id", "i", "", "id of the environment to export, default is current environment")
 	envExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive, default is current directory")
 	_ = envExportCmd.MarkFlagDirname("destination")
