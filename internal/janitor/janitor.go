@@ -5,14 +5,12 @@ import (
 	"path"
 	"time"
 
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/repository"
-
-	"github.com/google/uuid"
-
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/configuration"
 
-	"github.com/epiphany-platform/cli/internal/logger"
-	"github.com/epiphany-platform/cli/internal/util"
+	"github.com/google/uuid"
 )
 
 func InitializeStructure(directory string) error {

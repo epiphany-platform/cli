@@ -6,10 +6,10 @@ import (
 	"path"
 	"testing"
 
-	"github.com/epiphany-platform/cli/pkg/configuration"
-	"github.com/google/uuid"
-
 	"github.com/epiphany-platform/cli/internal/util"
+	"github.com/epiphany-platform/cli/pkg/configuration"
+
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
