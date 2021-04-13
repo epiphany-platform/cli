@@ -245,7 +245,8 @@ func create(name string, uuid uuid.UUID) (*Environment, error) {
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
-		logger.Panic().Err(err).Msgf("wasn't able to save environment %s", environment.Uuid.String())
+		logger.Error().Err(err).Msgf("wasn't able to save environment %s", environment.Uuid.String())
+		return nil, err
 	}
 	return environment, nil
 }

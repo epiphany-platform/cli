@@ -41,7 +41,8 @@ func (c *Config) CreateNewEnvironment(name string) (uuid.UUID, error) {
 	logger.Debug().Msgf("will try to create environment %s", name)
 	env, err := environment.Create(name)
 	if err != nil {
-		logger.Panic().Err(err).Msg("creation of new environment failed")
+		logger.Error().Err(err).Msg("creation of new environment failed")
+		return uuid.Nil, err
 	}
 	util.EnsureDirectory(path.Join(
 		util.UsedEnvironmentDirectory,

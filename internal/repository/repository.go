@@ -89,38 +89,14 @@ type V1 struct {
 }
 
 func Init() error {
-	err := load()
-	if err != nil {
-		logger.Error().Err(err).Msg("unable to load repos")
-		return err
-	}
-	inferredRepoName := inferName(util.DefaultRepository)
-	var installed bool
-	for _, v1 := range loaded.v1s {
-		if v1.Name == inferredRepoName {
-			installed = true
-			logger.Debug().Msgf("looks like repo with name %s is already installed", inferredRepoName)
-		}
-	}
-
-	if !installed {
-		logger.Trace().Msgf("repository %s not installed, will install now", inferredRepoName)
-		r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, util.DefaultRepository, util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName))
-		if err != nil {
-			return err
-		}
-		if r.Name == "" {
-			r.Name = inferredRepoName
-		}
-		return persistV1RepositoryFile(inferredRepoName, r, false)
-	}
-	return nil
+	return Install(util.DefaultRepository, false, util.DefaultRepositoryBranch)
 }
 
 func List() (string, error) {
 	err := load()
 	if err != nil {
-		logger.Panic().Err(err).Msg("unable to load repos")
+		logger.Error().Err(err).Msg("unable to load repos")
+		return "", err
 	}
 
 	var sb strings.Builder
