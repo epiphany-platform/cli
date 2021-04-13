@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -111,13 +112,13 @@ func List() (string, error) {
 	return sb.String(), nil
 }
 
-func Install(repoName string, force bool, branch string) error {
+func Install(repo string, force bool, branch string) error {
 	err := load()
 	if err != nil {
 		logger.Error().Err(err).Msg("unable to load repos")
 		return err
 	}
-	inferredRepoName := inferName(repoName)
+	inferredRepoName := inferRepoName(repo)
 	if !force {
 		for _, v1 := range loaded.v1s {
 			if v1.Name == inferredRepoName {
@@ -127,12 +128,16 @@ func Install(repoName string, force bool, branch string) error {
 		}
 	}
 
-	logger.Debug().Msgf("will install %s", repoName)
+	logger.Debug().Msgf("will install %s", repo)
 	b := util.DefaultRepositoryBranch
 	if branch != "" {
 		b = branch
 	}
-	r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, repoName, b, util.DefaultV1RepositoryFileName))
+	u, err := url.Parse(repo)
+	if err != nil {
+		return err
+	}
+	r, err := downloadV1Repository(fmt.Sprintf("%s/%s/%s/%s", util.GithubUrl, u.Path, b, util.DefaultV1RepositoryFileName))
 	if err != nil {
 		return err
 	}
@@ -244,9 +249,18 @@ func downloadV1Repository(url string) (*V1, error) {
 	return r, nil
 }
 
-func inferName(repo string) string {
+func inferRepoName(repo string) string {
+	u, err := url.Parse(repo)
+	if err != nil {
+		logger.Fatal().Err(err).Msgf("url.Parse(%s) failed", repo)
+	}
+	logger.Debug().Msgf("url.Parse(%s) Path: %s", repo, u.Path)
 	reg, _ := regexp.Compile("[^a-zA-Z0-9]+")
-	return reg.ReplaceAllString(repo, "-")
+	np := u.Path
+	if np[0] == '/' {
+		np = np[1:]
+	}
+	return reg.ReplaceAllString(np, "-")
 }
 
 func persistV1RepositoryFile(inferredRepoName string, v1 *V1, force bool) error {
@@ -255,13 +269,13 @@ func persistV1RepositoryFile(inferredRepoName string, v1 *V1, force bool) error 
 		logger.Error().Err(err).Msg("wasn't able to marshal repo object into yaml")
 		return err
 	}
-	newFilePath := path.Join(util.UsedConfigurationDirectory, util.DefaultRepoDirectoryName, inferredRepoName+".yaml")
-	if _, err = os.Stat(newFilePath); err == nil {
-		logger.Debug().Msg("file " + newFilePath + " already exists")
+	filePath := path.Join(util.UsedConfigurationDirectory, util.DefaultRepoDirectoryName, inferredRepoName+".yaml")
+	if _, err = os.Stat(filePath); err == nil {
+		logger.Debug().Msg("file " + filePath + " already exists")
 		if !force {
 			return errors.New("repo file already exists (use '--force' if you know what you do)")
 		}
 	}
-	logger.Debug().Msg("will write yaml to file")
-	return ioutil.WriteFile(newFilePath, b, 0644)
+	logger.Debug().Msgf("will write yaml to file: %s", filePath)
+	return ioutil.WriteFile(filePath, b, 0644)
 }
