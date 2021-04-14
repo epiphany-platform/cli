@@ -1,7 +1,10 @@
 package repository
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path"
 	"testing"
@@ -153,6 +156,73 @@ components: []
 				a.NoError(err2)
 				a.Equal(string(tt.want), string(got))
 			}
+		})
+	}
+}
+
+func Test_downloadV1Repository(t *testing.T) {
+	util.UsedConfigurationDirectory = ""
+	util.UsedReposDirectory = ""
+	util.UsedConfigFile = ""
+	util.UsedEnvironmentDirectory = ""
+	util.UsedRepositoryFile = ""
+	util.UsedTempDirectory = ""
+
+	type args struct {
+		url string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *V1
+		wantErr bool
+	}{
+		{
+			name: "happy path",
+			args: args{
+				url: fmt.Sprintf("/%s/%s/%s", "test-user/test-repo", util.DefaultRepositoryBranch, util.DefaultV1RepositoryFileName),
+			},
+			want: &V1{
+				Version:    "v",
+				Kind:       "k",
+				Name:       "n",
+				Components: []Component{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "incorrect url",
+			args: args{
+				url: "/test-user/test-repo/incorrect/url.yaml",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+
+			server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				t.Logf("got test request to: %s", req.URL.String())
+				if req.URL.String() == "/test-user/test-repo/HEAD/v1.yaml" {
+					_, _ = rw.Write([]byte(`version: v
+kind: k
+name: n
+components: []
+`))
+				}
+			}))
+			defer server.Close()
+
+			httpClient = server.Client()
+			got, err := downloadV1Repository(server.URL + tt.args.url)
+			if tt.wantErr {
+				a.Error(err)
+			} else {
+				a.NoError(err)
+			}
+			a.Equal(tt.want, got)
 		})
 	}
 }

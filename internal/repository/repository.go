@@ -19,7 +19,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var loaded repositories
+var (
+	loaded     repositories
+	httpClient = &http.Client{}
+)
 
 type repositories struct {
 	v1s []V1
@@ -227,7 +230,7 @@ func decodeV1Repository(filePath string) (*V1, error) {
 //The downloadV1Repository method retrieves file from provided url, unmarshalls it to V1 and returns obtained V1 struct.
 func downloadV1Repository(url string) (*V1, error) {
 	logger.Trace().Msgf("will try to download repo from: %s", url)
-	res, err := http.Get(url)
+	res, err := httpClient.Get(url)
 	if err != nil {
 		logger.Error().Err(err).Msg("wasn't able to perform http GET on repo URL")
 		return nil, err
@@ -238,6 +241,12 @@ func downloadV1Repository(url string) (*V1, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		logger.Error().Err(err).Msg("wasn't able to read response body")
+		return nil, err
+	}
+	logger.Trace().Msgf("got response body: \n%s", string(body))
+	if len(body) == 0 {
+		err = errors.New("empty response body")
+		logger.Error().Err(err).Msgf("got nothing from: %s", url)
 		return nil, err
 	}
 	r := &V1{}
