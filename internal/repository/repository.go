@@ -264,12 +264,17 @@ func inferRepoName(repo string) string {
 }
 
 func persistV1RepositoryFile(inferredRepoName string, v1 *V1, force bool) error {
+	if v1 == nil {
+		err := errors.New("nil repository")
+		logger.Error().Err(err).Msg("incorrect nil parameter")
+		return err
+	}
 	b, err := yaml.Marshal(v1)
 	if err != nil {
 		logger.Error().Err(err).Msg("wasn't able to marshal repo object into yaml")
 		return err
 	}
-	filePath := path.Join(util.UsedConfigurationDirectory, util.DefaultRepoDirectoryName, inferredRepoName+".yaml")
+	filePath := path.Join(util.UsedReposDirectory, inferredRepoName+".yaml")
 	if _, err = os.Stat(filePath); err == nil {
 		logger.Debug().Msg("file " + filePath + " already exists")
 		if !force {

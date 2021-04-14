@@ -14,18 +14,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setup(t *testing.T) string {
+func setup(a *assert.Assertions) string {
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	parentDir := os.TempDir()
 	mainDirectory, err := ioutil.TempDir(parentDir, "*-janitor")
-	if err != nil {
-		t.Fatal(err)
-	}
+	a.NoError(err)
 	return mainDirectory
 }
 
 func Test_setUsedConfigPaths(t *testing.T) {
-	confDir := setup(t)
+	confDir := setup(assert.New(t))
 	defer os.RemoveAll(confDir)
 
 	tests := []struct {
@@ -61,7 +59,7 @@ func Test_setUsedConfigPaths(t *testing.T) {
 }
 
 func Test_ensureConfig(t *testing.T) {
-	confDir := setup(t)
+	confDir := setup(assert.New(t))
 	defer os.RemoveAll(confDir)
 	util.UsedConfigFile = ""
 	util.UsedConfigurationDirectory = ""
@@ -102,7 +100,7 @@ func Test_ensureConfig(t *testing.T) {
 }
 
 func Test_ensureEnvironment(t *testing.T) {
-	confDir := setup(t)
+	confDir := setup(assert.New(t))
 	defer os.RemoveAll(confDir)
 	util.UsedConfigFile = ""
 	util.UsedConfigurationDirectory = ""
