@@ -196,17 +196,22 @@ func GetModule(repoName, moduleName, moduleVersion string) (*ComponentVersion, e
 
 func load() error {
 	loaded = repositories{}
-	reposPath := path.Join(util.UsedConfigurationDirectory, util.DefaultRepoDirectoryName)
-	return filepath.Walk(reposPath, func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk(util.UsedReposDirectory, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
+			logger.Trace().Msgf("%s is directory", path)
 			return nil
 		}
 		if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" {
+			logger.Trace().Msgf("will try to decode file: %s", path)
 			v1, err2 := decodeV1Repository(path)
 			if err2 != nil {
-				return err2
+				logger.Error().Err(err2).Msgf("file %s decode operation failed", path)
+				return nil
 			}
+			logger.Trace().Msgf("will add decoded content of %s to list of repos", path)
 			loaded.v1s = append(loaded.v1s, *v1)
+		} else {
+			logger.Trace().Msgf("file %s has unrecognized extension: %s", path, filepath.Ext(path))
 		}
 		return nil
 	})

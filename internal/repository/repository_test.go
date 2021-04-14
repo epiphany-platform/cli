@@ -315,3 +315,85 @@ components: []
 		})
 	}
 }
+
+func Test_load(t *testing.T) {
+	util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(assert.New(t))
+	util.UsedConfigFile = ""
+	util.UsedEnvironmentDirectory = ""
+	util.UsedRepositoryFile = ""
+	util.UsedTempDirectory = ""
+	tests := []struct {
+		name    string
+		mocked  map[string][]byte
+		wantErr bool
+		wantLen int
+	}{
+		{
+			name: "happy path",
+			mocked: map[string][]byte{
+				"first-repo.yaml": []byte(`version: v1
+kind: Repository
+name: first
+components: []
+`),
+				"second-repo.yaml": []byte(`version: v1
+kind: Repository
+name: second
+components: []
+`),
+			},
+			wantErr: false,
+			wantLen: 2,
+		},
+		{
+			name: "incorrect extension",
+			mocked: map[string][]byte{
+				"first-repo.incorrect": []byte(`version: v1
+kind: Repository
+name: first
+components: []
+`),
+				"correct-repo.yaml": []byte(`version: v1
+kind: Repository
+name: correct
+components: []
+`),
+			},
+			wantErr: false,
+			wantLen: 1,
+		},
+		{
+			name: "incorrect content",
+			mocked: map[string][]byte{
+				"incorrect-repo.yaml": []byte(`incorrect`),
+				"correct-repo.yaml": []byte(`version: v1
+kind: Repository
+name: correct
+components: []
+`),
+			},
+			wantErr: false,
+			wantLen: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			zerolog.SetGlobalLevel(zerolog.TraceLevel)
+			a := assert.New(t)
+			if tt.mocked != nil {
+				for k, v := range tt.mocked {
+					err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, k), v, 0644)
+					a.NoError(err)
+					defer os.Remove(path.Join(util.UsedReposDirectory, k))
+				}
+			}
+			err := load()
+			if tt.wantErr {
+				a.Error(err)
+			} else {
+				a.NoError(err)
+				a.Len(loaded.v1s, tt.wantLen)
+			}
+		})
+	}
+}
