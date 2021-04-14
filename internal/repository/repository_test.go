@@ -16,7 +16,7 @@ import (
 )
 
 func setup(a *assert.Assertions) (string, string) {
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	parentDir := os.TempDir()
 	mainDirectory, err := ioutil.TempDir(parentDir, "*-repository")
 	a.NoError(err)
@@ -56,12 +56,6 @@ func Test_inferRepoName(t *testing.T) {
 }
 
 func Test_persistV1RepositoryFile(t *testing.T) {
-	util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(assert.New(t))
-	util.UsedConfigFile = ""
-	util.UsedEnvironmentDirectory = ""
-	util.UsedRepositoryFile = ""
-	util.UsedTempDirectory = ""
-
 	type args struct {
 		inferredRepoName string
 		v1               *V1
@@ -142,11 +136,17 @@ components: []
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
+			util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(a)
+			util.UsedConfigFile = ""
+			util.UsedEnvironmentDirectory = ""
+			util.UsedRepositoryFile = ""
+			util.UsedTempDirectory = ""
+			defer os.RemoveAll(util.UsedConfigurationDirectory)
+
 			if tt.mocked != nil {
 				err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.inferredRepoName+".yaml"), tt.mocked, 0644)
 				a.NoError(err)
 			}
-			defer os.Remove(path.Join(util.UsedReposDirectory, tt.args.inferredRepoName+".yaml"))
 			err := persistV1RepositoryFile(tt.args.inferredRepoName, tt.args.v1, tt.args.force)
 			if tt.wantErr {
 				a.Error(err)
@@ -229,12 +229,6 @@ components: []
 }
 
 func Test_decodeV1Repository(t *testing.T) {
-	util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(assert.New(t))
-	util.UsedConfigFile = ""
-	util.UsedEnvironmentDirectory = ""
-	util.UsedRepositoryFile = ""
-	util.UsedTempDirectory = ""
-
 	type args struct {
 		fileName string
 	}
@@ -300,11 +294,17 @@ components: []
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
+			util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(a)
+			util.UsedConfigFile = ""
+			util.UsedEnvironmentDirectory = ""
+			util.UsedRepositoryFile = ""
+			util.UsedTempDirectory = ""
+			defer os.RemoveAll(util.UsedConfigurationDirectory)
+
 			if tt.mocked != nil {
 				err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.fileName), tt.mocked, 0644)
 				a.NoError(err)
 			}
-			defer os.Remove(path.Join(util.UsedReposDirectory, tt.args.fileName))
 			got, err := decodeV1Repository(path.Join(util.UsedReposDirectory, tt.args.fileName))
 			if tt.wantErr {
 				a.Error(err)
@@ -317,11 +317,6 @@ components: []
 }
 
 func Test_load(t *testing.T) {
-	util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(assert.New(t))
-	util.UsedConfigFile = ""
-	util.UsedEnvironmentDirectory = ""
-	util.UsedRepositoryFile = ""
-	util.UsedTempDirectory = ""
 	tests := []struct {
 		name    string
 		mocked  map[string][]byte
@@ -378,13 +373,18 @@ components: []
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			zerolog.SetGlobalLevel(zerolog.TraceLevel)
 			a := assert.New(t)
+			util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(a)
+			util.UsedConfigFile = ""
+			util.UsedEnvironmentDirectory = ""
+			util.UsedRepositoryFile = ""
+			util.UsedTempDirectory = ""
+			defer os.RemoveAll(util.UsedConfigurationDirectory)
+
 			if tt.mocked != nil {
 				for k, v := range tt.mocked {
 					err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, k), v, 0644)
 					a.NoError(err)
-					defer os.Remove(path.Join(util.UsedReposDirectory, k))
 				}
 			}
 			err := load()
