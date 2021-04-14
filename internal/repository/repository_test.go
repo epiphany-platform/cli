@@ -143,10 +143,11 @@ components: []
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 			if tt.mocked != nil {
-				ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.inferredRepoName+".yaml"), tt.mocked, 0644)
+				err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.inferredRepoName+".yaml"), tt.mocked, 0644)
+				a.NoError(err)
 			}
-			err := persistV1RepositoryFile(tt.args.inferredRepoName, tt.args.v1, tt.args.force)
 			defer os.Remove(path.Join(util.UsedReposDirectory, tt.args.inferredRepoName+".yaml"))
+			err := persistV1RepositoryFile(tt.args.inferredRepoName, tt.args.v1, tt.args.force)
 			if tt.wantErr {
 				a.Error(err)
 			} else {
@@ -223,6 +224,94 @@ components: []
 				a.NoError(err)
 			}
 			a.Equal(tt.want, got)
+		})
+	}
+}
+
+func Test_decodeV1Repository(t *testing.T) {
+	util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(assert.New(t))
+	util.UsedConfigFile = ""
+	util.UsedEnvironmentDirectory = ""
+	util.UsedRepositoryFile = ""
+	util.UsedTempDirectory = ""
+
+	type args struct {
+		fileName string
+	}
+	tests := []struct {
+		name    string
+		mocked  []byte
+		args    args
+		want    *V1
+		wantErr bool
+	}{
+		{
+			name: "happy path",
+			args: args{fileName: "repo-file.yaml"},
+			mocked: []byte(`version: v1
+kind: Repository
+name: c
+components: []
+`),
+			want: &V1{
+				Version:    "v1",
+				Kind:       "Repository",
+				Name:       "c",
+				Components: []Component{},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "missing repo file",
+			args:    args{fileName: "not-existing-repo-file.yaml"},
+			mocked:  nil,
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "empty file",
+			args:    args{fileName: "empty-repo-file.yaml"},
+			mocked:  []byte(``),
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "not a yaml",
+			args:    args{fileName: "not-a-yaml-repo-file.yaml"},
+			mocked:  []byte(`not a yaml`),
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "missing version field",
+			args:    args{fileName: "missing-version-field-repo-file.yaml"},
+			mocked:  []byte(`kind: a`),
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "missing kind field",
+			args:    args{fileName: "missing-kind-field-repo-file.yaml"},
+			mocked:  []byte(`version: a`),
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			if tt.mocked != nil {
+				err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.fileName), tt.mocked, 0644)
+				a.NoError(err)
+			}
+			defer os.Remove(path.Join(util.UsedReposDirectory, tt.args.fileName))
+			got, err := decodeV1Repository(path.Join(util.UsedReposDirectory, tt.args.fileName))
+			if tt.wantErr {
+				a.Error(err)
+			} else {
+				a.NoError(err)
+				a.Equal(tt.want, got)
+			}
 		})
 	}
 }

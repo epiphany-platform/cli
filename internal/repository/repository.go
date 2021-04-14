@@ -224,6 +224,12 @@ func decodeV1Repository(filePath string) (*V1, error) {
 	if err := d.Decode(&repo); err != nil {
 		return nil, err
 	}
+	if repo.Version != "v1" {
+		return nil, fmt.Errorf("repo file has unexpected Version field: %s", repo.Version)
+	}
+	if repo.Kind != "Repository" {
+		return nil, fmt.Errorf("repo file has unexpected Kind field: %s", repo.Kind)
+	}
 	return repo, nil
 }
 
