@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -68,22 +69,6 @@ func TestCmd(t *testing.T) {
 		shouldFail  bool
 		checkOutput bool
 	}{
-		{
-			name:        "e help",
-			args:        []string{"help"},
-			mockRepo:    false,
-			mockEnv:     false,
-			shouldFail:  false,
-			checkOutput: true,
-		},
-		{
-			name:        "e environments",
-			args:        []string{"environments"},
-			mockRepo:    false,
-			mockEnv:     false,
-			shouldFail:  false,
-			checkOutput: true,
-		},
 		{
 			name:        "e environments info",
 			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "info"},
@@ -175,9 +160,7 @@ func TestCmd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 			dir, err := os.Getwd()
-			if err != nil {
-				t.Fatal(err)
-			}
+			a.NoError(err)
 
 			if tt.mockRepo {
 				mock, err := loadFixture("cmd", tt.name+"_repo")
@@ -236,6 +219,191 @@ uuid: %s
 			}
 		})
 	}
+}
+
+func TestHelp(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedRepositoryFile, util.UsedTempDirectory = setup(t, "help")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name            string
+		args            []string
+		wantSubcommands []string
+		wantFlags       []string
+	}{
+		{
+			name:            "e --help",
+			args:            []string{"--help"},
+			wantSubcommands: []string{"az", "environments", "help", "module", "repos", "ssh"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e az --help",
+			args:            []string{"az", "--help"},
+			wantSubcommands: []string{"sp"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e az sp --help",
+			args:            []string{"az", "sp", "--help"},
+			wantSubcommands: []string{"create"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e az sp create --help",
+			args:            []string{"az", "sp", "create", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel", "name", "subscriptionID", "tenantID"},
+		},
+		{
+			name:            "e environments --help",
+			args:            []string{"environments", "--help"},
+			wantSubcommands: []string{"export", "import", "info", "list", "new", "run", "use"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e environments export --help",
+			args:            []string{"environments", "export", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel", "destination", "id"},
+		},
+		{
+			name:            "e environments import --help",
+			args:            []string{"environments", "import", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel", "from"},
+		},
+		{
+			name:            "e environments info --help",
+			args:            []string{"environments", "info", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e environments list --help",
+			args:            []string{"environments", "list", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e environments new --help",
+			args:            []string{"environments", "new", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel", "name"},
+		},
+		{
+			name:            "e environments run --help",
+			args:            []string{"environments", "run", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e environments use --help",
+			args:            []string{"environments", "use", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e module --help",
+			args:            []string{"module", "--help"},
+			wantSubcommands: []string{"info", "install", "search"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e module info --help",
+			args:            []string{"module", "info", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e module install --help",
+			args:            []string{"module", "install", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e module search --help",
+			args:            []string{"module", "search", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e repos --help",
+			args:            []string{"repos", "--help"},
+			wantSubcommands: []string{"install", "list"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e repos install --help",
+			args:            []string{"repos", "install", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel", "branch", "force"},
+		},
+		{
+			name:            "e repos list --help",
+			args:            []string{"repos", "list", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e ssh --help",
+			args:            []string{"ssh", "--help"},
+			wantSubcommands: []string{"keygen"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e ssh keygen --help",
+			args:            []string{"ssh", "keygen", "--help"},
+			wantSubcommands: []string{"create"},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+		{
+			name:            "e ssh keygen create --help",
+			args:            []string{"ssh", "keygen", "create", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{"configDir", "help", "logLevel"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			dir, err := os.Getwd()
+			a.NoError(err)
+
+			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
+			got, err := cmd.CombinedOutput()
+			a.NoError(err)
+
+			subCommands := extractSubcommandsNames(string(got))
+			a.ElementsMatch(tt.wantSubcommands, subCommands)
+			flags := extractFlagsNames(string(got))
+			a.ElementsMatch(tt.wantFlags, flags)
+		})
+	}
+}
+
+func extractSubcommandsNames(in string) []string {
+	commandsSectionExtractor := regexp.MustCompile("Available Commands:([\\S\\s]*?)Flags:")
+	commandsSection := commandsSectionExtractor.FindString(in)
+	commandsNamesExtractor := regexp.MustCompile("(?m)^\\s\\s[^\\s,]*[\\s]*")
+	commandsNames := commandsNamesExtractor.FindAllString(commandsSection, -1)
+	for i, m := range commandsNames {
+		commandsNames[i] = strings.TrimSpace(m)
+	}
+	return commandsNames
+}
+
+func extractFlagsNames(input string) []string {
+	useLineRemover := regexp.MustCompile("(?m)[\r\n]+^.*Use \"e.*$")
+	inputWithoutUseLine := useLineRemover.ReplaceAllString(input, "")
+	flagsSectionExtractor := regexp.MustCompile("Flags:([\\S\\s]*?)$")
+	flagsSection := flagsSectionExtractor.FindString(inputWithoutUseLine)
+	flagsNamesExtractor := regexp.MustCompile("--[a-zA-Z]*")
+	flagsNames := flagsNamesExtractor.FindAllString(flagsSection, -1)
+	for i, m := range flagsNames {
+		flagsNames[i] = strings.TrimLeft(strings.TrimSpace(m), "-")
+	}
+	return flagsNames
 }
 
 func loadFixture(packageName, name string) (string, error) {
