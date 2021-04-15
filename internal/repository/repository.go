@@ -60,6 +60,10 @@ type ComponentVersion struct {
 }
 
 func (cv *ComponentVersion) String() string {
+	if cv == nil {
+		logger.Warn().Msg("nil ComponentVersion.String() receiver")
+		return ""
+	}
 	var b bytes.Buffer
 	b.WriteString(fmt.Sprintf("  Component Version:\n   Version: %s\n   Image: %s\n", cv.Version, cv.Image))
 	for _, cc := range cv.Commands {
@@ -220,13 +224,13 @@ func load() error {
 //The decodeV1Repository method loads V1 from provided file path
 func decodeV1Repository(filePath string) (*V1, error) {
 	repo := &V1{}
-	file, err := os.Open(filePath)
+	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
-	d := yaml.NewDecoder(file)
-	if err := d.Decode(&repo); err != nil {
+	logger.Trace().Msgf("read content of file %s : \n%s", filePath, content)
+	err = yaml.Unmarshal(content, repo)
+	if err != nil {
 		return nil, err
 	}
 	if repo.Version != "v1" {

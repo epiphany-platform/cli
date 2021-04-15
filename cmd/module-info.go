@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rs/zerolog"
+	"gopkg.in/yaml.v2"
+
 	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/internal/repository"
 
@@ -35,7 +38,16 @@ var moduleInfoCmd = &cobra.Command{
 		if err != nil {
 			logger.Error().Err(err).Msg("info failed")
 		}
-		fmt.Print(v.String())
+		if v != nil {
+			if zerolog.GlobalLevel() == zerolog.TraceLevel {
+				l, _ := yaml.Marshal(v)
+				logger.Trace().Msgf("will return: %s", string(l))
+			}
+			fmt.Print(v.String())
+		} else {
+			fmt.Println("module not found")
+		}
+
 	},
 }
 

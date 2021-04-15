@@ -33,11 +33,15 @@ func setup(t *testing.T, suffix string) (string, string, string, string, string)
 		t.Fatal(err)
 	}
 
+	reposDirectory := path.Join(configDirectory, util.DefaultRepoDirectoryName)
+	err = os.Mkdir(reposDirectory, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	configFile := path.Join(configDirectory, util.DefaultConfigFileName)
 
-	repoFile := path.Join(configDirectory, util.DefaultV1RepositoryFileName)
-
-	return configFile, configDirectory, envsDirectory, repoFile, tempDirectory
+	return configFile, configDirectory, envsDirectory, reposDirectory, tempDirectory
 }
 
 func TestMain(m *testing.M) {
@@ -57,7 +61,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestCmd(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedRepositoryFile, util.UsedTempDirectory = setup(t, "cmd")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "cmd")
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
@@ -222,7 +226,7 @@ uuid: %s
 }
 
 func TestHelp(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedRepositoryFile, util.UsedTempDirectory = setup(t, "help")
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "help")
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
@@ -378,6 +382,123 @@ func TestHelp(t *testing.T) {
 			a.ElementsMatch(tt.wantSubcommands, subCommands)
 			flags := extractFlagsNames(string(got))
 			a.ElementsMatch(tt.wantFlags, flags)
+		})
+	}
+}
+
+func TestModule(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "module")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name     string
+		args     []string
+		mockRepo map[string][]byte
+		want     []string
+	}{
+		{
+			name: "e module info",
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "module", "info", "example-repo/c1:0.1.0"},
+			mockRepo: map[string][]byte{
+				"example-repo.yaml": []byte(`version: v1
+kind: Repository
+name: example-repo
+components:
+  - name: c1
+    type: docker
+    versions:
+      - version: 0.1.0
+        latest: true
+        image: "docker.io/hashicorp/terraform:0.12.28"
+        workdir: "/terraform"
+        mounts:
+          - "/terraform"
+        commands:
+          - name: init
+            description: "initializes terraform in local directory"
+            command: init
+            envs:
+              TF_LOG: WARN
+`),
+			},
+			want: []string{"Version: 0.1.0", "Image: docker.io/hashicorp/terraform:0.12.28"},
+		},
+		{
+			name: "e module install",
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "module", "install", "example-repo/c1:0.1.0"},
+			mockRepo: map[string][]byte{
+				"example-repo.yaml": []byte(`version: v1
+kind: Repository
+name: example-repo
+components:
+  - name: c1
+    type: docker
+    versions:
+      - version: 0.1.0
+        latest: true
+        image: "docker.io/hashicorp/terraform:0.12.28"
+        workdir: "/terraform"
+        mounts:
+          - "/terraform"
+        commands:
+          - name: init
+            description: "initializes terraform in local directory"
+            command: init
+            envs:
+              TF_LOG: WARN
+`),
+			},
+			want: []string{"Installed module c1:0.1.0 to environment"},
+		},
+		{
+			name: "e module search",
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "module", "search", "c1"},
+			mockRepo: map[string][]byte{
+				"example-repo.yaml": []byte(`version: v1
+kind: Repository
+name: example-repo
+components:
+  - name: c1
+    type: docker
+    versions:
+      - version: 0.1.0
+        latest: true
+        image: "docker.io/hashicorp/terraform:0.12.28"
+        workdir: "/terraform"
+        mounts:
+          - "/terraform"
+        commands:
+          - name: init
+            description: "initializes terraform in local directory"
+            command: init
+            envs:
+              TF_LOG: WARN
+`),
+			},
+			want: []string{"example-repo/c1:0.1.0"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			dir, err := os.Getwd()
+			a.NoError(err)
+
+			if tt.mockRepo != nil {
+				for k, v := range tt.mockRepo {
+					err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, k), v, 0644)
+					a.NoError(err)
+				}
+			}
+
+			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
+			got, err := cmd.CombinedOutput()
+			a.NoError(err)
+
+			for _, w := range tt.want {
+				a.Contains(string(got), w)
+			}
 		})
 	}
 }
