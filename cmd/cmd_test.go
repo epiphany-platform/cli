@@ -503,6 +503,43 @@ components:
 	}
 }
 
+func TestRepos(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "repos")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name string
+		args []string
+		want []string
+	}{
+		{
+			name: "e repos list",
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "list"},
+			want: []string{"Module: terraform:0.1.0"},
+		},
+		{
+			name: "e repos install",
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "install", "mkyc/my-epipany-repo", "--logLevel", "debug"},
+			want: []string{"will install mkyc/my-epipany-repo"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			dir, err := os.Getwd()
+			a.NoError(err)
+
+			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
+			got, err := cmd.CombinedOutput()
+			a.NoError(err)
+
+			for _, w := range tt.want {
+				a.Contains(string(got), w)
+			}
+		})
+	}
+}
+
 func extractSubcommandsNames(in string) []string {
 	commandsSectionExtractor := regexp.MustCompile("Available Commands:([\\S\\s]*?)Flags:")
 	commandsSection := commandsSectionExtractor.FindString(in)
