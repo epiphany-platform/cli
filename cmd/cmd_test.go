@@ -40,7 +40,6 @@ func setup(t *testing.T, suffix string) (string, string, string, string, string)
 	}
 
 	configFile := path.Join(configDirectory, util.DefaultConfigFileName)
-
 	return configFile, configDirectory, envsDirectory, reposDirectory, tempDirectory
 }
 
@@ -217,138 +216,168 @@ func TestHelp(t *testing.T) {
 		args            []string
 		wantSubcommands []string
 		wantFlags       []string
+		wantOutput      []string
 	}{
 		{
 			name:            "e --help",
 			args:            []string{"--help"},
 			wantSubcommands: []string{"az", "environments", "help", "module", "repos", "ssh"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e az --help",
 			args:            []string{"az", "--help"},
 			wantSubcommands: []string{"sp"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e az sp --help",
 			args:            []string{"az", "sp", "--help"},
 			wantSubcommands: []string{"create"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e az sp create --help",
 			args:            []string{"az", "sp", "create", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel", "name", "subscriptionID", "tenantID"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments --help",
 			args:            []string{"environments", "--help"},
 			wantSubcommands: []string{"export", "import", "info", "list", "new", "run", "use"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments export --help",
 			args:            []string{"environments", "export", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel", "destination", "id"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments import --help",
 			args:            []string{"environments", "import", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel", "from"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments info --help",
 			args:            []string{"environments", "info", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments list --help",
 			args:            []string{"environments", "list", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments new --help",
 			args:            []string{"environments", "new", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel", "name"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments run --help",
 			args:            []string{"environments", "run", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e environments use --help",
 			args:            []string{"environments", "use", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e module --help",
 			args:            []string{"module", "--help"},
 			wantSubcommands: []string{"info", "install", "search"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e module info --help",
 			args:            []string{"module", "info", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e module install --help",
 			args:            []string{"module", "install", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e module search --help",
 			args:            []string{"module", "search", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e repos --help",
 			args:            []string{"repos", "--help"},
 			wantSubcommands: []string{"install", "list"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e repos install --help",
 			args:            []string{"repos", "install", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel", "branch", "force"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e repos list --help",
 			args:            []string{"repos", "list", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e ssh --help",
 			args:            []string{"ssh", "--help"},
 			wantSubcommands: []string{"keygen"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e ssh keygen --help",
 			args:            []string{"ssh", "keygen", "--help"},
 			wantSubcommands: []string{"create"},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
 		},
 		{
 			name:            "e ssh keygen create --help",
 			args:            []string{"ssh", "keygen", "create", "--help"},
 			wantSubcommands: []string{},
 			wantFlags:       []string{"configDir", "help", "logLevel"},
+			wantOutput:      []string{},
+		},
+		{
+			name:            "e unknown --help",
+			args:            []string{"unknown", "--help"},
+			wantSubcommands: []string{},
+			wantFlags:       []string{},
+			wantOutput:      []string{"Error: unknown command \"unknown\" for \"e\""},
 		},
 	}
 	for _, tt := range tests {
@@ -365,6 +394,10 @@ func TestHelp(t *testing.T) {
 			a.ElementsMatch(tt.wantSubcommands, subCommands)
 			flags := extractFlagsNames(string(got))
 			a.ElementsMatch(tt.wantFlags, flags)
+
+			for _, w := range tt.wantOutput {
+				a.Contains(string(got), w)
+			}
 		})
 	}
 }
@@ -378,6 +411,7 @@ func TestModule(t *testing.T) {
 		args     []string
 		mockRepo map[string][]byte
 		want     []string
+		wantErr  bool
 	}{
 		{
 			name: "e module info",
@@ -404,7 +438,8 @@ components:
               TF_LOG: WARN
 `),
 			},
-			want: []string{"Version: 0.1.0", "Image: docker.io/hashicorp/terraform:0.12.28"},
+			want:    []string{"Version: 0.1.0", "Image: docker.io/hashicorp/terraform:0.12.28"},
+			wantErr: false,
 		},
 		{
 			name: "e module install",
@@ -431,7 +466,8 @@ components:
               TF_LOG: WARN
 `),
 			},
-			want: []string{"Installed module c1:0.1.0 to environment"},
+			want:    []string{"Installed module c1:0.1.0 to environment"},
+			wantErr: false,
 		},
 		{
 			name: "e module search",
@@ -458,7 +494,36 @@ components:
               TF_LOG: WARN
 `),
 			},
-			want: []string{"example-repo/c1:0.1.0"},
+			want:    []string{"example-repo/c1:0.1.0"},
+			wantErr: false,
+		},
+		{
+			name:     "e module install incorrect format 1",
+			args:     []string{"--configDir", util.UsedConfigurationDirectory, "module", "install", "incorrect"},
+			mockRepo: nil,
+			want:     []string{"Error: module name argument incorrectly formatted"},
+			wantErr:  false,
+		},
+		{
+			name:     "e module install incorrect format 2",
+			args:     []string{"--configDir", util.UsedConfigurationDirectory, "module", "install", "user/repo"},
+			mockRepo: nil,
+			want:     []string{"Error: module name argument incorrectly formatted"},
+			wantErr:  false,
+		},
+		{
+			name:     "e module install incorrect format 3",
+			args:     []string{"--configDir", util.UsedConfigurationDirectory, "module", "install", "repo:version"},
+			mockRepo: nil,
+			want:     []string{"Error: module name argument incorrectly formatted"},
+			wantErr:  false,
+		},
+		{
+			name:     "e module install not existing",
+			args:     []string{"--configDir", util.UsedConfigurationDirectory, "module", "install", "user/repo:version"},
+			mockRepo: nil,
+			want:     []string{"module not found: user/repo:version"},
+			wantErr:  true,
 		},
 	}
 
@@ -477,7 +542,11 @@ components:
 
 			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
 			got, err := cmd.CombinedOutput()
-			a.NoError(err)
+			if tt.wantErr {
+				a.Error(err)
+			} else {
+				a.NoError(err)
+			}
 
 			for _, w := range tt.want {
 				a.Contains(string(got), w)
@@ -503,7 +572,12 @@ func TestRepos(t *testing.T) {
 		{
 			name: "e repos install",
 			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "install", "mkyc/my-epipany-repo", "--logLevel", "debug"},
-			want: []string{"will install mkyc/my-epipany-repo"},
+			want: []string{"will try to install mkyc/my-epipany-repo"},
+		},
+		{
+			name: "e repos install incorrect",
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "install", "not-existing-user/not-existing-repo", "--logLevel", "trace"},
+			want: []string{"got response body: \n404: Not Found"},
 		},
 	}
 	for _, tt := range tests {

@@ -135,7 +135,7 @@ func Install(repo string, force bool, branch string) error {
 		}
 	}
 
-	logger.Debug().Msgf("will install %s", repo)
+	logger.Debug().Msgf("will try to install %s", repo)
 	b := util.DefaultRepositoryBranch
 	if branch != "" {
 		b = branch

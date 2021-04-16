@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/epiphany-platform/cli/pkg/environment"
@@ -22,6 +23,10 @@ var moduleInstallCmd = &cobra.Command{
 		if len(args) != 1 {
 			return errors.New("there should be one positional argument")
 		}
+		r := regexp.MustCompile("^[0-9a-zA-Z-_]+/[0-9a-zA-Z-_]+:[0-9a-zA-Z-_.]+$") // TODO ensure github user and repo formats
+		if !r.MatchString(args[0]) {
+			return fmt.Errorf("module name argument incorrectly formatted")
+		}
 		return nil
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
@@ -35,7 +40,10 @@ var moduleInstallCmd = &cobra.Command{
 		moduleVersion := b[1]
 		v, err := repository.GetModule(repoName, moduleName, moduleVersion)
 		if err != nil {
-			logger.Error().Err(err).Msg("info failed")
+			logger.Fatal().Err(err).Msg("get module failed")
+		}
+		if v == nil {
+			logger.Fatal().Msgf("module not found: %s", args[0])
 		}
 		newComponent := environment.InstalledComponentVersion{
 			EnvironmentRef: currentEnvironment.Uuid,
