@@ -148,6 +148,9 @@ func Install(repo string, force bool, branch string) error {
 	if err != nil {
 		return err
 	}
+	if r == nil {
+		logger.Error().Msgf("no repo")
+	}
 	if r.Name == "" {
 		r.Name = inferredRepoName
 	}
@@ -250,6 +253,11 @@ func downloadV1Repository(url string) (*V1, error) {
 		logger.Error().Err(err).Msg("wasn't able to perform http GET on repo URL")
 		return nil, err
 	}
+	if res.StatusCode == 404 {
+		err2 := fmt.Errorf("repository %s not found", url)
+		logger.Warn().Err(err2).Msg("not found")
+		return nil, err2
+	}
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
@@ -264,8 +272,8 @@ func downloadV1Repository(url string) (*V1, error) {
 		logger.Error().Err(err).Msgf("got nothing from: %s", url)
 		return nil, err
 	}
-	r := &V1{}
-	err = yaml.Unmarshal(body, r)
+	var r *V1
+	err = yaml.Unmarshal(body, &r)
 	if err != nil {
 		logger.Error().Err(err).Msg("wasn't able to unmarshal body into correct yaml")
 		return nil, err

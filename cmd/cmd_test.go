@@ -577,7 +577,7 @@ func TestRepos(t *testing.T) {
 		{
 			name: "e repos install incorrect",
 			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "install", "not-existing-user/not-existing-repo", "--logLevel", "trace"},
-			want: []string{"got response body: \n404: Not Found"},
+			want: []string{"repository https://raw.githubusercontent.com/not-existing-user/not-existing-repo/HEAD/v1.yaml not found"},
 		},
 	}
 	for _, tt := range tests {
