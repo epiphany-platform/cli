@@ -582,6 +582,56 @@ func TestSsh(t *testing.T) {
 	}
 }
 
+func TestAz(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "az")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name    string
+		args    []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "e az",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az"},
+			want:    []string{"Available Commands:\n  sp"},
+			wantErr: false,
+		},
+		{
+			name:    "e az sp",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az", "sp"},
+			want:    []string{"Available Commands:\n  create"},
+			wantErr: false,
+		},
+		{
+			name:    "e az sp create",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az", "sp", "create"},
+			want:    []string{"no tenantID defined"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			dir, err := os.Getwd()
+			a.NoError(err)
+
+			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
+			got, err := cmd.CombinedOutput()
+			if tt.wantErr {
+				a.Error(err)
+			} else {
+				a.NoError(err)
+			}
+
+			for _, w := range tt.want {
+				a.Contains(string(got), w)
+			}
+		})
+	}
+}
+
 func extractSubcommandsNames(in string) []string {
 	commandsSectionExtractor := regexp.MustCompile("Available Commands:([\\S\\s]*?)Flags:")
 	commandsSection := commandsSectionExtractor.FindString(in)
