@@ -55,7 +55,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		// Default environment and destination directory are current ones
 		// Check if environment is default
 		if envIdStr == "" {
-			if config.CurrentEnvironment == uuid.Nil {
+			if config.CurrentEnvironment == uuid.Nil { // TODO this will never occur due to new janitor environment initialization
 				logger.Fatal().Msg("Environment has to be selected if id is not specified")
 			} else {
 				envId = config.CurrentEnvironment
@@ -65,24 +65,24 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 			// Check if passed environment id is valid
 			exists, err := environment.IsExisting(envId)
 			if err != nil {
-				logger.Fatal().Err(err).Msgf("Environment %s existence check failed", envId.String())
+				logger.Fatal().Err(err).Msgf("Environment existence check failed (environment id: %s)", envId.String())
 			} else if !exists {
-				logger.Fatal().Msgf("Environment %s is not found", envId.String())
+				logger.Fatal().Msgf("Environment not found (environment id: %s)", envId.String())
 			}
 		}
 
 		// Export an environment
 		env, err := environment.Get(envId)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to get an environment by id %s", envId.String())
+			logger.Fatal().Err(err).Msgf("Unable to get an environment by id (environment id: %s)", envId.String())
 		}
 
 		err = env.Export(dstDir)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envId.String())
+			logger.Fatal().Err(err).Msgf("Unable to export environment (environment id: %s)", envId.String())
 		}
 
-		logger.Info().Msgf("Environment with id %s was exported", envId.String())
+		logger.Info().Msgf("Export operation finished correctly (environment id: %s)", envId.String())
 	},
 }
 

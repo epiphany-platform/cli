@@ -38,8 +38,10 @@ var envUseCmd = &cobra.Command{
 		return nil
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		logger.Debug().Msg("environments use called")
-		uu = uuid.MustParse(args[0])
+		if len(args) == 1 {
+			logger.Debug().Msg("environments use called")
+			uu = uuid.MustParse(args[0])
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {

@@ -6,10 +6,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/epiphany-platform/cli/internal/util"
 
@@ -60,104 +60,33 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestCmd(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "cmd")
+func TestAz(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "az")
 	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
-		name        string
-		args        []string
-		mockRepo    bool
-		mockEnv     bool
-		envId       string
-		shouldFail  bool
-		checkOutput bool
+		name    string
+		args    []string
+		want    []string
+		wantErr bool
 	}{
 		{
-			name:        "e environments info",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "info"},
-			mockRepo:    false,
-			mockEnv:     true,
-			envId:       "cd7b59f8-6610-468a-8d56-3d1ea2566428",
-			shouldFail:  false,
-			checkOutput: true,
+			name:    "e az",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az"},
+			want:    []string{"Available Commands:\n  sp"},
+			wantErr: false,
 		},
 		{
-			name:        "e environments new",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "new", "e1"},
-			mockRepo:    false,
-			mockEnv:     false,
-			shouldFail:  false,
-			checkOutput: false,
+			name:    "e az sp",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az", "sp"},
+			want:    []string{"Available Commands:\n  create"},
+			wantErr: false,
 		},
 		{
-			name:        "e environments use",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b"},
-			mockRepo:    false,
-			mockEnv:     true,
-			envId:       "2398d4b7-bd5e-4a2c-9efb-0bceaee6f89b",
-			shouldFail:  false,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments export",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "2e309e00-aea0-41bc-8344-9813970ec2a6", "--destination", util.UsedConfigurationDirectory},
-			mockRepo:    false,
-			mockEnv:     true,
-			envId:       "2e309e00-aea0-41bc-8344-9813970ec2a6",
-			shouldFail:  false,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments export wrong env id",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "fcfd81e4-27a8-4ee6-8bb3-f71b8218ba6d"},
-			mockRepo:    false,
-			mockEnv:     false,
-			shouldFail:  true,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments export wrong destination",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "ba03a2ba-8fa0-4c15-ac07-894af3dbb365", "--destination", "/fake/path"},
-			mockRepo:    false,
-			mockEnv:     true,
-			envId:       "ba03a2ba-8fa0-4c15-ac07-894af3dbb365",
-			shouldFail:  true,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments import",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "ba03a2ba-8fa0-4c15-ac07-894af3dbb365.zip")},
-			mockRepo:    false,
-			mockEnv:     false,
-			envId:       "ba03a2ba-8fa0-4c15-ac07-894af3dbb365",
-			shouldFail:  true,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments import existing",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "ba03a2ba-8fa0-4c15-ac07-894af3dbb365.zip")},
-			mockRepo:    false,
-			mockEnv:     false,
-			shouldFail:  true,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments import not existing",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "2e309e00-aea0-41bc-8344-9813970ec2a6.zip")},
-			mockRepo:    false,
-			mockEnv:     false,
-			envId:       "2e309e00-aea0-41bc-8344-9813970ec2a6",
-			shouldFail:  false,
-			checkOutput: false,
-		},
-		{
-			name:        "e environments import wrong source file",
-			args:        []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", "/fake/path"},
-			mockRepo:    false,
-			mockEnv:     false,
-			shouldFail:  true,
-			checkOutput: false,
+			name:    "e az sp create",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az", "sp", "create"},
+			want:    []string{"no tenantID defined"},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -166,60 +95,114 @@ func TestCmd(t *testing.T) {
 			dir, err := os.Getwd()
 			a.NoError(err)
 
-			if tt.mockRepo {
-				mock, err := loadFixture("cmd", tt.name+"_repo")
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = ioutil.WriteFile(util.UsedRepositoryFile, []byte(mock), 0644)
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-
-			if tt.mockEnv {
-				configMock, err := loadFixture("cmd", tt.name+"_config")
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = ioutil.WriteFile(util.UsedConfigFile, []byte(configMock), 0644)
-				if err != nil {
-					t.Fatal(err)
-				}
-				envConfigMock := fmt.Sprintf(`name: e1
-uuid: %s
-`, tt.envId)
-				envPath := path.Join(util.UsedEnvironmentDirectory, tt.envId)
-				err = os.MkdirAll(envPath, 0755)
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = ioutil.WriteFile(path.Join(envPath, util.DefaultEnvironmentConfigFileName), []byte(envConfigMock), 0644)
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-
-			if tt.name == "e environments import not existing" {
-				err = os.RemoveAll(path.Join(util.UsedEnvironmentDirectory, tt.envId))
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-
 			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
 			got, err := cmd.CombinedOutput()
-			if tt.shouldFail {
+			if tt.wantErr {
 				a.Error(err)
 			} else {
 				a.NoError(err)
 			}
-			if tt.checkOutput {
-				want, err := loadFixture("cmd", tt.name+"_want")
-				if err != nil {
-					t.Fatal(err)
-				}
-				a.Truef(reflect.DeepEqual(string(got), want), "got \n======\n\n%v\n\n=====\n, want \n======\n\n%v\n\n=====\n", string(got), want)
+
+			for _, w := range tt.want {
+				a.Contains(string(got), w)
+			}
+		})
+	}
+}
+
+func TestEnvironments(t *testing.T) {
+	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "environments")
+	defer os.RemoveAll(util.UsedConfigurationDirectory)
+
+	tests := []struct {
+		name    string
+		args    []string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:    "e environments info",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "info"},
+			want:    []string{"Environment info:\n Name: " + time.Now().Format("060102")},
+			wantErr: false,
+		},
+		{
+			name:    "e environments list",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "list"},
+			want:    []string{fmt.Sprintf(") | %s-", time.Now().Format("060102"))},
+			wantErr: false,
+		},
+		{
+			name:    "e environments new",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "new", "t1", "--logLevel", "debug"},
+			want:    []string{"Created an environment with id "},
+			wantErr: false,
+		},
+		{
+			name:    "e environments use",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "something-incorrect"},
+			want:    []string{"Error: invalid UUID length: 19"},
+			wantErr: false,
+		},
+		{
+			name:    "e environments run no args",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "run"},
+			want:    []string{"Usage:\n  e environments run"},
+			wantErr: false,
+		},
+		{
+			name:    "e environments run one arg",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "run", "something"},
+			want:    []string{"Usage:\n  e environments run"},
+			wantErr: false,
+		},
+		{
+			name:    "e environments run two incorrect args",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "run", "something", "incorrect"},
+			want:    []string{"no such component installed"},
+			wantErr: true,
+		},
+		{
+			name:    "e environments export",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--destination", util.UsedConfigurationDirectory, "--logLevel", "debug"},
+			want:    []string{"Export operation finished correctly (environment id:"},
+			wantErr: false,
+		},
+		{
+			name:    "e environments export wrong env id",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--id", "fcfd81e4-27a8-4ee6-8bb3-f71b8218ba6d"},
+			want:    []string{"Environment not found (environment id:"},
+			wantErr: true,
+		},
+		{
+			name:    "e environments export wrong destination",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "export", "--destination", "/fake/path"},
+			want:    []string{"Unable to export environment (environment id:"},
+			wantErr: true,
+		},
+		{
+			name:    "e environments import not existing",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "import", "--from", path.Join(util.UsedConfigurationDirectory, "ba03a2ba-8fa0-4c15-ac07-894af3dbb365.zip")},
+			want:    []string{"Incorrect file path specified"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := assert.New(t)
+			dir, err := os.Getwd()
+			a.NoError(err)
+
+			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
+			got, err := cmd.CombinedOutput()
+			if tt.wantErr {
+				a.Error(err)
+			} else {
+				a.NoError(err)
+			}
+
+			for _, w := range tt.want {
+				a.Contains(string(got), w)
 			}
 		})
 	}
@@ -582,56 +565,6 @@ func TestSsh(t *testing.T) {
 	}
 }
 
-func TestAz(t *testing.T) {
-	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "az")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
-
-	tests := []struct {
-		name    string
-		args    []string
-		want    []string
-		wantErr bool
-	}{
-		{
-			name:    "e az",
-			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az"},
-			want:    []string{"Available Commands:\n  sp"},
-			wantErr: false,
-		},
-		{
-			name:    "e az sp",
-			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az", "sp"},
-			want:    []string{"Available Commands:\n  create"},
-			wantErr: false,
-		},
-		{
-			name:    "e az sp create",
-			args:    []string{"--configDir", util.UsedConfigurationDirectory, "az", "sp", "create"},
-			want:    []string{"no tenantID defined"},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-			dir, err := os.Getwd()
-			a.NoError(err)
-
-			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
-			got, err := cmd.CombinedOutput()
-			if tt.wantErr {
-				a.Error(err)
-			} else {
-				a.NoError(err)
-			}
-
-			for _, w := range tt.want {
-				a.Contains(string(got), w)
-			}
-		})
-	}
-}
-
 func extractSubcommandsNames(in string) []string {
 	commandsSectionExtractor := regexp.MustCompile("Available Commands:([\\S\\s]*?)Flags:")
 	commandsSection := commandsSectionExtractor.FindString(in)
@@ -654,16 +587,4 @@ func extractFlagsNames(input string) []string {
 		flagsNames[i] = strings.TrimLeft(strings.TrimSpace(m), "-")
 	}
 	return flagsNames
-}
-
-func loadFixture(packageName, name string) (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	buf, err := ioutil.ReadFile(path.Join(dir, "fixtures", packageName, strings.ReplaceAll(name, " ", "_")))
-	if err != nil {
-		return "", err
-	}
-	return string(buf), nil
 }
