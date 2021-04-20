@@ -79,19 +79,19 @@ func init() {
 	azSpCreateCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
-func isEnvPresentAndSelected() (err error) {
+func isEnvPresentAndSelected() error {
 	logger.Debug().Msg("will check if isEnvPresentAndSelected()")
 	environments, err := environment.GetAll()
 	if err != nil {
-		return
+		return err
 	}
 	for _, e := range environments {
 		if e.Uuid.String() == config.CurrentEnvironment.String() {
 			logger.Debug().Msgf("found currently selected environment %s", e.Uuid.String())
-			return
+			return nil
 		}
 	}
-	logger.Debug().Msg("currently selected environment not found")
-	err = errors.New("currently selected environment not found")
-	return
+	err = errors.New("currently selected environment missing")
+	logger.Warn().Err(err).Msg("environment not found")
+	return err
 }

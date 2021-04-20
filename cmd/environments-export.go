@@ -32,7 +32,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
-			logger.Fatal().Err(err).Msg("viper.BindPFlags failed")
+			logger.Fatal().Err(err).Msg("Command flags are specified incorrectly")
 		}
 
 		envIdStr = viper.GetString("id")
