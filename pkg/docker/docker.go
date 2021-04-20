@@ -58,8 +58,8 @@ func (image *Image) Pull() (string, error) { //TODO remove splitting log streams
 	}()
 
 	go func() {
-		defer logW.Close()
-		defer stdoutW.Close()
+		defer pipeWriterClosure(logW)
+		defer pipeWriterClosure(stdoutW)
 
 		// build the MultiWriter for all the pipes
 		mw := io.MultiWriter(logW, stdoutW)
@@ -169,7 +169,7 @@ func run(job Job) error {
 
 func clientAndContext() (context.Context, *client.Client, error) {
 	ctx := context.Background()
-	cli, err := client.NewEnvClient() // TODO deprecated
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -184,4 +184,8 @@ func removeFinishedContainer(cli *client.Client, ctx context.Context, containerI
 	if err != nil {
 		logger.Warn().Err(err).Msg("cannot remove container after it finished it's job")
 	}
+}
+
+func pipeWriterClosure(pw *io.PipeWriter) {
+	_ = pw.Close()
 }

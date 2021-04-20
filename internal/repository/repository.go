@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -259,7 +260,9 @@ func downloadV1Repository(url string) (*V1, error) {
 		return nil, err2
 	}
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func(b io.ReadCloser) {
+			_ = b.Close()
+		}(res.Body)
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {

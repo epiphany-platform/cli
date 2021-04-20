@@ -38,13 +38,13 @@ func Test_inferRepoName(t *testing.T) {
 		},
 		{
 			name:     "happy path 2",
-			repoName: "mkyc/my-epipany-repo",
-			want:     "mkyc-my-epipany-repo",
+			repoName: "mkyc/my-epiphany-repo",
+			want:     "mkyc-my-epiphany-repo",
 		},
 		{
 			name:     "full url",
-			repoName: "https://github.com/mkyc/my-epipany-repo",
-			want:     "mkyc-my-epipany-repo",
+			repoName: "https://github.com/mkyc/my-epiphany-repo",
+			want:     "mkyc-my-epiphany-repo",
 		},
 	}
 	for _, tt := range tests {
@@ -140,7 +140,9 @@ components: []
 			util.UsedConfigFile = ""
 			util.UsedEnvironmentDirectory = ""
 			util.UsedTempDirectory = ""
-			defer os.RemoveAll(util.UsedConfigurationDirectory)
+			defer func() {
+				_ = os.RemoveAll(util.UsedConfigurationDirectory)
+			}()
 
 			if tt.mocked != nil {
 				err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.inferredRepoName+".yaml"), tt.mocked, 0644)
@@ -296,7 +298,9 @@ components: []
 			util.UsedConfigFile = ""
 			util.UsedEnvironmentDirectory = ""
 			util.UsedTempDirectory = ""
-			defer os.RemoveAll(util.UsedConfigurationDirectory)
+			defer func() {
+				_ = os.RemoveAll(util.UsedConfigurationDirectory)
+			}()
 
 			if tt.mocked != nil {
 				err := ioutil.WriteFile(path.Join(util.UsedReposDirectory, tt.args.fileName), tt.mocked, 0644)
@@ -375,7 +379,9 @@ components: []
 			util.UsedConfigFile = ""
 			util.UsedEnvironmentDirectory = ""
 			util.UsedTempDirectory = ""
-			defer os.RemoveAll(util.UsedConfigurationDirectory)
+			defer func() {
+				_ = os.RemoveAll(util.UsedConfigurationDirectory)
+			}()
 
 			if tt.mocked != nil {
 				for k, v := range tt.mocked {

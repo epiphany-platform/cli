@@ -57,7 +57,7 @@ var azSpCreateCmd = &cobra.Command{
 			logger.Fatal().Err(err).Msg("creation of service principal on Azure failed")
 		}
 		credentials := az.Credentials{
-			AppID:          *app.AppID,
+			AppID:          *app.AppID, // TODO investigate if that is correct or there should be ObjectID?
 			Password:       pass,
 			Tenant:         tenantID,
 			SubscriptionID: subscriptionID,

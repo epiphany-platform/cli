@@ -38,7 +38,7 @@ func setup(t *testing.T, suffix string) (string, string, string) {
 }
 
 // Create necessary files and directories as environments are validated before switching
-func prepareSetUsedEnvironmentPrereqs(t *testing.T, envDirectory, envIDCurrent, envIDSwitch string) {
+func prepareSetUsedEnvironmentResources(t *testing.T, envDirectory, envIDCurrent, envIDSwitch string) {
 	envConfigTemplate := `name: %s
 uuid: %s
 `
@@ -66,9 +66,10 @@ func TestConfig_SetUsedEnvironment(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "used")
 	envIDCurrent := "3e5b7269-1b3d-4003-9454-9f472857633a"
 	envIDSwitch := "567c0831-7e83-4b56-a2a7-ec7a8327238f"
-	prepareSetUsedEnvironmentPrereqs(t, util.UsedEnvironmentDirectory, envIDCurrent, envIDSwitch)
-
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	prepareSetUsedEnvironmentResources(t, util.UsedEnvironmentDirectory, envIDCurrent, envIDSwitch)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	type fields struct {
 		Version            string
@@ -115,7 +116,9 @@ current-environment: %s
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
-			defer ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			defer func() {
+				_ = ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			}()
 			c := &Config{
 				Version:            tt.fields.Version,
 				Kind:               tt.fields.Kind,
@@ -137,7 +140,9 @@ current-environment: %s
 
 func TestConfig_CreateNewEnvironment(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "create")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	type args struct {
 		name string
@@ -175,7 +180,9 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(util.UsedConfigFile, tt.mocked, 0644)
 			}
-			defer ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			defer func() {
+				_ = ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			}()
 			c, err := GetConfig()
 			a.NoErrorf(err, "error getting configuration %v", err)
 			u, err := c.CreateNewEnvironment(tt.args.name)
@@ -193,7 +200,9 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 
 func TestConfig_Save(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "save")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name    string
@@ -305,7 +314,9 @@ func TestConfig_AddAzureCredentials(t *testing.T) {
 func TestGetConfig(t *testing.T) {
 	var tempFile, tempDirectory string
 	tempFile, tempDirectory, _ = setup(t, "get")
-	defer os.RemoveAll(tempDirectory)
+	defer func() {
+		_ = os.RemoveAll(tempDirectory)
+	}()
 
 	tests := []struct {
 		name       string
@@ -367,7 +378,9 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configPath, tt.mocked, 0644)
 			}
-			defer ioutil.WriteFile(tt.configPath, []byte(""), 0644)
+			defer func() {
+				_ = ioutil.WriteFile(tt.configPath, []byte(""), 0644)
+			}()
 			got, err := GetConfig()
 			if tt.wantErr == nil {
 				a.NoError(err)

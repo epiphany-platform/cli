@@ -129,7 +129,7 @@ Use "e environments [command] --help" for more information about a command.
 > e environments new e1
 ```
 
-no output expected
+No output is expected.
 
 #### e environments info
 
@@ -199,7 +199,7 @@ After all command executed in previous section directory structure looks in simi
 
 Main config file contains: 
 
-```yaml
+```shell
 > cat config.yaml 
 version: v1
 kind: Config
@@ -208,7 +208,7 @@ current-environment: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
 
 Used environment config file contains: 
 
-```yaml
+```shell
 > cat environments/ade1b8ad-3723-4f85-b51a-3cffa057b2c8/config.yaml 
 name: e1
 uuid: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
@@ -239,4 +239,4 @@ installed:
 
 ## TODO
 
-There is a lot TODO's in a code which should be fixed
+There is a lot TODO in a code which should be fixed

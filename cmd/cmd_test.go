@@ -61,7 +61,9 @@ func TestMain(m *testing.M) {
 
 func TestAz(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "az")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name    string
@@ -111,7 +113,9 @@ func TestAz(t *testing.T) {
 
 func TestEnvironments(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "environments")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name    string
@@ -209,7 +213,9 @@ func TestEnvironments(t *testing.T) {
 
 func TestHelp(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "help")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name            string
@@ -404,7 +410,9 @@ func TestHelp(t *testing.T) {
 
 func TestModule(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "module")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name     string
@@ -557,7 +565,9 @@ components:
 
 func TestRepos(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "repos")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name string
@@ -571,8 +581,8 @@ func TestRepos(t *testing.T) {
 		},
 		{
 			name: "e repos install",
-			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "install", "mkyc/my-epipany-repo", "--logLevel", "debug"},
-			want: []string{"will try to install mkyc/my-epipany-repo"},
+			args: []string{"--configDir", util.UsedConfigurationDirectory, "repos", "install", "mkyc/my-epiphany-repo", "--logLevel", "debug"},
+			want: []string{"will try to install mkyc/my-epiphany-repo"},
 		},
 		{
 			name: "e repos install incorrect",
@@ -599,7 +609,9 @@ func TestRepos(t *testing.T) {
 
 func TestSsh(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedReposDirectory, util.UsedTempDirectory = setup(t, "ssh")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name string

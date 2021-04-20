@@ -59,7 +59,7 @@ func setup(t *testing.T, suffix string) (string, string, string, string) {
 	return configFile, mainDirectory, envsDirectory, tempDirectory
 }
 
-func prepareImportTestPrereqs(t *testing.T, usedConfigurationDirectory, usedEnvironmentDirectory string) (string, string, string, string) {
+func prepareImportTestResources(t *testing.T, usedConfigurationDirectory, usedEnvironmentDirectory string) (string, string, string, string) {
 	// Create environments
 	importEnvValidFirst, err := Create("export-valid1")
 	if err != nil {
@@ -74,7 +74,7 @@ func prepareImportTestPrereqs(t *testing.T, usedConfigurationDirectory, usedEnvi
 		t.Fatal(err)
 	}
 	// Remove config file for one of environments to make it invalid
-	os.Remove(path.Join(usedEnvironmentDirectory, importEnvInvalidFirst.Uuid.String(), util.DefaultEnvironmentConfigFileName))
+	_ = os.Remove(path.Join(usedEnvironmentDirectory, importEnvInvalidFirst.Uuid.String(), util.DefaultEnvironmentConfigFileName))
 
 	importEnvInvalidSecond, err := Create("export-invalid2")
 	if err != nil {
@@ -115,16 +115,18 @@ func prepareImportTestPrereqs(t *testing.T, usedConfigurationDirectory, usedEnvi
 	}
 
 	// Remove environments to be able to export except one left by purpose
-	os.RemoveAll(path.Join(usedEnvironmentDirectory, importEnvValidFirst.Uuid.String()))
-	os.RemoveAll(path.Join(usedEnvironmentDirectory, importEnvValidSecond.Uuid.String()))
-	os.RemoveAll(path.Join(usedEnvironmentDirectory, importEnvInvalidFirst.Uuid.String()))
+	_ = os.RemoveAll(path.Join(usedEnvironmentDirectory, importEnvValidFirst.Uuid.String()))
+	_ = os.RemoveAll(path.Join(usedEnvironmentDirectory, importEnvValidSecond.Uuid.String()))
+	_ = os.RemoveAll(path.Join(usedEnvironmentDirectory, importEnvInvalidFirst.Uuid.String()))
 
 	return importFileValidFirst, importFileValidSecond, importFileInvalidFirst, importFileInvalidSecond
 }
 
 func TestGet(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "get")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	type args struct {
 		uuid uuid.UUID
@@ -189,7 +191,7 @@ installed: []`),
 			got, err := Get(tt.args.uuid)
 			if tt.wantErr == nil {
 				a.NoError(err)
-			} else if tt.isPattern {
+			} else if tt.isPattern && err != nil {
 				a.Contains(err.Error(), tt.wantErr.Error())
 			} else {
 				a.EqualError(err, tt.wantErr.Error())
@@ -322,8 +324,11 @@ installed: []`),
 		},
 	}
 	for _, tt := range tests {
-		util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "get-all")
 		t.Run(tt.name, func(t *testing.T) {
+			util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "get-all")
+			defer func() {
+				_ = os.RemoveAll(util.UsedConfigurationDirectory)
+			}()
 			a := assert.New(t)
 			if tt.mocked != nil && len(tt.mocked) > 0 {
 				for _, m := range tt.mocked {
@@ -341,7 +346,7 @@ installed: []`),
 			}
 
 			if tt.shouldPanic {
-				a.PanicsWithValue(tt.wantErr.Error(), func() { GetAll() })
+				a.PanicsWithValue(tt.wantErr.Error(), func() { _, _ = GetAll() })
 			} else {
 				got, err := GetAll()
 				if tt.wantErr == nil {
@@ -352,13 +357,14 @@ installed: []`),
 				a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 			}
 		})
-		os.RemoveAll(util.UsedConfigurationDirectory)
 	}
 }
 
 func Test_create(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "create")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	type args struct {
 		name string
@@ -412,7 +418,9 @@ func Test_create(t *testing.T) {
 
 func TestEnvironment_Save(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "env-save")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name        string
@@ -517,7 +525,9 @@ installed:
 
 func TestEnvironment_GetComponentByName(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "env-get-by-name")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name          string
@@ -633,6 +643,9 @@ func TestEnvironment_GetComponentByName(t *testing.T) {
 
 func TestIsExisting(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "validation")
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 	validEnv, err := Create("validation")
 	if err != nil {
 		t.Fatal(err)
@@ -641,7 +654,6 @@ func TestIsExisting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
 
 	tests := []struct {
 		name string
@@ -672,7 +684,9 @@ func TestIsExisting(t *testing.T) {
 
 func TestExport(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, util.UsedTempDirectory = setup(t, "export")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	// Create the environment to export
 	exportEnv, err := Create("export")
@@ -733,9 +747,11 @@ func TestExport(t *testing.T) {
 
 func TestImport(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory, _ = setup(t, "import")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
-	importFileValidFirst, importFileValidSecond, importFileInvalidFirst, importFileInvalidSecond := prepareImportTestPrereqs(t, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory)
+	importFileValidFirst, importFileValidSecond, importFileInvalidFirst, importFileInvalidSecond := prepareImportTestResources(t, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory)
 
 	tests := []struct {
 		name    string
@@ -755,12 +771,12 @@ func TestImport(t *testing.T) {
 		{
 			name:    "Source file that does not contain environment's config file",
 			from:    importFileInvalidFirst,
-			wantErr: errors.New("Missing environment config file"),
+			wantErr: errors.New("missing environment config file"),
 		},
 		{
 			name:    "Existing environment",
 			from:    importFileInvalidSecond,
-			wantErr: fmt.Errorf("Environment with id %s already exists", strings.Trim(filepath.Base(importFileInvalidSecond), filepath.Ext(importFileInvalidSecond))),
+			wantErr: fmt.Errorf("environment with id %s already exists", strings.Trim(filepath.Base(importFileInvalidSecond), filepath.Ext(importFileInvalidSecond))),
 		},
 	}
 	for _, tt := range tests {

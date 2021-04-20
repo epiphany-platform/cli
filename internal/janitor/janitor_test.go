@@ -24,7 +24,9 @@ func setup(a *assert.Assertions) string {
 
 func Test_setUsedConfigPaths(t *testing.T) {
 	confDir := setup(assert.New(t))
-	defer os.RemoveAll(confDir)
+	defer func() {
+		_ = os.RemoveAll(confDir)
+	}()
 
 	tests := []struct {
 		name      string
@@ -59,7 +61,9 @@ func Test_setUsedConfigPaths(t *testing.T) {
 
 func Test_ensureConfig(t *testing.T) {
 	confDir := setup(assert.New(t))
-	defer os.RemoveAll(confDir)
+	defer func() {
+		_ = os.RemoveAll(confDir)
+	}()
 	util.UsedConfigurationDirectory = ""
 	util.UsedReposDirectory = ""
 	util.UsedConfigFile = ""
@@ -89,7 +93,9 @@ func Test_ensureConfig(t *testing.T) {
 			if tt.exists {
 				_ = ioutil.WriteFile(tt.want, []byte("random content"), 0644)
 			}
-			defer os.Remove(tt.want)
+			defer func() {
+				_ = os.Remove(tt.want)
+			}()
 			err := ensureConfig()
 			a.NoError(err)
 			a.FileExists(tt.want)
@@ -99,7 +105,9 @@ func Test_ensureConfig(t *testing.T) {
 
 func Test_ensureEnvironment(t *testing.T) {
 	confDir := setup(assert.New(t))
-	defer os.RemoveAll(confDir)
+	defer func() {
+		_ = os.RemoveAll(confDir)
+	}()
 	util.UsedConfigurationDirectory = ""
 	util.UsedReposDirectory = ""
 	util.UsedConfigFile = ""
@@ -131,7 +139,9 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
 			_ = ioutil.WriteFile(util.UsedConfigFile, tt.mocked, 0644)
-			defer os.Remove(util.UsedConfigFile)
+			defer func() {
+				_ = os.Remove(util.UsedConfigFile)
+			}()
 			err := ensureConfig()
 			a.NoError(err)
 			err = ensureEnvironment()

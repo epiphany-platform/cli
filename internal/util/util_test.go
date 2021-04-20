@@ -29,10 +29,12 @@ func TestEnsureDirectory(t *testing.T) {
 	}
 	parentDir := os.TempDir()
 	mainDirectory, err := ioutil.TempDir(parentDir, "*-e-util")
+	defer func() {
+		_ = os.RemoveAll(mainDirectory)
+	}()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(mainDirectory)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			expectedDirectory := path.Join(mainDirectory, tt.want)

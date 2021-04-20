@@ -34,8 +34,8 @@ type InstalledComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
-//TODO add tests
 func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mounts map[string]string, processor func(string) string) error {
+	//TODO add tests
 	for _, v := range mounts {
 		util.EnsureDirectory(v)
 	}
@@ -77,8 +77,8 @@ type InstalledComponentVersion struct {
 	Commands       []InstalledComponentCommand `yaml:"commands"`
 }
 
-//TODO add tests
 func (cv *InstalledComponentVersion) Run(command string, processor func(string) string) error {
+	//TODO add tests
 	if cv.Type == "docker" {
 		mounts := make(map[string]string)
 		moduleMountPath := path.Join(
@@ -117,8 +117,8 @@ func (cv *InstalledComponentVersion) String() string {
 	return b.String()
 }
 
-//TODO add tests
 func (cv *InstalledComponentVersion) Download() error {
+	//TODO add tests
 	if cv.Type == "docker" {
 		dockerImage := &docker.Image{Name: cv.Image}
 		found, err := dockerImage.IsPulled()
@@ -196,8 +196,8 @@ func (e *Environment) String() string {
 	return b.String()
 }
 
-//TODO add tests
 func (e *Environment) Install(newComponent InstalledComponentVersion) error {
+	//TODO add tests
 	for _, ic := range e.Installed {
 		if ic.Name == newComponent.Name && ic.Version == newComponent.Version {
 			return errors.New("this version of component is already installed in environment")
@@ -287,7 +287,9 @@ func Get(uuid uuid.UUID) (*Environment, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
+		defer func(f *os.File) {
+			_ = f.Close()
+		}(file)
 		d := yaml.NewDecoder(file)
 		logger.Debug().Msgf("will try to decode file %s to yaml", expectedFile)
 		if err := d.Decode(&e); err != nil {
@@ -318,7 +320,7 @@ func (e *Environment) copyDirectoryForExport() (string, error) {
 	return destDir, err
 }
 
-// Check if environment with specified id exists
+// IsExisting checks if environment with specified id exists
 func IsExisting(uuid uuid.UUID) (bool, error) {
 	environments, err := GetAll()
 	if err != nil {
@@ -351,7 +353,9 @@ func (e *Environment) Export(dstDir string) error {
 	}
 
 	// Remove temporary directory
-	defer os.RemoveAll(envTempPath)
+	defer func() {
+		_ = os.RemoveAll(envTempPath)
+	}()
 
 	return nil
 }
@@ -367,15 +371,15 @@ func Import(srcFile string) (uuid.UUID, error) {
 			isFound = true
 			configContent, err := ioutil.ReadAll(f)
 			if err != nil {
-				return errors.New("Unable to read environment config")
+				return errors.New("unable to read environment config")
 			}
 			envConfig = &Environment{}
 			err = yaml.Unmarshal(configContent, envConfig)
 			if err != nil {
-				return errors.New("Cannot unmarshal config")
+				return errors.New("cannot unmarshal config")
 			}
 			if envConfig.Uuid == uuid.Nil {
-				return errors.New("Environment id is missing in the config")
+				return errors.New("environment id is missing in the config")
 			}
 		}
 		return nil
@@ -383,14 +387,14 @@ func Import(srcFile string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	} else if !isFound {
-		return uuid.Nil, errors.New("Missing environment config file")
+		return uuid.Nil, errors.New("missing environment config file")
 	}
 
 	isExisting, err := IsExisting(envConfig.Uuid)
 	if err != nil {
 		return uuid.Nil, err
 	} else if isExisting {
-		return uuid.Nil, fmt.Errorf("Environment with id %s already exists", envConfig.Uuid.String())
+		return uuid.Nil, fmt.Errorf("environment with id %s already exists", envConfig.Uuid.String())
 	}
 
 	// Unarchive specified file

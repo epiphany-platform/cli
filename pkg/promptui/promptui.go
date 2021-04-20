@@ -34,8 +34,8 @@ func PromptForString(label string) (string, error) {
 	return result, nil
 }
 
-//TODO fix it not to call config and environments here
 func PromptForEnvironmentSelect(label string) (uuid.UUID, error) {
+	//TODO fix it not to call config and environments here
 	config, err := configuration.GetConfig()
 	if err != nil {
 		return uuid.Nil, err

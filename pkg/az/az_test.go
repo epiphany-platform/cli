@@ -55,7 +55,7 @@ func TestGeneratePassword(t *testing.T) {
 				letters, digits, others := passwordCharactersCounter(got)
 				// expectedLettersNumber is the total length of generated Password, where first character is a letter due to Azure password requirements
 				// number of letters is a difference between total length and the rest of possible symbols
-				expectedLettersNumber := (tt.args.length - (tt.args.numDigits + tt.args.numSymbols))
+				expectedLettersNumber := tt.args.length - (tt.args.numDigits + tt.args.numSymbols)
 				if letters != expectedLettersNumber {
 					t.Errorf(`GeneratePassword() generated = %v. It has %d letters, but expected was %d letters`, got, letters, expectedLettersNumber)
 				}

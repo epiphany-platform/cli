@@ -98,7 +98,9 @@ func GetConfig() (*Config, error) {
 		logger.Error().Err(err).Msgf("failed to open file %s", util.UsedConfigFile)
 		return nil, err
 	}
-	defer file.Close()
+	defer func(f *os.File) {
+		_ = f.Close()
+	}(file)
 	d := yaml.NewDecoder(file)
 	logger.Trace().Msgf("will try to decode file %s to yaml", util.UsedConfigFile)
 	if err := d.Decode(&config); err != nil {

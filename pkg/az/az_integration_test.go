@@ -49,20 +49,26 @@ func TestCreateServicePrincipal(t *testing.T) {
 	appClient := getTestApplicationClient(tenantID, authorizer)
 
 	// when
+	var spObjectID, appObjectID string
 	app, sp, err := CreateServicePrincipal(pass, subscriptionID, tenantID, name)
-	spID := *sp.ObjectID
-	appID := *app.ObjectID
+	defer cleanupTestResources(spObjectID, appObjectID, spClient, appClient, t)
+	if sp != nil {
+		spObjectID = *sp.ObjectID
+	}
+	if app != nil {
+		appObjectID = *app.ObjectID
+	}
 	if err != nil {
-		if appID == "" && spID == "" {
+		if appObjectID == "" && spObjectID == "" {
 			t.Fatal(err)
 		} else {
-			//appID and spID were returned so there is potential to cleanup
+			// appID and spID were returned so there is potential to cleanup
 			t.Error(err)
 		}
 	}
 
 	// then
-	servicePrincipal, err := spClient.Get(context.TODO(), spID)
+	servicePrincipal, err := spClient.Get(context.TODO(), spObjectID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -70,7 +76,7 @@ func TestCreateServicePrincipal(t *testing.T) {
 		t.Errorf("service principal GET operation returned: %s", servicePrincipal.Response.Status)
 	}
 
-	application, err := appClient.Get(context.TODO(), appID)
+	application, err := appClient.Get(context.TODO(), appObjectID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -79,15 +85,13 @@ func TestCreateServicePrincipal(t *testing.T) {
 	}
 
 	credentials := Credentials{
-		AppID:          appID,
+		AppID:          appObjectID,
 		Password:       pass,
 		Tenant:         tenantID,
 		SubscriptionID: subscriptionID,
 	}
 
 	t.Logf("created credentials: %#v", credentials)
-
-	cleanupTestResources(spID, appID, spClient, appClient, t)
 }
 
 // cleanupTestResources cleans up Service Principal and related resources based on app and sp object ID
