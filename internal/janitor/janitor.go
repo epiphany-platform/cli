@@ -71,13 +71,6 @@ func setUsedConfigPaths(configDir string) {
 		logger.Debug().Msgf("util.UsedTempDirectory is already %s", util.UsedTempDirectory)
 	}
 
-	logger.Debug().Msg("will try to set repo config file path")
-	if util.UsedRepositoryFile == "" {
-		util.UsedRepositoryFile = path.Join(configDir, util.DefaultV1RepositoryFileName)
-	} else {
-		logger.Debug().Msgf("util.UsedRepositoryFile is already %s", util.UsedRepositoryFile)
-	}
-
 	logger.Debug().Msg("will try to set repos directory")
 	if util.UsedReposDirectory == "" {
 		util.UsedReposDirectory = path.Join(configDir, util.DefaultRepoDirectoryName)

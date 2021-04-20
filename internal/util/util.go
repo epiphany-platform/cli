@@ -26,7 +26,6 @@ var (
 	UsedConfigFile             string
 	UsedConfigurationDirectory string
 	UsedEnvironmentDirectory   string
-	UsedRepositoryFile         string
 	UsedTempDirectory          string
 	UsedReposDirectory         string
 )

@@ -41,12 +41,11 @@ func Test_setUsedConfigPaths(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
-			util.UsedConfigFile = ""
 			util.UsedConfigurationDirectory = ""
-			util.UsedEnvironmentDirectory = ""
-			util.UsedRepositoryFile = ""
-			util.UsedTempDirectory = ""
 			util.UsedReposDirectory = ""
+			util.UsedConfigFile = ""
+			util.UsedEnvironmentDirectory = ""
+			util.UsedTempDirectory = ""
 
 			setUsedConfigPaths(tt.configDir)
 
@@ -61,12 +60,11 @@ func Test_setUsedConfigPaths(t *testing.T) {
 func Test_ensureConfig(t *testing.T) {
 	confDir := setup(assert.New(t))
 	defer os.RemoveAll(confDir)
-	util.UsedConfigFile = ""
 	util.UsedConfigurationDirectory = ""
-	util.UsedEnvironmentDirectory = ""
-	util.UsedRepositoryFile = ""
-	util.UsedTempDirectory = ""
 	util.UsedReposDirectory = ""
+	util.UsedConfigFile = ""
+	util.UsedEnvironmentDirectory = ""
+	util.UsedTempDirectory = ""
 	setUsedConfigPaths(confDir)
 
 	tests := []struct {
@@ -102,12 +100,11 @@ func Test_ensureConfig(t *testing.T) {
 func Test_ensureEnvironment(t *testing.T) {
 	confDir := setup(assert.New(t))
 	defer os.RemoveAll(confDir)
-	util.UsedConfigFile = ""
 	util.UsedConfigurationDirectory = ""
-	util.UsedEnvironmentDirectory = ""
-	util.UsedRepositoryFile = ""
-	util.UsedTempDirectory = ""
 	util.UsedReposDirectory = ""
+	util.UsedConfigFile = ""
+	util.UsedEnvironmentDirectory = ""
+	util.UsedTempDirectory = ""
 	setUsedConfigPaths(confDir)
 
 	tests := []struct {

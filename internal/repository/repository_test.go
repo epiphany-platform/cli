@@ -139,7 +139,6 @@ components: []
 			util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(a)
 			util.UsedConfigFile = ""
 			util.UsedEnvironmentDirectory = ""
-			util.UsedRepositoryFile = ""
 			util.UsedTempDirectory = ""
 			defer os.RemoveAll(util.UsedConfigurationDirectory)
 
@@ -166,7 +165,6 @@ func Test_downloadV1Repository(t *testing.T) {
 	util.UsedReposDirectory = ""
 	util.UsedConfigFile = ""
 	util.UsedEnvironmentDirectory = ""
-	util.UsedRepositoryFile = ""
 	util.UsedTempDirectory = ""
 
 	type args struct {
@@ -297,7 +295,6 @@ components: []
 			util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(a)
 			util.UsedConfigFile = ""
 			util.UsedEnvironmentDirectory = ""
-			util.UsedRepositoryFile = ""
 			util.UsedTempDirectory = ""
 			defer os.RemoveAll(util.UsedConfigurationDirectory)
 
@@ -377,7 +374,6 @@ components: []
 			util.UsedConfigurationDirectory, util.UsedReposDirectory = setup(a)
 			util.UsedConfigFile = ""
 			util.UsedEnvironmentDirectory = ""
-			util.UsedRepositoryFile = ""
 			util.UsedTempDirectory = ""
 			defer os.RemoveAll(util.UsedConfigurationDirectory)
 
