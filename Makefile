@@ -23,6 +23,7 @@ clean: clean-task
 build: get-task janitor-task build-task
 get: get-update-task
 install: install-task
+pipeline-test: test-task
 
 test-task:
 	$(TEST) -race -v ./...
