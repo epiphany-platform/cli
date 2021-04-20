@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -22,6 +23,10 @@ var moduleInfoCmd = &cobra.Command{
 	Args: func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
 			return errors.New("there should be one positional argument")
+		}
+		r := regexp.MustCompile("^[0-9a-zA-Z-_]+/[0-9a-zA-Z-_]+:[0-9a-zA-Z-_.]+$") // TODO ensure github user and repo formats
+		if !r.MatchString(args[0]) {
+			return fmt.Errorf("module name argument incorrectly formatted")
 		}
 		return nil
 	},
