@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"errors"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/az"
-	"github.com/epiphany-platform/cli/pkg/configuration"
 	"github.com/epiphany-platform/cli/pkg/environment"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -42,7 +44,7 @@ var azSpCreateCmd = &cobra.Command{
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := isEnvPresentAndSelected()
+		err := isEnvPresentAndSelected()
 		if err != nil {
 			logger.Fatal().Msg("no environment selected")
 		}
@@ -55,7 +57,7 @@ var azSpCreateCmd = &cobra.Command{
 			logger.Fatal().Err(err).Msg("creation of service principal on Azure failed")
 		}
 		credentials := az.Credentials{
-			AppID:          *app.AppID,
+			AppID:          *app.AppID, // TODO investigate if that is correct or there should be ObjectID?
 			Password:       pass,
 			Tenant:         tenantID,
 			SubscriptionID: subscriptionID,
@@ -77,23 +79,19 @@ func init() {
 	azSpCreateCmd.Flags().String("name", "epiphany-cli", "Display Name of service principal")
 }
 
-func isEnvPresentAndSelected() (config *configuration.Config, err error) {
-	debug("will check if isEnvPresentAndSelected()")
-	config, err = configuration.GetConfig()
-	if err != nil {
-		return
-	}
+func isEnvPresentAndSelected() error {
+	logger.Debug().Msg("will check if isEnvPresentAndSelected()")
 	environments, err := environment.GetAll()
 	if err != nil {
-		return
+		return err
 	}
 	for _, e := range environments {
 		if e.Uuid.String() == config.CurrentEnvironment.String() {
-			debug("found currently selected environment %s", e.Uuid.String())
-			return
+			logger.Debug().Msgf("found currently selected environment %s", e.Uuid.String())
+			return nil
 		}
 	}
-	debug("currently selected environment not found")
-	err = errors.New("currently selected environment not found")
-	return
+	err = errors.New("currently selected environment missing")
+	logger.Warn().Err(err).Msg("environment not found")
+	return err
 }

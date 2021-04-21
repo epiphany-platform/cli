@@ -3,8 +3,9 @@ package cmd
 import (
 	"os"
 
-	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/environment"
+
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -15,7 +16,8 @@ var (
 	dstDir   string
 )
 
-var environmentsExportCmd = &cobra.Command{
+// envExportCmd represents envs export command
+var envExportCmd = &cobra.Command{
 	Use:        "export",
 	SuggestFor: []string{"expor", "exprt"},
 	Short:      "Exports an environment as a zip archive",
@@ -53,11 +55,7 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		// Default environment and destination directory are current ones
 		// Check if environment is default
 		if envIdStr == "" {
-			config, err := configuration.GetConfig()
-			if err != nil {
-				logger.Fatal().Err(err).Msg("Unable to get environment config")
-			}
-			if config.CurrentEnvironment == uuid.Nil {
+			if config.CurrentEnvironment == uuid.Nil { // TODO this will never occur due to new janitor environment initialization
 				logger.Fatal().Msg("Environment has to be selected if id is not specified")
 			} else {
 				envId = config.CurrentEnvironment
@@ -65,33 +63,34 @@ Export environment into home directory: e environments export --id ba03a2ba-8fa0
 		} else {
 			envId = uuid.MustParse(envIdStr)
 			// Check if passed environment id is valid
-			isEnvValid, err := environment.IsExisting(envId)
+			exists, err := environment.IsExisting(envId)
 			if err != nil {
-				logger.Fatal().Err(err).Msgf("Environment %s validation failed", envId.String())
-			} else if !isEnvValid {
-				logger.Fatal().Msgf("Environment %s is not found", envId.String())
+				logger.Fatal().Err(err).Msgf("Environment existence check failed (environment id: %s)", envId.String())
+			} else if !exists {
+				logger.Fatal().Msgf("Environment not found (environment id: %s)", envId.String())
 			}
 		}
 
 		// Export an environment
 		env, err := environment.Get(envId)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to get an environment by id %s", envId.String())
+			logger.Fatal().Err(err).Msgf("Unable to get an environment by id (environment id: %s)", envId.String())
 		}
 
 		err = env.Export(dstDir)
 		if err != nil {
-			logger.Fatal().Err(err).Msgf("Unable to export environment with id %s", envId.String())
+			logger.Fatal().Err(err).Msgf("Unable to export environment (environment id: %s)", envId.String())
 		}
 
-		logger.Info().Msgf("Environment with id %s was exported", envId.String())
+		logger.Info().Msgf("Export operation finished correctly (environment id: %s)", envId.String())
 	},
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsExportCmd)
+	envCmd.AddCommand(envExportCmd)
 
-	environmentsExportCmd.Flags().StringP("id", "i", "", "id of the environment to export, default is current environment")
-	environmentsExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive, default is current directory")
-	environmentsExportCmd.MarkFlagDirname("destination")
+	//TODO decide if we need this parameter at all
+	envExportCmd.Flags().StringP("id", "i", "", "id of the environment to export, default is current environment")
+	envExportCmd.Flags().StringP("destination", "d", "", "destination directory to store exported archive, default is current directory")
+	_ = envExportCmd.MarkFlagDirname("destination")
 }

@@ -1,9 +1,0 @@
-Component:
- Name: c1
- Type: docker
-  Component Version:
-   Version: 0.1.0
-   Image: docker.io/hashicorp/terraform:0.12.28
-    Command:
-     Name init
-     Description initializes terraform in local directory

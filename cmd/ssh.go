@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -11,8 +11,8 @@ var sshCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Ssh and keys operations",
 	Long:  `Commands related to ssh and keys operations.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("ssh called")
+	PreRun: func(cmd *cobra.Command, args []string) {
+		logger.Debug().Msg("ssh called")
 	},
 }
 

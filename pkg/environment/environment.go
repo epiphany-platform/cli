@@ -10,14 +10,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/auth"
 	"github.com/epiphany-platform/cli/pkg/docker"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/google/uuid"
 	"github.com/mholt/archiver/v3"
 	"github.com/otiai10/copy"
 	"gopkg.in/yaml.v2"
 )
+
+func init() {
+	logger.Initialize()
+}
 
 //InstalledComponentCommand holds information about specific command of installed component
 type InstalledComponentCommand struct {
@@ -28,8 +34,8 @@ type InstalledComponentCommand struct {
 	Args        []string          `yaml:"args"`
 }
 
-//TODO add tests
 func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory string, mounts map[string]string, processor func(string) string) error {
+	//TODO add tests
 	for _, v := range mounts {
 		util.EnsureDirectory(v)
 	}
@@ -49,7 +55,7 @@ func (cc *InstalledComponentCommand) RunDocker(image string, workDirectory strin
 		Mounts:               mounts,
 		EnvironmentVariables: envs,
 	}
-	debug("will try to run docker job %+v", dockerJob)
+	logger.Debug().Msgf("will try to run docker job %+v", dockerJob)
 	return dockerJob.Run()
 }
 
@@ -71,8 +77,8 @@ type InstalledComponentVersion struct {
 	Commands       []InstalledComponentCommand `yaml:"commands"`
 }
 
-//TODO add tests
 func (cv *InstalledComponentVersion) Run(command string, processor func(string) string) error {
+	//TODO add tests
 	if cv.Type == "docker" {
 		mounts := make(map[string]string)
 		moduleMountPath := path.Join(
@@ -111,8 +117,8 @@ func (cv *InstalledComponentVersion) String() string {
 	return b.String()
 }
 
-//TODO add tests
 func (cv *InstalledComponentVersion) Download() error {
+	//TODO add tests
 	if cv.Type == "docker" {
 		dockerImage := &docker.Image{Name: cv.Image}
 		found, err := dockerImage.IsPulled()
@@ -144,7 +150,7 @@ func (cv *InstalledComponentVersion) PersistLogs(logs string) { //TODO change to
 	)
 	err := ioutil.WriteFile(logsPath, []byte(logs), 0644)
 	if err != nil {
-		errFailedToWriteFile(err)
+		logger.Panic().Err(err).Msg("failed to write file")
 	}
 }
 
@@ -165,13 +171,13 @@ func (e *Environment) Save() error {
 	if e.Uuid == uuid.Nil {
 		return errors.New(fmt.Sprintf("unexpected UUID on Save: %s", e.Uuid))
 	}
-	debug("will try to marshal environment %+v", e)
+	logger.Debug().Msgf("will try to marshal environment %+v", e)
 	data, err := yaml.Marshal(e)
 	if err != nil {
 		return err
 	}
 	ep := path.Join(util.UsedEnvironmentDirectory, e.Uuid.String(), util.DefaultEnvironmentConfigFileName)
-	debug("will try to write marshaled data to file %s", ep)
+	logger.Debug().Msgf("will try to write marshaled data to file %s", ep)
 	err = ioutil.WriteFile(ep, data, 0644)
 	if err != nil {
 		return err
@@ -190,8 +196,8 @@ func (e *Environment) String() string {
 	return b.String()
 }
 
-//TODO add tests
 func (e *Environment) Install(newComponent InstalledComponentVersion) error {
+	//TODO add tests
 	for _, ic := range e.Installed {
 		if ic.Name == newComponent.Name && ic.Version == newComponent.Version {
 			return errors.New("this version of component is already installed in environment")
@@ -230,7 +236,7 @@ func Create(name string) (*Environment, error) {
 
 //create new environment with given name and uuid
 func create(name string, uuid uuid.UUID) (*Environment, error) {
-	debug("will try to create environment with uuid %s and name %s", uuid.String(), name)
+	logger.Debug().Msgf("will try to create environment with uuid %s and name %s", uuid.String(), name)
 	environment := &Environment{
 		Name: name,
 		Uuid: uuid,
@@ -239,27 +245,28 @@ func create(name string, uuid uuid.UUID) (*Environment, error) {
 	util.EnsureDirectory(newEnvironmentDirectory)
 	err := environment.Save()
 	if err != nil {
-		errSaveEnvironment(err, environment.Uuid.String())
+		logger.Error().Err(err).Msgf("wasn't able to save environment %s", environment.Uuid.String())
+		return nil, err
 	}
 	return environment, nil
 }
 
 //GetAll existing Environment
 func GetAll() ([]*Environment, error) {
-	debug("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
+	logger.Debug().Msgf("will try to get all subdirectories of %s directory", util.UsedEnvironmentDirectory)
 	items, err := ioutil.ReadDir(util.UsedEnvironmentDirectory)
 	if err != nil {
 		return nil, err
 	}
 	var environments []*Environment
 	for _, i := range items {
-		debug("entered directory %s", i.Name())
+		logger.Debug().Msgf("entered directory %s", i.Name())
 		if i.IsDir() {
 			e, err := Get(uuid.MustParse(i.Name()))
 			if err == nil {
 				environments = append(environments, e)
 			} else {
-				warnNotEnvironmentDirectory(err)
+				logger.Warn().Err(err).Msg("does not seam like environment directory")
 			}
 		}
 	}
@@ -269,24 +276,26 @@ func GetAll() ([]*Environment, error) {
 //Get Environment bu uuid
 func Get(uuid uuid.UUID) (*Environment, error) {
 	expectedFile := path.Join(util.UsedEnvironmentDirectory, uuid.String(), util.DefaultEnvironmentConfigFileName)
-	debug("will try to get environment config from file %s", expectedFile)
+	logger.Debug().Msgf("will try to get environment config from file %s", expectedFile)
 	if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-		warnEnvironmentConfigFileNotFound(err, expectedFile)
+		logger.Warn().Err(err).Msgf("expected file %s not found", expectedFile)
 		return nil, err
 	} else {
 		e := &Environment{}
-		debug("trying to open %s file", expectedFile)
+		logger.Debug().Msgf("trying to open %s file", expectedFile)
 		file, err := os.Open(expectedFile)
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
+		defer func(f *os.File) {
+			_ = f.Close()
+		}(file)
 		d := yaml.NewDecoder(file)
-		debug("will try to decode file %s to yaml", expectedFile)
+		logger.Debug().Msgf("will try to decode file %s to yaml", expectedFile)
 		if err := d.Decode(&e); err != nil {
 			return nil, err
 		}
-		debug("got environment config %+v", e)
+		logger.Debug().Msgf("got environment config %+v", e)
 		return e, nil
 	}
 }
@@ -311,7 +320,7 @@ func (e *Environment) copyDirectoryForExport() (string, error) {
 	return destDir, err
 }
 
-// Check if environment with specified id exists
+// IsExisting checks if environment with specified id exists
 func IsExisting(uuid uuid.UUID) (bool, error) {
 	environments, err := GetAll()
 	if err != nil {
@@ -344,7 +353,9 @@ func (e *Environment) Export(dstDir string) error {
 	}
 
 	// Remove temporary directory
-	defer os.RemoveAll(envTempPath)
+	defer func() {
+		_ = os.RemoveAll(envTempPath)
+	}()
 
 	return nil
 }
@@ -360,15 +371,15 @@ func Import(srcFile string) (uuid.UUID, error) {
 			isFound = true
 			configContent, err := ioutil.ReadAll(f)
 			if err != nil {
-				return errors.New("Unable to read environment config")
+				return errors.New("unable to read environment config")
 			}
 			envConfig = &Environment{}
 			err = yaml.Unmarshal(configContent, envConfig)
 			if err != nil {
-				return errors.New("Cannot unmarshal config")
+				return errors.New("cannot unmarshal config")
 			}
 			if envConfig.Uuid == uuid.Nil {
-				return errors.New("Environment id is missing in the config")
+				return errors.New("environment id is missing in the config")
 			}
 		}
 		return nil
@@ -376,14 +387,14 @@ func Import(srcFile string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	} else if !isFound {
-		return uuid.Nil, errors.New("Missing environment config file")
+		return uuid.Nil, errors.New("missing environment config file")
 	}
 
 	isExisting, err := IsExisting(envConfig.Uuid)
 	if err != nil {
 		return uuid.Nil, err
 	} else if isExisting {
-		return uuid.Nil, fmt.Errorf("Environment with id %s already exists", envConfig.Uuid.String())
+		return uuid.Nil, fmt.Errorf("environment with id %s already exists", envConfig.Uuid.String())
 	}
 
 	// Unarchive specified file

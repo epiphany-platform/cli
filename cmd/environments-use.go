@@ -1,41 +1,59 @@
 package cmd
 
 import (
-	"github.com/epiphany-platform/cli/pkg/configuration"
+	"errors"
+
+	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/promptui"
+
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
-// environmentsUseCmd represents the use command
-var environmentsUseCmd = &cobra.Command{
+var uu uuid.UUID
+
+// envUseCmd represents the use command
+var envUseCmd = &cobra.Command{
 	Use:   "use",
 	Short: "Allows to select environment to be used",
 	Long:  `TODO`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			return errors.New("'use' command gets 1 optional argument with UUID of environment to use")
+		}
+		if len(args) == 1 {
+			u, err := uuid.Parse(args[0])
+			if err != nil {
+				return err
+			}
+			exists, err := environment.IsExisting(u)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				return errors.New("environment with UUID: " + u.String() + " not found")
+			}
+		}
+		return nil
+	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments use called")
+		if len(args) == 1 {
+			logger.Debug().Msg("environments use called")
+			uu = uuid.MustParse(args[0])
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
-		if config.CurrentEnvironment == uuid.Nil {
-			logger.Fatal().Msg("no environment selected")
-		}
-
-		var u uuid.UUID
-		if len(args) == 1 {
-			u = uuid.MustParse(args[0])
-		} else {
-			u, err = promptui.PromptForEnvironmentSelect("Environments")
+		if len(args) == 0 {
+			u, err := promptui.PromptForEnvironmentSelect("Environments")
 			if err != nil {
 				logger.Fatal().Err(err).Msg("prompt failed")
 			}
+			uu = u
 		}
 
-		logger.Info().Msgf("Chosen environment UUID is %s", u.String())
-		err = config.SetUsedEnvironment(u)
+		logger.Info().Msgf("Chosen environment UUID is %s", uu.String())
+		err := config.SetUsedEnvironment(uu)
 		if err != nil {
 			logger.Fatal().Err(err).Msg("setting used environment failed")
 		}
@@ -43,15 +61,5 @@ var environmentsUseCmd = &cobra.Command{
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsUseCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// environmentsUseCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// environmentsUseCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	envCmd.AddCommand(envUseCmd)
 }

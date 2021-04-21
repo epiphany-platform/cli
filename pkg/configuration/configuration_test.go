@@ -10,8 +10,9 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/az"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ func setup(t *testing.T, suffix string) (string, string, string) {
 }
 
 // Create necessary files and directories as environments are validated before switching
-func prepareSetUsedEnvironmentPrereqs(t *testing.T, envDirectory, envIDCurrent, envIDSwitch string) {
+func prepareSetUsedEnvironmentResources(t *testing.T, envDirectory, envIDCurrent, envIDSwitch string) {
 	envConfigTemplate := `name: %s
 uuid: %s
 `
@@ -61,52 +62,14 @@ uuid: %s
 	}
 }
 
-func TestConfig_GetConfigFilePath(t *testing.T) {
-	var tempFile string
-	tempFile, util.UsedConfigurationDirectory, _ = setup(t, "get")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
-
-	tests := []struct {
-		name        string
-		mocked      string
-		want        string
-		shouldPanic bool
-	}{
-		{
-			name:        "correct",
-			mocked:      tempFile,
-			want:        tempFile,
-			shouldPanic: false,
-		},
-		{
-			name:        "incorrect",
-			mocked:      "",
-			want:        tempFile,
-			shouldPanic: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-			util.UsedConfigFile = tt.mocked
-			c := &Config{}
-			if tt.shouldPanic {
-				a.Panics(func() { c.GetConfigFilePath() })
-			} else {
-				got := c.GetConfigFilePath()
-				a.Equal(got, tt.want, "got %s, want %s", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestConfig_SetUsedEnvironment(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "used")
 	envIDCurrent := "3e5b7269-1b3d-4003-9454-9f472857633a"
 	envIDSwitch := "567c0831-7e83-4b56-a2a7-ec7a8327238f"
-	prepareSetUsedEnvironmentPrereqs(t, util.UsedEnvironmentDirectory, envIDCurrent, envIDSwitch)
-
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	prepareSetUsedEnvironmentResources(t, util.UsedEnvironmentDirectory, envIDCurrent, envIDSwitch)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	type fields struct {
 		Version            string
@@ -153,7 +116,9 @@ current-environment: %s
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			a := assert.New(t)
-			defer ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			defer func() {
+				_ = ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			}()
 			c := &Config{
 				Version:            tt.fields.Version,
 				Kind:               tt.fields.Kind,
@@ -175,7 +140,9 @@ current-environment: %s
 
 func TestConfig_CreateNewEnvironment(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "create")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	type args struct {
 		name string
@@ -213,16 +180,18 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(util.UsedConfigFile, tt.mocked, 0644)
 			}
-			defer ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			defer func() {
+				_ = ioutil.WriteFile(util.UsedConfigFile, []byte(""), 0644)
+			}()
 			c, err := GetConfig()
 			a.NoErrorf(err, "error getting configuration %v", err)
-			uuid, err := c.CreateNewEnvironment(tt.args.name)
+			u, err := c.CreateNewEnvironment(tt.args.name)
 			if tt.wantErr == nil {
 				a.NoError(err)
 			} else {
 				a.EqualError(err, tt.wantErr.Error())
 			}
-			envDir := path.Join(util.UsedEnvironmentDirectory, uuid.String())
+			envDir := path.Join(util.UsedEnvironmentDirectory, u.String())
 			a.DirExists(envDir)
 			a.FileExists(path.Join(envDir, util.DefaultEnvironmentConfigFileName))
 		})
@@ -231,7 +200,9 @@ current-environment: b3d7be89-461e-41eb-b130-0b4db1555d85`),
 
 func TestConfig_Save(t *testing.T) {
 	util.UsedConfigFile, util.UsedConfigurationDirectory, util.UsedEnvironmentDirectory = setup(t, "save")
-	defer os.RemoveAll(util.UsedConfigurationDirectory)
+	defer func() {
+		_ = os.RemoveAll(util.UsedConfigurationDirectory)
+	}()
 
 	tests := []struct {
 		name    string
@@ -340,112 +311,12 @@ func TestConfig_AddAzureCredentials(t *testing.T) {
 	}
 }
 
-func Test_setUsedConfigPaths(t *testing.T) {
-	var tempFile, tempDir string
-	tempFile, tempDir, _ = setup(t, "set")
-	defer os.RemoveAll(tempDir)
-
-	tests := []struct {
-		name       string
-		configDir  string
-		configFile string
-		mocked     []byte
-		want       *Config
-		wantErr    error
-	}{
-		{
-			name:       "empty file",
-			configDir:  tempDir,
-			configFile: tempFile,
-			wantErr:    errors.New("EOF"),
-		},
-		{
-			name:       "correct",
-			configDir:  tempDir,
-			configFile: tempFile,
-			mocked: []byte(`version: v1
-kind: Config
-current-environment: 3e5b7269-1b3d-4003-9454-9f472857633a`),
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("3e5b7269-1b3d-4003-9454-9f472857633a"),
-			},
-			wantErr: nil,
-		},
-		{
-			name:       "incorrect",
-			configDir:  tempDir,
-			configFile: tempFile,
-			mocked:     []byte("incorrect file"),
-			wantErr:    errors.New("yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `incorre...` into configuration.Config"),
-		},
-		{
-			name:       "correct with null",
-			configDir:  tempDir,
-			configFile: tempFile,
-			mocked: []byte(`version: v1
-kind: Config
-current-environment: 00000000-0000-0000-0000-000000000000`),
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
-			wantErr: nil,
-		},
-		{
-			name:       "not existing directory",
-			configDir:  path.Join(tempDir, "non-existing-config-directory"),
-			configFile: path.Join(tempDir, "non-existing-config-directory", "non-existing-file.yaml"),
-			wantErr:    nil,
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
-		},
-		{
-			name:       "not existing file",
-			configDir:  tempDir,
-			configFile: path.Join(tempDir, "another-not-existing-file.yaml"),
-			wantErr:    nil,
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := assert.New(t)
-			util.UsedConfigFile = ""
-			util.UsedConfigurationDirectory = ""
-			util.UsedEnvironmentDirectory = ""
-			util.UsedRepositoryFile = ""
-			util.UsedTempDirectory = ""
-			if len(tt.mocked) > 0 {
-				_ = ioutil.WriteFile(tt.configFile, tt.mocked, 0644)
-			}
-			defer ioutil.WriteFile(tt.configFile, []byte(""), 0644)
-			got, err := setUsedConfigPaths(tt.configDir, tt.configFile)
-
-			if tt.wantErr == nil {
-				a.NoError(err)
-			} else {
-				a.EqualError(err, tt.wantErr.Error())
-			}
-			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
-		})
-	}
-}
-
-func Test_makeOrGetConfig(t *testing.T) {
+func TestGetConfig(t *testing.T) {
 	var tempFile, tempDirectory string
-	tempFile, tempDirectory, _ = setup(t, "make")
-	defer os.RemoveAll(tempDirectory)
+	tempFile, tempDirectory, _ = setup(t, "get")
+	defer func() {
+		_ = os.RemoveAll(tempDirectory)
+	}()
 
 	tests := []struct {
 		name       string
@@ -494,23 +365,23 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 		{
 			name:       "not existing",
 			configPath: path.Join(tempDirectory, "non-existing-config-directory"),
-			wantErr:    nil,
-			want: &Config{
-				Version:            "v1",
-				Kind:               KindConfig,
-				CurrentEnvironment: uuid.MustParse("00000000-0000-0000-0000-000000000000"),
-			},
+			wantErr:    errors.New("open " + path.Join(tempDirectory, "non-existing-config-directory") + ": no such file or directory"),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			util.UsedConfigurationDirectory = tempDirectory
+			util.UsedConfigFile = tt.configPath
+
 			a := assert.New(t)
 			util.UsedConfigFile = tt.configPath
 			if len(tt.mocked) > 0 {
 				_ = ioutil.WriteFile(tt.configPath, tt.mocked, 0644)
 			}
-			defer ioutil.WriteFile(tt.configPath, []byte(""), 0644)
-			got, err := makeOrGetConfig()
+			defer func() {
+				_ = ioutil.WriteFile(tt.configPath, []byte(""), 0644)
+			}()
+			got, err := GetConfig()
 			if tt.wantErr == nil {
 				a.NoError(err)
 			} else {
@@ -519,4 +390,5 @@ current-environment: 00000000-0000-0000-0000-000000000000`),
 			a.Truef(reflect.DeepEqual(got, tt.want), "got = %#v, want = %#v", got, tt.want)
 		})
 	}
+
 }

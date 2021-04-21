@@ -7,93 +7,80 @@ PoC application to wrap containerised modules of epiphany
 
 #### e help 
 
+You can use `--help` switch anyway in a cli sub commands path. 
+
 ```shell
 > e --help                          
 E wrapper allows to interact with epiphany
 
-Usage:
-  e [command]
-
-Available Commands:
-  components   Allows to inspect and install available components
-  environments Allows various interactions with environments
-  help         Help about any command
-
-Flags:
-      --configDir string   config directory (default is .e)
-  -d, --debug              enable debug loglevel
-  -h, --help               help for e
-
-Use "e [command] --help" for more information about a command.
-
+...
 ```
 
-### components sub-command
+### module sub-command
 
-#### e components help
+#### e module help
 
 ```shell
-> e components --help
-This command provides way to:
- - list available components, 
- - install new component to environment
- - get information about component
-
-Information about available components are taken from https://github.com/mkyc/epiphany-wrapper-poc-repo/blob/master/v1.yaml
+> e module --help
+TODO
 
 Usage:
-  e components [command]
+  e module [command]
 
 Available Commands:
-  info        Displays information about component
-  install     Installs component into currently used environment
-  list        Lists all existing components in repository
+  info        shows ifo of named module
+  install     installs module into currently used environment
+  search      searches for named module
 
 Flags:
-  -h, --help   help for components
+  -h, --help   help for module
 
 Global Flags:
       --configDir string   config directory (default is .e)
-  -d, --debug              enable debug loglevel
+      --logLevel string    log level (default is warn, values: [trace, debug, info, error, fatal])
 
-Use "e components [command] --help" for more information about a command.
-
+Use "e module [command] --help" for more information about a command.
 ```
 
-#### e components list 
+#### e module search 
 
 ```shell
-> e components list  
-Component: c1:0.1.0
-Component: luuk-c1:0.0.1
+> e module search azbi
+epiphany-platform-modules/azbi:dev
 ```
 
-#### e components info
+#### e module info
 
 ```shell
-> e components info c1
-Component:
- Name: c1
- Type: docker
+> e module info epiphany-platform-modules/azbi:dev
   Component Version:
-   Version: 0.1.0
-   Image: docker.io/hashicorp/terraform:0.12.28
+   Version: dev
+   Image: docker.io/epiphanyplatform/azbi:dev
+    Command:
+     Name metadata
+     Description meta
     Command:
      Name init
-     Description initializes terraform in local directory
+     Description init
+    Command:
+     Name plan
+     Description plan
     Command:
      Name apply
-     Description applies terraform in local directory
-
+     Description apply
+    Command:
+     Name plan-destroy
+     Description plan destroy
+    Command:
+     Name destroy
+     Description destroy
 ```
 
-#### e components install
-
-Use you created environment with `e environment new e1`
+#### e module install
 
 ```shell
-> e components install c1
-Installed component c1 0.1.0 to environment e1
+> e module install epiphany-platform-modules/azbi:dev
+Installed module azbi:dev to environment 210416-1214
 ```
 
 ### environments sub-command
@@ -101,14 +88,20 @@ Installed component c1 0.1.0 to environment e1
 #### e environments help
 
 ```shell
-> e environments --help
+> e environments --help                                       
 TODO
 
 Usage:
   e environments [command]
 
+Aliases:
+  environments, env
+
 Available Commands:
+  export      Exports an environment as a zip archive
+  import      Imports a zip compressed environment
   info        Displays information about currently selected environment
+  list        TODO
   new         Creates new environment
   run         Runs installed component command in environment
   use         Allows to select environment to be used
@@ -118,7 +111,7 @@ Flags:
 
 Global Flags:
       --configDir string   config directory (default is .e)
-  -d, --debug              enable debug loglevel
+      --logLevel string    log level (default is warn, values: [trace, debug, info, error, fatal])
 
 Use "e environments [command] --help" for more information about a command.
 ```
@@ -129,48 +122,109 @@ Use "e environments [command] --help" for more information about a command.
 > e environments new e1
 ```
 
-no output expected
+No output is expected.
 
 #### e environments info
 
 Here used after command `e components install c1`
 
 ```shell
-> e environments info    
+> e environments info
 Environment info:
  Name: e1
- UUID: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
+ UUID: 1dd02223-66ab-482f-8b0b-6c9e5d154c34
   Installed Component:
-   Name: c1
+   Name: azbi
    Type: docker
-   Version: 0.1.0
-   Image: docker.io/hashicorp/terraform:0.12.28
+   Version: dev
+   Image: docker.io/epiphanyplatform/azbi:dev
+    Command:
+     Name metadata
+     Description meta
     Command:
      Name init
-     Description initializes terraform in local directory
+     Description init
+    Command:
+     Name plan
+     Description plan
     Command:
      Name apply
-     Description applies terraform in local directory
+     Description apply
+    Command:
+     Name plan-destroy
+     Description plan destroy
+    Command:
+     Name destroy
+     Description destroy
 ```
 
 #### e environments use
 
 ```shell 
-> e environments use     
-✔ e1 (ade1b8ad-3723-4f85-b51a-3cffa057b2c8, current)
+> e environments use 
+Use the arrow keys to navigate: ↓ ↑ → ← 
+? Environments: 
+  ▸ 210416-1214 (1dd02223-66ab-482f-8b0b-6c9e5d154c34, current)
+    e1 (f1a114d9-9a38-4c36-8488-4272ed94f359)
 ```
 
 #### e environments run
 
 ```shell
-> e environments run c1 init
-2020/07/28 15:39:17 [WARN] Log levels other than TRACE are currently unreliable, and are supported only for backward compatibility.
-  Use TF_LOG=TRACE to see Terraform's internal logs.
-  ----
-Terraform initialized in an empty directory!
+> e environments run azbi metadata
+{"labels":{"kind":"infrastructure","name":"Azure Basic Infrastructure","provider":"azure","provides-pubips":true,"provides-vms":true,"short":"azbi","version":"dev"}}
+```
 
-The directory has no Terraform configuration files. You may begin working
-with Terraform immediately by creating Terraform configuration files.
+### repos sub-command
+
+#### e repos help
+
+```shell
+> e repos --help                                               
+Commands related to repos management
+
+Usage:
+  e repos [command]
+
+Available Commands:
+  install     installs new repository
+  list        Lists installed repositories
+
+Flags:
+  -h, --help   help for repos
+
+Global Flags:
+      --configDir string   config directory (default is .e)
+      --logLevel string    log level (default is warn, values: [trace, debug, info, error, fatal])
+
+Use "e repos [command] --help" for more information about a command.
+```
+
+#### e repos list
+
+```shell
+> e repos list  
+Repository: epiphany-platform-modules
+	Module: terraform:0.1.0
+	Module: azbi:dev
+```
+
+#### e repos install
+
+```shell
+> e repos install mkyc/my-epiphany-repo
+```
+
+No output is expected but `list` output should get longer.
+
+```shell
+> e repos list                         
+Repository: epiphany-platform-modules
+	Module: terraform:0.1.0
+	Module: azbi:dev
+Repository: mkyc-my-epiphany-repo
+	Module: azbi:0.1.0
+	Module: azks:0.1.0
 ```
 
 ## configuration directory structure
@@ -178,65 +232,62 @@ with Terraform immediately by creating Terraform configuration files.
 After all command executed in previous section directory structure looks in similar way to: 
 
 ```shell
-> pwd
+> tree ~/.e                                                   
 /Users/mateusz/.e
-> tree -a
-.
 ├── config.yaml
 ├── environments
-│   └── ade1b8ad-3723-4f85-b51a-3cffa057b2c8
-│       ├── c1
-│       │   └── 0.1.0
-│       │       ├── mounts
-│       │       │   └── terraform
-│       │       └── runs
-│       │           └── 20200728-173415.915CEST.log
-│       └── config.yaml
-└── v1.yaml
+│   ├── 63fdee7b-cf31-46f9-be9b-61fad761b484
+│   │   ├── azbi
+│   │   │   └── dev
+│   │   │       ├── mounts
+│   │   │       └── runs
+│   │   ├── config.yaml
+│   │   └── shared
+│   └── d94a07eb-0501-4beb-8bee-cc74e5b0d403
+│       ├── config.yaml
+│       └── shared
+├── repos
+│   └── epiphany-platform-modules.yaml
+└── tmp
 
-7 directories, 4 files
+11 directories, 4 files
 ```
 
 Main config file contains: 
 
-```yaml
-> cat config.yaml 
+```shell
+> cat ~/.e/config.yaml 
 version: v1
 kind: Config
-current-environment: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
+current-environment: 63fdee7b-cf31-46f9-be9b-61fad761b484
 ```
 
 Used environment config file contains: 
 
-```yaml
-> cat environments/ade1b8ad-3723-4f85-b51a-3cffa057b2c8/config.yaml 
+```shell
+> cat ~/.e/environments/63fdee7b-cf31-46f9-be9b-61fad761b484/config.yaml 
 name: e1
-uuid: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
+uuid: 63fdee7b-cf31-46f9-be9b-61fad761b484
 installed:
-- environment_ref: ade1b8ad-3723-4f85-b51a-3cffa057b2c8
-  name: c1
+- environment_ref: 63fdee7b-cf31-46f9-be9b-61fad761b484
+  name: azbi
   type: docker
-  version: 0.1.0
-  image: docker.io/hashicorp/terraform:0.12.28
-  workdir: /terraform
-  mounts:
-  - /terraform
+  version: dev
+  image: docker.io/epiphanyplatform/azbi:dev
+  workdir: /shared
+  mounts: []
+  shared: /shared
   commands:
-  - name: init
-    description: initializes terraform in local directory
-    command: init
-    envs:
-      TF_LOG: WARN
-    args: []
-  - name: apply
-    description: applies terraform in local directory
-    command: apply
-    envs:
-      TF_LOG: DEBUG
+  - name: metadata
+    description: meta
+    command: metadata
+    envs: {}
     args:
-    - -auto-approve
+    - --json
+
+...
 ```
 
 ## TODO
 
-There is a lot TODO's in a code which should be fixed
+There is a lot TODO in a code which should be fixed

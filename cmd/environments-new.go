@@ -1,48 +1,45 @@
 package cmd
 
 import (
-	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/promptui"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var newEnvName string
 
-// environmentsNewCmd represents the new command
-var environmentsNewCmd = &cobra.Command{
+// envNewCmd represents the new command
+var envNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "Creates new environment",
 	Long:  `TODO`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments new called")
+		logger.Debug().Msg("environments new called")
 
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {
-			logger.Fatal().Err(err)
+			logger.Fatal().Err(err).Msg("BindPFlags failed")
 		}
 
 		newEnvName = viper.GetString("name")
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
-
 		if newEnvName == "" {
 			if len(args) == 1 {
 				newEnvName = args[0]
 			}
 		}
 		if newEnvName == "" {
-			newEnvName, err = promptui.PromptForString("Environment name")
+			ne, err := promptui.PromptForString("Environment name")
 			if err != nil {
 				logger.Fatal().Err(err).Msg("prompt failed")
 			}
+			newEnvName = ne
 		}
 
-		debug("new environment name is: %s", newEnvName)
+		logger.Debug().Msgf("new environment name is: %s", newEnvName)
 
 		envId, err := config.CreateNewEnvironment(newEnvName)
 		if err != nil {
@@ -54,7 +51,8 @@ var environmentsNewCmd = &cobra.Command{
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsNewCmd)
+	envCmd.AddCommand(envNewCmd)
 
-	environmentsNewCmd.Flags().String("name", "", "name of new environment to create")
+	// TODO decide if we want this parameter at all
+	envNewCmd.Flags().String("name", "", "name of new environment to create")
 }

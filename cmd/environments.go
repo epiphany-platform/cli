@@ -1,20 +1,22 @@
 package cmd
 
 import (
+	"github.com/epiphany-platform/cli/internal/logger"
+
 	"github.com/spf13/cobra"
 )
 
-// environmentsCmd represents the environments command
-var environmentsCmd = &cobra.Command{
+// envCmd represents the environments command
+var envCmd = &cobra.Command{
 	Use:     "environments",
 	Short:   "Allows various interactions with environments",
 	Long:    `TODO`,
 	Aliases: []string{"env"},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("environments called")
+		logger.Debug().Msg("environments called")
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(environmentsCmd)
+	rootCmd.AddCommand(envCmd)
 }

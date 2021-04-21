@@ -2,64 +2,82 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"time"
+	"path"
 
+	"github.com/epiphany-platform/cli/pkg/environment"
+
+	"github.com/epiphany-platform/cli/internal/janitor"
+
+	"github.com/epiphany-platform/cli/internal/logger"
+	"github.com/epiphany-platform/cli/internal/util"
 	"github.com/epiphany-platform/cli/pkg/configuration"
-	"github.com/epiphany-platform/cli/pkg/util"
+
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	cfgDir   string
-	logLevel string
-	logger   zerolog.Logger
+	cfgDir             string
+	logLevel           string
+	config             *configuration.Config
+	currentEnvironment *environment.Environment
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "e",
-	Short: "[root description never actually showed]",
-	Long:  `E wrapper allows to interact with epiphany`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) {},
+	Use:  "e",
+	Long: `E wrapper allows to interact with epiphany`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		logger.Debug().Msg("root PersistentPreRun")
+		var usedConfigDir string
+		if cfgDir != "" {
+			logger.Trace().Msg("configDir parameter not empty")
+			usedConfigDir = cfgDir
+		} else {
+			logger.Trace().Msg("configDir parameter empty")
+			usedConfigDir = path.Join(util.GetHomeDirectory(), util.DefaultConfigurationDirectory)
+		}
+
+		err := janitor.InitializeStructure(usedConfigDir)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("initialization failed")
+		}
+		logger.Trace().Msg("will configuration.GetConfig()")
+		config, err = configuration.GetConfig()
+		if err != nil {
+			logger.Fatal().Err(err).Msg("get config failed")
+		}
+		logger.Trace().Msg("will environment.Get(config.CurrentEnvironment)")
+		currentEnvironment, err = environment.Get(config.CurrentEnvironment)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("get current environment failed")
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		logger.
-			Fatal().
-			Err(err).
-			Msg("root execute failed")
+		logger.Debug().Err(err).Msg("root execute failed")
 	}
 }
 
 func init() {
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	logger = zerolog.New(output).With().Str("package", "cmd").Caller().Timestamp().Logger()
+	logger.Initialize()
 
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVar(&cfgDir, "configDir", "", fmt.Sprintf("config directory (default is %s)", util.DefaultConfigurationDirectory))
-	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "", fmt.Sprintf("log level (default is warn, values: [debug, info, error, fatal])"))
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "", fmt.Sprintf("log level (default is warn, values: [trace, debug, info, error, fatal])"))
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	switch logLevel {
+	case "trace":
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	case "info":
@@ -72,27 +90,6 @@ func initConfig() {
 		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
 
-	debug("initializing root config")
-	if cfgDir != "" {
-		config, err := configuration.SetConfigDirectory(cfgDir)
-		if err != nil {
-			logger.Fatal().Err(err).Msg("set config failed")
-		}
-		// Use config file from the flag.
-		viper.SetConfigFile(config.GetConfigFilePath())
-	} else {
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("get config failed")
-		}
-		// setup default
-		viper.SetConfigFile(config.GetConfigFilePath())
-	}
-	debug("read config variables")
+	logger.Debug().Msg("read config variables")
 	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		logger.Info().Msgf("used config file: %s", viper.ConfigFileUsed())
-	}
 }

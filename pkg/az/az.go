@@ -3,10 +3,9 @@ package az
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
-	"github.com/rs/zerolog"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/authorization/mgmt/authorization"
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
@@ -24,13 +23,8 @@ const (
 	roleName  = "Contributor"
 )
 
-var (
-	logger zerolog.Logger
-)
-
 func init() {
-	output := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-	logger = zerolog.New(output).With().Str("package", "az").Caller().Timestamp().Logger()
+	logger.Initialize()
 }
 
 // Credentials structure is used to format display information for Service Principal
@@ -41,44 +35,44 @@ type Credentials struct {
 	SubscriptionID string
 }
 
-// TODO CreateServicePrincipal has to be CLI independent for test reasons
 // CreateServicePrincipal function is used to create Service Principal, returns Service Principal and related App
-func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (app graphrbac.Application, sp graphrbac.ServicePrincipal, err error) {
+func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (*graphrbac.Application, *graphrbac.ServicePrincipal, error) {
+	// TODO CreateServicePrincipal has to be CLI independent for test reasons
 	logger.Debug().Msg("begin CreateServicePrincipal(...)")
 
 	authorizer, err := auth.NewAuthorizerFromCLI()
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 	logger.Debug().Msg("authorizer created from az cli command")
 
 	env, err := azure.EnvironmentFromName(cloudName)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 	logger.Debug().Msg("azure cloud endpoints information obtained")
 
 	graphAuthorizer, err := auth.NewAuthorizerFromCLIWithResource(env.GraphEndpoint)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 	logger.Debug().Msg("graph authorizer created from az cli command")
 
-	app, err = createApplication(tenantID, name, pass, graphAuthorizer)
+	app, err := createApplication(tenantID, name, pass, graphAuthorizer)
 	if err != nil {
-		return
+		return &app, nil, err
 	}
-	appBytes, err := app.MarshalJSON()
+	appBytes, err := app.MarshalJSON() // TODO remove
 	if err != nil {
 		logger.Warn().Err(err).Msg("wasn't able to marshall application structure")
 	}
 	logger.Debug().Msgf("created application: \n %s", string(appBytes))
 
-	sp, err = createServicePrincipal(tenantID, app, graphAuthorizer)
+	sp, err := createServicePrincipal(tenantID, app, graphAuthorizer)
 	if err != nil {
-		return
+		return &app, &sp, err
 	}
-	spBytes, err := sp.MarshalJSON()
+	spBytes, err := sp.MarshalJSON() // TODO remove
 	if err != nil {
 		logger.Warn().Err(err).Msg("wasn't able to marshall service principal structure")
 	}
@@ -86,28 +80,26 @@ func CreateServicePrincipal(pass, subscriptionID, tenantID, name string) (app gr
 
 	roleID, err := getRoleID(subscriptionID, roleName, authorizer)
 	if err != nil {
-		return
+		return &app, &sp, err
 	}
 	logger.Debug().Msgf("obtained id %s for role %s", roleID, roleName)
 
 	ra, err := assignRoleToServicePrincipalWithRetries(subscriptionID, roleID, sp, authorizer)
 	if err != nil {
-		return
+		return &app, &sp, err
 	}
-	raBytes, err := ra.MarshalJSON()
+	raBytes, err := ra.MarshalJSON() // TODO remove
 	if err != nil {
 		logger.Warn().Err(err).Msg("wasn't able to marshall role assignment structure")
 	}
 	logger.Debug().Msgf("created role assignment: \n %s", string(raBytes))
-
-	logger.Debug().Msg("end CreateServicePrincipal(...)")
-	return
+	return &app, &sp, nil
 }
 
 // GeneratePassword generates Service Principal password
 func GeneratePassword(length, numDigits, numSymbols int) (string, error) {
 	logger.Debug().Msgf("will generate password of length %d with %d digits", length, numDigits)
-	// the total length of generated Password is dimnished by 1, because first character is a letter due to Azure
+	// the total length of generated Password is decreased by 1, because first character is a letter due to Azure
 	// password requirements (needs to be alphanumeric)
 	// TODO: Add possibility that the first character can be a number
 	if numDigits+numSymbols > length-1 {
@@ -191,7 +183,7 @@ func assignRoleToServicePrincipalWithRetries(subscriptionID, roleID string, sp g
 			},
 		})
 		if err != nil {
-			logger.Warn().Err(err).Msgf("(%d) failed to assign role to service principal.", i)
+			logger.Info().Err(err).Msgf("(%d) failed to assign role to service principal.", i)
 			time.Sleep(1 * time.Second)
 			continue
 		} else {

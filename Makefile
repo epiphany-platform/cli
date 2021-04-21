@@ -23,12 +23,13 @@ clean: clean-task
 build: get-task janitor-task build-task
 get: get-update-task
 install: install-task
+pipeline-test: test-task
 
 test-task:
 	$(TEST) -race -v ./...
 
 clean-task:
-	$(CLEAN) -x ./cmd/... ./pkg/...
+	$(CLEAN) -x ./cmd/... ./pkg/... ./internal/...
 	rm -rf $(BUILD_DIR)
 
 get-task:
@@ -40,8 +41,9 @@ get-update-task:
 janitor-task:
 	$(TIDY)
 	$(VENDOR)
-	$(VET) ./cmd/... ./pkg/...
-	$(FMT) ./cmd/... ./pkg/...
+	$(VET) ./cmd/... ./pkg/... ./internal/...
+	$(FMT) ./cmd/... ./pkg/... ./internal/...
+	goimports -l -w ./cmd/ ./pkg/ ./internal/
 
 build-task:
 	$(BUILD) -x -o $(BUILD_DIR)$(APP_NAME) $(APP_REPO)

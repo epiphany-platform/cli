@@ -3,16 +3,18 @@ package cmd
 import (
 	"os"
 
-	"github.com/epiphany-platform/cli/pkg/configuration"
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/environment"
 	"github.com/epiphany-platform/cli/pkg/promptui"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var srcFile string
 
-var environmentsImportCmd = &cobra.Command{
+// envImportCmd represents envs import command
+var envImportCmd = &cobra.Command{
 	Use:        "import",
 	SuggestFor: []string{"impor", "imprt"},
 	Short:      "Imports a zip compressed environment",
@@ -43,12 +45,6 @@ and immediately switches to the imported environment`,
 			logger.Fatal().Err(err).Msg("Incorrect file path specified")
 		}
 
-		// Get current config
-		config, err := configuration.GetConfig()
-		if err != nil {
-			logger.Fatal().Err(err).Msg("Get config failed")
-		}
-
 		// Import environment
 		envId, err := environment.Import(srcFile)
 		if err != nil {
@@ -66,8 +62,8 @@ and immediately switches to the imported environment`,
 }
 
 func init() {
-	environmentsCmd.AddCommand(environmentsImportCmd)
+	envCmd.AddCommand(envImportCmd)
 
-	environmentsImportCmd.Flags().StringP("from", "f", "", "File to import from")
-	environmentsImportCmd.MarkFlagFilename("from")
+	envImportCmd.Flags().StringP("from", "f", "", "File to import from")
+	_ = envImportCmd.MarkFlagFilename("from")
 }

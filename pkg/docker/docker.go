@@ -8,20 +8,25 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/epiphany-platform/cli/internal/logger"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 )
+
+func init() {
+	logger.Initialize()
+}
 
 type Image struct {
 	Name string
 }
 
 func (image *Image) Pull() (string, error) { //TODO remove splitting log streams here, but use zerolog multiwriter
-	debug("will try to pull")
+	logger.Debug().Msg("will try to pull")
 	ctx, cli, err := clientAndContext()
 	if err != nil {
 		return "", err
@@ -40,8 +45,7 @@ func (image *Image) Pull() (string, error) { //TODO remove splitting log streams
 	go func() {
 		s := bufio.NewScanner(stdoutR)
 		for s.Scan() {
-			txt := s.Text()
-			debugJson([]byte(txt), "pulling")
+			logger.Debug().RawJSON("json", s.Bytes()).Msg("pulling")
 		}
 		done <- true
 	}()
@@ -54,8 +58,8 @@ func (image *Image) Pull() (string, error) { //TODO remove splitting log streams
 	}()
 
 	go func() {
-		defer logW.Close()
-		defer stdoutW.Close()
+		defer pipeWriterClosure(logW)
+		defer pipeWriterClosure(stdoutW)
 
 		// build the MultiWriter for all the pipes
 		mw := io.MultiWriter(logW, stdoutW)
@@ -142,6 +146,7 @@ func run(job Job) error {
 			Mounts: mounts,
 		},
 		nil,
+		nil,
 		"",
 	)
 	if err != nil {
@@ -164,7 +169,7 @@ func run(job Job) error {
 
 func clientAndContext() (context.Context, *client.Client, error) {
 	ctx := context.Background()
-	cli, err := client.NewEnvClient()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -177,6 +182,10 @@ func removeFinishedContainer(cli *client.Client, ctx context.Context, containerI
 
 	err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
 	if err != nil {
-		warnRemovingContainer(err)
+		logger.Warn().Err(err).Msg("cannot remove container after it finished it's job")
 	}
+}
+
+func pipeWriterClosure(pw *io.PipeWriter) {
+	_ = pw.Close()
 }

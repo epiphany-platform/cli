@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/epiphany-platform/cli/internal/logger"
+
 	"github.com/spf13/cobra"
 )
 
@@ -10,7 +12,7 @@ var azCmd = &cobra.Command{
 	Short: "Azure Cloud related operations",
 	Long:  `Commands used to work with Azure cloud.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
-		debug("az pre run called")
+		logger.Debug().Msg("az pre run called")
 	},
 }
 
