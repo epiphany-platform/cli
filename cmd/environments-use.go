@@ -3,8 +3,9 @@ package cmd
 import (
 	"errors"
 
-	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/environment"
+
+	"github.com/epiphany-platform/cli/internal/logger"
 	"github.com/epiphany-platform/cli/pkg/promptui"
 
 	"github.com/google/uuid"
@@ -22,25 +23,20 @@ var envUseCmd = &cobra.Command{
 		if len(args) > 1 {
 			return errors.New("'use' command gets 1 optional argument with UUID of environment to use")
 		}
-		if len(args) == 1 {
-			u, err := uuid.Parse(args[0])
-			if err != nil {
-				return err
-			}
-			exists, err := environment.IsExisting(u)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				return errors.New("environment with UUID: " + u.String() + " not found")
-			}
-		}
 		return nil
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
 			logger.Debug().Msg("environments use called")
 			uu = uuid.MustParse(args[0])
+
+			exists, err := environment.IsExisting(uu)
+			if err != nil {
+				logger.Panic().Err(err).Msgf("expected environment %s existence check failed", uu.String())
+			}
+			if !exists {
+				logger.Panic().Msgf("expected environment %s not found", uu.String())
+			}
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
