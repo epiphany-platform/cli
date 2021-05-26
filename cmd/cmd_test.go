@@ -143,7 +143,7 @@ func TestEnvironments(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:           "e env use",
+			name:           "e environments use",
 			args:           []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "69a1f007-ab54-4c5d-8fe3-8568ce319c61"},
 			want:           []string{""},
 			additionalEnvs: map[string]string{"69a1f007-ab54-4c5d-8fe3-8568ce319c61": "second-env"},
@@ -156,7 +156,7 @@ func TestEnvironments(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "e env use unknown",
+			name:    "e environments use unknown",
 			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "8934387b-0c9f-42d2-a3c1-6acac763dd5a"},
 			want:    []string{"expected environment 8934387b-0c9f-42d2-a3c1-6acac763dd5a not found"},
 			wantErr: true,
