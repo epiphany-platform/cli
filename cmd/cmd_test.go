@@ -118,10 +118,11 @@ func TestEnvironments(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name    string
-		args    []string
-		want    []string
-		wantErr bool
+		name           string
+		args           []string
+		want           []string
+		additionalEnvs map[string]string
+		wantErr        bool
 	}{
 		{
 			name:    "e environments info",
@@ -142,10 +143,23 @@ func TestEnvironments(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "e environments use",
+			name:           "e environments use",
+			args:           []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "69a1f007-ab54-4c5d-8fe3-8568ce319c61"},
+			want:           []string{""},
+			additionalEnvs: map[string]string{"69a1f007-ab54-4c5d-8fe3-8568ce319c61": "second-env"},
+			wantErr:        false,
+		},
+		{
+			name:    "e environments use incorrect",
 			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "something-incorrect"},
-			want:    []string{"Error: invalid UUID length: 19"},
-			wantErr: false,
+			want:    []string{"panic: uuid: Parse(something-incorrect): invalid UUID length: 19"},
+			wantErr: true,
+		},
+		{
+			name:    "e environments use unknown",
+			args:    []string{"--configDir", util.UsedConfigurationDirectory, "environments", "use", "8934387b-0c9f-42d2-a3c1-6acac763dd5a"},
+			want:    []string{"expected environment 8934387b-0c9f-42d2-a3c1-6acac763dd5a not found"},
+			wantErr: true,
 		},
 		{
 			name:    "e environments run no args",
@@ -195,6 +209,18 @@ func TestEnvironments(t *testing.T) {
 			a := assert.New(t)
 			dir, err := os.Getwd()
 			a.NoError(err)
+
+			if tt.additionalEnvs != nil {
+				for k, v := range tt.additionalEnvs {
+					p := path.Join(util.UsedConfigurationDirectory, "environments", k)
+					err2 := os.MkdirAll(path.Join(p, "shared"), os.ModePerm)
+					a.NoError(err2)
+
+					config := fmt.Sprintf("name: %s\nuuid: %s\ninstalled: []", v, k)
+					err2 = ioutil.WriteFile(path.Join(p, "config.yaml"), []byte(config), 0644)
+					a.NoError(err2)
+				}
+			}
 
 			cmd := exec.Command(path.Join(dir, "output", "e"), tt.args...)
 			got, err := cmd.CombinedOutput()
